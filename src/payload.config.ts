@@ -1,25 +1,7 @@
-import path from 'path'
-// import { postgresAdapter } from '@payloadcms/db-postgres'
-import {
-  AlignFeature,
-  BlockQuoteFeature,
-  BlocksFeature,
-  BoldFeature,
-  CheckListFeature,
-  HeadingFeature,
-  IndentFeature,
-  InlineCodeFeature,
-  ItalicFeature,
-  lexicalEditor,
-  LinkFeature,
-  OrderedListFeature,
-  ParagraphFeature,
-  RelationshipFeature,
-  UnorderedListFeature,
-  UploadFeature,
-} from '@payloadcms/richtext-lexical'
-//import { slateEditor } from '@payloadcms/richtext-slate'
+import { Questionnaire } from '@/app/(payload)/collections/Questionnaire'
 import { mongooseAdapter } from '@payloadcms/db-mongodb'
+import { lexicalEditor } from '@payloadcms/richtext-lexical'
+import path from 'path'
 import { buildConfig } from 'payload/config'
 import sharp from 'sharp'
 import { fileURLToPath } from 'url'
@@ -28,9 +10,22 @@ const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
 export default buildConfig({
-  //editor: slateEditor({}),
   editor: lexicalEditor(),
+  // i18n: {
+  //   fallbackLanguage: 'en',
+  //   supportedLanguages: ['en'],
+  // },
+  debug: true,
+  serverURL: 'http://localhost:3000',
+
+  plugins: [
+    // samplePlugin({
+    //   enabled: true,
+    // }),
+  ],
+
   collections: [
+    Questionnaire,
     {
       slug: 'pages',
       admin: {
@@ -62,36 +57,30 @@ export default buildConfig({
   typescript: {
     outputFile: path.resolve(dirname, 'payload-types.ts'),
   },
-  // db: postgresAdapter({
-  //   pool: {
-  //     connectionString: process.env.POSTGRES_URI || ''
-  //   }
-  // }),
   db: mongooseAdapter({
     url: process.env.MONGODB_URI || '',
   }),
   admin: {
-    autoLogin: {
-      email: 'dev@payloadcms.com',
-      password: 'test',
-      prefillOnly: true,
-    },
+    // autoLogin: {
+    //   email: 'dev@payloadcms.com',
+    //   password: 'test',
+    //   prefillOnly: true,
+    // },
   },
   async onInit(payload) {
-    const existingUsers = await payload.find({
-      collection: 'users',
-      limit: 1,
-    })
-
-    if (existingUsers.docs.length === 0) {
-      await payload.create({
-        collection: 'users',
-        data: {
-          email: 'dev@payloadcms.com',
-          password: 'test',
-        },
-      })
-    }
+    // const existingUsers = await payload.find({
+    //   collection: 'users',
+    //   limit: 1,
+    // })
+    // if (existingUsers.docs.length === 0) {
+    //   await payload.create({
+    //     collection: 'users',
+    //     data: {
+    //       email: 'dev@payloadcms.com',
+    //       password: 'test',
+    //     },
+    //   })
+    // }
   },
   // Sharp is now an optional dependency -
   // if you want to resize images, crop, set focal point, etc.

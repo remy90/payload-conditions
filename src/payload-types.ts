@@ -8,6 +8,7 @@
 
 export interface Config {
   collections: {
+    questionnaire: Questionnaire;
     pages: Page;
     media: Media;
     users: User;
@@ -15,6 +16,85 @@ export interface Config {
     'payload-migrations': PayloadMigration;
   };
   globals: {};
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "questionnaire".
+ */
+export interface Questionnaire {
+  id: string;
+  title: string;
+  pages?: StandardPage[] | null;
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "StandardPage".
+ */
+export interface StandardPage {
+  skippable?: boolean | null;
+  questionAnswerPair?:
+    | {
+        question: string;
+        answer: (BooleanChoice | MultipleChoice | InputText)[];
+        id?: string | null;
+      }[]
+    | null;
+  qCondition?: Question[] | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'standardPage';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "BooleanChoice".
+ */
+export interface BooleanChoice {
+  booleanOptions: {
+    trueOption: string;
+    falseOption: string;
+  };
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'booleanChoice';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "MultipleChoice".
+ */
+export interface MultipleChoice {
+  options?:
+    | {
+        option: string;
+        id?: string | null;
+      }[]
+    | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'multipleChoice';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "InputText".
+ */
+export interface InputText {
+  inputText: string;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'inputText';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "Question".
+ */
+export interface Question {
+  text: string;
+  optional?: boolean | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'contentBlock';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
