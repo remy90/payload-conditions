@@ -1,19 +1,7 @@
-import type { Block, BlockField, Field } from 'payload/types'
+import type { Block, Field, OptionObject } from 'payload/types'
 import questionAnswerPair from '../Plugins/collections/questionAnswerPair'
+import AnswerCondition from '../Plugins/components/condition/answerCondition'
 import QuestionCondition from '../Plugins/components/condition/questionCondition'
-import { question } from './question'
-
-const ContentBlockField: BlockField = {
-  name: 'contentBlock', // page type
-  type: 'blocks',
-  blocks: [question],
-  label: 'Content',
-  labels: {
-    plural: 'Content',
-    singular: 'content',
-  },
-  required: true,
-}
 
 export const pageFields: Field[] = [
   {
@@ -25,24 +13,52 @@ export const pageFields: Field[] = [
   },
   ...questionAnswerPair.fields,
 ]
-
+const options: OptionObject[] = [
+  {
+    label: 'is',
+    value: '1',
+  },
+  {
+    label: 'is not',
+    value: '-1',
+  },
+  {
+    // to be used for strings
+    label: 'contains',
+    value: '2',
+  },
+]
 export const StandardPage: Block = {
   slug: 'standardPage',
   fields: [
-    // blockFields({
-    // name: 'content',
-    // fields: [
     ...pageFields,
     {
       type: 'text',
-      label: 'Question Condition',
+      label: 'Question condition',
       name: 'questionValue',
       admin: {
         className: 'page-content',
         components: { Field: QuestionCondition },
       },
-      // fields: [ContentBlockField, ...prerequisiteGroups],
-      // fields: [ContentBlockField],
+    },
+    {
+      name: 'operatorType',
+      type: 'select',
+      admin: {
+        className: 'operator',
+        isClearable: false,
+      },
+      defaultValue: options[0].value,
+      label: false,
+      options,
+
+      required: true,
+    },
+    {
+      type: 'text',
+      label: 'Answer condition',
+      name: 'answerValue',
+      admin: { components: { Field: AnswerCondition } },
     },
   ],
   interfaceName: 'StandardPage',

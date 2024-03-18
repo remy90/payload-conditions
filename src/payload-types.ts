@@ -8,57 +8,57 @@
 
 export interface Config {
   collections: {
-    questionnaire: Questionnaire;
-    pages: Page;
-    media: Media;
-    users: User;
-    'payload-preferences': PayloadPreference;
-    'payload-migrations': PayloadMigration;
-  };
-  globals: {};
+    questionnaire: Questionnaire
+    pages: Page
+    media: Media
+    users: User
+    'payload-preferences': PayloadPreference
+    'payload-migrations': PayloadMigration
+  }
+  globals: {}
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "questionnaire".
  */
 export interface Questionnaire {
-  id: string;
-  title: string;
-  pages?: StandardPage[] | null;
-  updatedAt: string;
-  createdAt: string;
-  _status?: ('draft' | 'published') | null;
+  id: string
+  title: string
+  pages?: StandardPage[] | null
+  updatedAt: string
+  createdAt: string
+  _status?: ('draft' | 'published') | null
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "StandardPage".
  */
 export interface StandardPage {
-  skippable?: boolean | null;
+  skippable?: boolean | null
   questionAnswerPair?:
     | {
-        question: string;
-        answer: (BooleanChoice | MultipleChoice | InputText)[];
-        id?: string | null;
+        question: string
+        answer: (BooleanOptions | MultipleChoice | InputText)[]
+        id?: string | null
       }[]
-    | null;
-  qCondition?: Question[] | null;
-  id?: string | null;
-  blockName?: string | null;
-  blockType: 'standardPage';
+    | null
+  qCondition?: Question[] | null
+  id?: string | null
+  blockName?: string | null
+  blockType: 'standardPage'
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "BooleanChoice".
+ * via the `definition` "BooleanOptions".
  */
-export interface BooleanChoice {
+export interface BooleanOptions {
   booleanOptions: {
-    trueOption: string;
-    falseOption: string;
-  };
-  id?: string | null;
-  blockName?: string | null;
-  blockType: 'booleanChoice';
+    trueOption: string
+    falseOption: string
+  }
+  id?: string | null
+  blockName?: string | null
+  blockType: 'booleanOptions'
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -67,128 +67,127 @@ export interface BooleanChoice {
 export interface MultipleChoice {
   options?:
     | {
-        option: string;
-        id?: string | null;
+        option: string
+        id?: string | null
       }[]
-    | null;
-  id?: string | null;
-  blockName?: string | null;
-  blockType: 'multipleChoice';
+    | null
+  id?: string | null
+  blockName?: string | null
+  blockType: 'multipleChoice'
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "InputText".
  */
 export interface InputText {
-  inputText: string;
-  id?: string | null;
-  blockName?: string | null;
-  blockType: 'inputText';
+  inputText: string
+  id?: string | null
+  blockName?: string | null
+  blockType: 'inputText'
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "Question".
  */
 export interface Question {
-  text: string;
-  optional?: boolean | null;
-  id?: string | null;
-  blockName?: string | null;
-  blockType: 'contentBlock';
+  text: string
+  optional?: boolean | null
+  id?: string | null
+  blockName?: string | null
+  blockType: 'contentBlock'
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "pages".
  */
 export interface Page {
-  id: string;
-  title?: string | null;
+  id: string
+  title?: string | null
   content?: {
     root: {
-      type: string;
+      type: string
       children: {
-        type: string;
-        version: number;
-        [k: string]: unknown;
-      }[];
-      direction: ('ltr' | 'rtl') | null;
-      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-      indent: number;
-      version: number;
-    };
-    [k: string]: unknown;
-  } | null;
-  updatedAt: string;
-  createdAt: string;
+        type: string
+        version: number
+        [k: string]: unknown
+      }[]
+      direction: ('ltr' | 'rtl') | null
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | ''
+      indent: number
+      version: number
+    }
+    [k: string]: unknown
+  } | null
+  updatedAt: string
+  createdAt: string
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "media".
  */
 export interface Media {
-  id: string;
-  text?: string | null;
-  updatedAt: string;
-  createdAt: string;
-  url?: string | null;
-  filename?: string | null;
-  mimeType?: string | null;
-  filesize?: number | null;
-  width?: number | null;
-  height?: number | null;
+  id: string
+  text?: string | null
+  updatedAt: string
+  createdAt: string
+  url?: string | null
+  filename?: string | null
+  mimeType?: string | null
+  filesize?: number | null
+  width?: number | null
+  height?: number | null
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "users".
  */
 export interface User {
-  id: string;
-  updatedAt: string;
-  createdAt: string;
-  email: string;
-  resetPasswordToken?: string | null;
-  resetPasswordExpiration?: string | null;
-  salt?: string | null;
-  hash?: string | null;
-  loginAttempts?: number | null;
-  lockUntil?: string | null;
-  password?: string | null;
+  id: string
+  updatedAt: string
+  createdAt: string
+  email: string
+  resetPasswordToken?: string | null
+  resetPasswordExpiration?: string | null
+  salt?: string | null
+  hash?: string | null
+  loginAttempts?: number | null
+  lockUntil?: string | null
+  password?: string | null
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-preferences".
  */
 export interface PayloadPreference {
-  id: string;
+  id: string
   user: {
-    relationTo: 'users';
-    value: string | User;
-  };
-  key?: string | null;
+    relationTo: 'users'
+    value: string | User
+  }
+  key?: string | null
   value?:
     | {
-        [k: string]: unknown;
+        [k: string]: unknown
       }
     | unknown[]
     | string
     | number
     | boolean
-    | null;
-  updatedAt: string;
-  createdAt: string;
+    | null
+  updatedAt: string
+  createdAt: string
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-migrations".
  */
 export interface PayloadMigration {
-  id: string;
-  name?: string | null;
-  batch?: number | null;
-  updatedAt: string;
-  createdAt: string;
+  id: string
+  name?: string | null
+  batch?: number | null
+  updatedAt: string
+  createdAt: string
 }
-
 
 declare module 'payload' {
   export interface GeneratedTypes extends Config {}

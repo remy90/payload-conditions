@@ -18,13 +18,6 @@ export const Questionnaire: CollectionConfig = {
       blocks: [StandardPage],
       label: 'Survey pages',
       labels: { plural: 'pages', singular: 'page' },
-      hooks: {
-        afterChange: [
-          async ({ data }) => {
-            console.log('data', data)
-          },
-        ],
-      },
     },
   ],
 

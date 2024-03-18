@@ -1,3 +1,4 @@
+import { randomUUID } from 'crypto'
 import type { Block, Field } from 'payload/types'
 
 const truthyField: Field = {
@@ -6,6 +7,15 @@ const truthyField: Field = {
   label: 'True option',
   defaultValue: 'Yes',
   required: true,
+  custom: {
+    id: 'custom id',
+  },
+}
+const trueId: Field = {
+  name: 'trueId',
+  type: 'text',
+  admin: { hidden: true },
+  defaultValue: randomUUID(),
 }
 
 const falsyField: Field = {
@@ -15,17 +25,24 @@ const falsyField: Field = {
   defaultValue: 'No',
   required: true,
 }
+const falseId: Field = {
+  name: 'falseId',
+  type: 'text',
+  admin: { hidden: true },
+  defaultValue: randomUUID(),
+}
+
 // TODO: Add style option: buttons, checkbox, dropdown, toggle
-export const booleanChoiceBlock: Block = {
+export const booleanOptionsBlock: Block = {
   fields: [
     {
       name: 'booleanOptions',
       type: 'group',
-      fields: [truthyField, falsyField],
+      fields: [truthyField, trueId, falsyField, falseId],
       label: 'True Option',
     },
   ],
-  slug: 'booleanChoice',
+  slug: 'booleanOptions',
   labels: { singular: 'True or false', plural: 'True or false' },
-  interfaceName: 'BooleanChoice',
+  interfaceName: 'BooleanOptions',
 }

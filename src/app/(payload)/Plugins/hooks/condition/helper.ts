@@ -1,17 +1,12 @@
-/**
- * Returns the index _before_ the indexRef in the path
- */
-export const getIndexFromPath: ({
+export const getCurrentPageNoFromPath: ({
+  pageName,
   path,
-  indexRef,
 }: {
+  pageName: string
   path: string
-  indexRef: string
-}) => number = ({ path, indexRef }) => {
+}) => number = ({ path, pageName }) => {
   const pathAsArray = path.split('.')
-  // search for indexRef in pathAsArray
-  const pageIndexFromPathArray = pathAsArray.findIndex(pathPart => pathPart === indexRef)
-  if (pageIndexFromPathArray === -1) throw new Error('indexRef not found in path')
+  const pageIndexFromPathArray = pathAsArray.indexOf(pageName) + 1
 
-  return Number(pathAsArray[pageIndexFromPathArray - 1])
+  return Number(pathAsArray[pageIndexFromPathArray])
 }
