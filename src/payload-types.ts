@@ -42,7 +42,15 @@ export interface StandardPage {
         id?: string | null
       }[]
     | null
-  qCondition?: Question[] | null
+  allOrAnyCondition: 'any' | 'all'
+  conditionalLogicGroup?:
+    | {
+        questionValue?: string | null
+        operatorType: '1' | '-1' | '2'
+        answerValue?: string | null
+        id?: string | null
+      }[]
+    | null
   id?: string | null
   blockName?: string | null
   blockType: 'standardPage'
@@ -54,7 +62,9 @@ export interface StandardPage {
 export interface BooleanOptions {
   booleanOptions: {
     trueOption: string
+    trueId?: string | null
     falseOption: string
+    falseId?: string | null
   }
   id?: string | null
   blockName?: string | null
@@ -84,17 +94,6 @@ export interface InputText {
   id?: string | null
   blockName?: string | null
   blockType: 'inputText'
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "Question".
- */
-export interface Question {
-  text: string
-  optional?: boolean | null
-  id?: string | null
-  blockName?: string | null
-  blockType: 'contentBlock'
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

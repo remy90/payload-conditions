@@ -2,6 +2,7 @@ import type { Block, Field, OptionObject } from 'payload/types'
 import questionAnswerPair from '../Plugins/collections/questionAnswerPair'
 import AnswerCondition from '../Plugins/components/condition/answerCondition'
 import QuestionCondition from '../Plugins/components/condition/questionCondition'
+import { allOrAnyCondition } from '../Plugins/fields/questionAnswerCondition'
 
 export const pageFields: Field[] = [
   {
@@ -33,32 +34,45 @@ export const StandardPage: Block = {
   fields: [
     ...pageFields,
     {
-      type: 'text',
-      label: 'Question condition',
-      name: 'questionValue',
-      admin: {
-        className: 'page-content',
-        components: { Field: QuestionCondition },
-      },
-    },
-    {
-      name: 'operatorType',
-      type: 'select',
-      admin: {
-        className: 'operator',
-        isClearable: false,
-      },
-      defaultValue: options[0].value,
-      label: false,
-      options,
-
-      required: true,
-    },
-    {
-      type: 'text',
-      label: 'Answer condition',
-      name: 'answerValue',
-      admin: { components: { Field: AnswerCondition } },
+      type: 'row',
+      fields: [
+        allOrAnyCondition,
+        {
+          type: 'array',
+          name: 'conditionalLogicGroup',
+          label: 'Conditional logic group',
+          labels: { singular: 'conditional logic group', plural: 'conditional logic groups' },
+          fields: [
+            {
+              type: 'text',
+              label: 'Question condition',
+              name: 'questionValue',
+              admin: {
+                className: 'page-content',
+                components: { Field: QuestionCondition },
+              },
+            },
+            {
+              name: 'operatorType',
+              type: 'select',
+              admin: {
+                className: 'operator',
+                isClearable: false,
+              },
+              defaultValue: options[0].value,
+              label: false,
+              options,
+              required: true,
+            },
+            {
+              type: 'text',
+              label: 'Answer condition',
+              name: 'answerValue',
+              admin: { components: { Field: AnswerCondition } },
+            },
+          ],
+        },
+      ],
     },
   ],
   interfaceName: 'StandardPage',

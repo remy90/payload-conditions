@@ -39,7 +39,7 @@ export const booleanOptionsBlock: Block = {
       name: 'booleanOptions',
       type: 'group',
       fields: [truthyField, trueId, falsyField, falseId],
-      label: 'True Option',
+      label: false,
     },
   ],
   slug: 'booleanOptions',
