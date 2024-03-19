@@ -14,13 +14,14 @@ const handleChange = (
 const AnswerCondition: FC<{ pageType: string }> = ({ pageType }) => {
   const { path } = useFieldPath()
   const { fields } = useFormFields(([formFields]) => ({ fields: formFields }))
-
+  console.log('fields', fields)
   const generateAnswerOptions = useAnswerGeneration({
     pageState: fields,
     path,
   })
 
   const [options, setOptions] = useState<OptionObject[]>(generateAnswerOptions())
+
   const { setValue: setSelectedValue, value: selectedValue } = useField<string>({ path })
 
   return (
@@ -33,7 +34,9 @@ const AnswerCondition: FC<{ pageType: string }> = ({ pageType }) => {
       }} // ? still required with new data structure?
       options={options}
       placeholder="Select an answer"
-      value={options?.find(({ value }) => value === selectedValue)}
+      value={
+        options ? options.find(({ value }) => value === selectedValue) : { label: '', value: '' }
+      }
     />
   )
 }

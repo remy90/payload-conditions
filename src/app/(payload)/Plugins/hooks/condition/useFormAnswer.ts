@@ -1,22 +1,18 @@
-import { StandardPage } from '@/payload-types'
-import type { Data, FormState, OptionObject } from 'payload/types'
+import type { Data, OptionObject } from 'payload/types'
 import { useCallback } from 'react'
+import { processorLookup } from '../../components/condition/answerCondition/processors'
+import { CMSAnswerBlockType } from '../../components/condition/answerCondition/processors/types'
 import { numberToArray } from '../../utilities'
 import { getCurrentPageNoFromPath } from './helper'
 
-type CMSAnswerBlockType = NonNullable<
-  StandardPage['questionAnswerPair']
->[number]['answer'][number]['blockType']
-
-type AnswerProcessor = (field: FormState, answerBlockType: string) => OptionObject[]
 export const useAnswerGeneration = ({
   pageState,
   path,
 }: {
   pageState: Data
   path: string
-}): (() => OptionObject[]) => {
-  return useCallback(() => {
+}): (() => OptionObject[]) =>
+  useCallback(() => {
     const [topLevelPath] = path.split('.')
     const numberOfPages = (pageState.pages?.value as number) ?? 0
 
@@ -44,10 +40,10 @@ export const useAnswerGeneration = ({
           (questionPath) => pageState[`${questionPath}.id`]?.value === currentQuestionId,
         )
         if (!pathForQuestionId) return []
-        const answerOptions = getAnswerOptionsFromAnswerType(
-          pageState,
-          `${pathForQuestionId}.answer.0.blockType`,
-        )
+        const answerOptions = getAnswerOptionsFromAnswerType({
+          field: pageState,
+          answerBlockType: `${pathForQuestionId}.answer.0.blockType`,
+        })
 
         return pathForQuestionId
           ? answerOptions?.flatMap<OptionObject>((option) =>
@@ -58,46 +54,6 @@ export const useAnswerGeneration = ({
 
     return options ?? []
   }, [pageState, path])
-}
-
-const processBooleanOptions: AnswerProcessor = (fields, answerBlockType) => {
-  const booleanPaths = [
-    answerBlockType.replace('blockType', 'booleanOptions.trueOption'),
-    answerBlockType.replace('blockType', 'booleanOptions.falseOption'),
-  ]
-
-  return booleanPaths.map<OptionObject>((label) => ({
-    label: fields[label]?.value as string,
-    value: fields[label.replace('eOption', 'eId')]?.value as string,
-  }))
-}
-const processMultipleChoice: AnswerProcessor = (field, answerBlockType) => {
-  return numberToArray(
-    Number(field[answerBlockType.replace('blockType', 'multipleChoice.options')]?.value ?? 0),
-  ).map<OptionObject>((choiceNo) => ({
-    label: field[
-      answerBlockType.replace('blockType', `multipleChoice.options.${choiceNo}.optionText`)
-    ]?.value as string,
-    value: field[answerBlockType.replace('blockType', `multipleChoice.options.${choiceNo}.id`)]
-      ?.value as string,
-  }))
-}
-
-const processInputTextChoice: AnswerProcessor = (field, answerBlockType) => {
-  return numberToArray(
-    Number(field[answerBlockType.replace('blockType', 'inputText.options')]?.value ?? 0),
-  ).map<OptionObject>((choiceNo) => ({
-    label: field[answerBlockType.replace('blockType', `inputText.${choiceNo}.inputText`)]
-      ?.value as string,
-    value: '',
-  }))
-}
-
-const processorLookup: Record<CMSAnswerBlockType, AnswerProcessor> = {
-  booleanOptions: processBooleanOptions,
-  multipleChoice: processMultipleChoice,
-  inputText: processInputTextChoice,
-}
 
 const getQuestionIdFromPrerequisiteAnswerIdPath: (
   path: string,
@@ -108,11 +64,15 @@ const getQuestionIdFromPrerequisiteAnswerIdPath: (
   return pageState[`${prerequisiteQuestionPath}`]?.value as string | undefined
 }
 
-export const getAnswerOptionsFromAnswerType = (
-  field: Data,
-  answerBlockType: string,
-): OptionObject[] | null => {
+export const getAnswerOptionsFromAnswerType = ({
+  field,
+  answerBlockType,
+}: {
+  field: Data
+  answerBlockType: string
+}): OptionObject[] | null => {
   const blockType = field[answerBlockType]?.value as CMSAnswerBlockType
+  console.log('blockType for processor: ', blockType)
   const processor = processorLookup[blockType]
   if (!processor) {
     console.error(`Unknown answer type: ${answerBlockType}`)

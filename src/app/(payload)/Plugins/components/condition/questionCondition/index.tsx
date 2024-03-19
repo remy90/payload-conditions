@@ -9,7 +9,6 @@ const handleChange = (option: OptionObject, setSelectedValue: (val: string | und
 
 const QuestionCondition: FC<{ pageType: string }> = ({ pageType }) => {
   const { path } = useFieldPath()
-
   const { fields } = useFormFields(([formFields]) => ({ fields: formFields }))
 
   const generateQuestionOptions = useFormQuestions()

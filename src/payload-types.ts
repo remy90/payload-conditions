@@ -46,7 +46,7 @@ export interface StandardPage {
   conditionalLogicGroup?:
     | {
         questionValue?: string | null
-        operatorType: '1' | '-1' | '2'
+        operatorType: '1' | '-1' | '2' | '-2'
         answerValue?: string | null
         id?: string | null
       }[]
@@ -75,7 +75,7 @@ export interface BooleanOptions {
  * via the `definition` "MultipleChoice".
  */
 export interface MultipleChoice {
-  options?:
+  multipleChoice?:
     | {
         option: string
         id?: string | null

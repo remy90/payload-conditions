@@ -24,53 +24,51 @@ const options: OptionObject[] = [
     value: '-1',
   },
   {
-    // to be used for strings
     label: 'contains',
     value: '2',
+  },
+  {
+    label: 'excludes',
+    value: '-2',
   },
 ]
 export const StandardPage: Block = {
   slug: 'standardPage',
   fields: [
     ...pageFields,
+    allOrAnyCondition,
     {
-      type: 'row',
+      type: 'array',
+      name: 'conditionalLogicGroup',
+      label: 'Conditional logic group',
+      labels: { singular: 'conditional logic group', plural: 'conditional logic groups' },
       fields: [
-        allOrAnyCondition,
         {
-          type: 'array',
-          name: 'conditionalLogicGroup',
-          label: 'Conditional logic group',
-          labels: { singular: 'conditional logic group', plural: 'conditional logic groups' },
-          fields: [
-            {
-              type: 'text',
-              label: 'Question condition',
-              name: 'questionValue',
-              admin: {
-                className: 'page-content',
-                components: { Field: QuestionCondition },
-              },
-            },
-            {
-              name: 'operatorType',
-              type: 'select',
-              admin: {
-                className: 'operator',
-                isClearable: false,
-              },
-              defaultValue: options[0].value,
-              label: false,
-              options,
-              required: true,
-            },
-            {
-              type: 'text',
-              label: 'Answer condition',
-              name: 'answerValue',
-              admin: { components: { Field: AnswerCondition } },
-            },
-          ],
+          type: 'text',
+          label: 'Question condition',
+          name: 'questionValue',
+          admin: {
+            className: 'page-content',
+            components: { Field: QuestionCondition },
+          },
+        },
+        {
+          name: 'operatorType',
+          type: 'select',
+          admin: {
+            className: 'operator',
+            isClearable: false,
+          },
+          defaultValue: options[0].value,
+          label: false,
+          options,
+          required: true,
+        },
+        {
+          type: 'text',
+          label: 'Answer condition',
+          name: 'answerValue',
+          admin: { components: { Field: AnswerCondition } },
         },
       ],
     },

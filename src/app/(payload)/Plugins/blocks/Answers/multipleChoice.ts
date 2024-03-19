@@ -6,9 +6,11 @@ export const multipleChoiceBlock: Block = {
   labels: { singular: 'Multiple choice', plural: 'Multiple choice' },
   fields: [
     {
-      name: 'options',
+      name: 'multipleChoice',
       type: 'array',
-      labels: { singular: 'Option', plural: 'Options' },
+      label: 'option',
+
+      labels: { singular: 'option', plural: 'options' },
       minRows: 2,
       fields: [
         {
