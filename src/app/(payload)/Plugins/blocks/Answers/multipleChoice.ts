@@ -1,6 +1,5 @@
 import type { Block } from 'payload/types'
 
-// TODO: add style options: select, buttons, radio*
 export const multipleChoiceBlock: Block = {
   slug: 'multipleChoice',
   labels: { singular: 'Multiple choice', plural: 'Multiple choice' },

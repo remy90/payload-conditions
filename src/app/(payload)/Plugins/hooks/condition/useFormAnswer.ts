@@ -5,22 +5,22 @@ import { CMSAnswerBlockType } from '../../components/condition/answerCondition/p
 import { numberToArray } from '../../utilities'
 import { getCurrentPageNoFromPath } from './helper'
 
-export const useAnswerGeneration = ({
+export const useAnswerGeneration = (): (({
   pageState,
   path,
 }: {
   pageState: Data
   path: string
-}): (() => OptionObject[]) =>
-  useCallback(() => {
+}) => OptionObject[]) =>
+  useCallback(({ pageState, path }) => {
     const [topLevelPath] = path.split('.')
     const numberOfPages = (pageState.pages?.value as number) ?? 0
 
     const currentPageNo =
       topLevelPath === 'pages'
-        ? getCurrentPageNoFromPath({ path, pageName: 'pages' }) // ! get proper page
+        ? getCurrentPageNoFromPath({ path, pageName: 'pages' }) // TODO: pass in "page" concept
         : numberOfPages
-    const currentQuestionId = getQuestionIdFromPrerequisiteAnswerIdPath(path, pageState)
+    const currentQuestionId = getQuestionIdFromAnswerIdPath(path, pageState)
 
     if (!currentQuestionId) return []
 
@@ -53,15 +53,15 @@ export const useAnswerGeneration = ({
       })
 
     return options ?? []
-  }, [pageState, path])
+  }, [])
 
-const getQuestionIdFromPrerequisiteAnswerIdPath: (
-  path: string,
-  pageState: Data,
-) => string | undefined = (path, pageState) => {
-  const prerequisiteQuestionPath = path.replace('answerValue', 'questionValue')
-  // TODO: switch from pageData to reducedPageData formValues
-  return pageState[`${prerequisiteQuestionPath}`]?.value as string | undefined
+const getQuestionIdFromAnswerIdPath: (path: string, pageState: Data) => string | undefined = (
+  path,
+  pageState,
+) => {
+  const questionIdPath = path.replace('answerValue', 'questionValue')
+
+  return pageState[`${questionIdPath}`]?.value as string | undefined
 }
 
 export const getAnswerOptionsFromAnswerType = ({

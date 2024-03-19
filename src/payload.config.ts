@@ -11,10 +11,6 @@ const dirname = path.dirname(filename)
 
 export default buildConfig({
   editor: lexicalEditor(),
-  // i18n: {
-  //   fallbackLanguage: 'en',
-  //   supportedLanguages: ['en'],
-  // },
   debug: true,
   serverURL: 'http://localhost:3000',
 
@@ -66,21 +62,6 @@ export default buildConfig({
     //   password: 'test',
     //   prefillOnly: true,
     // },
-  },
-  async onInit(payload) {
-    // const existingUsers = await payload.find({
-    //   collection: 'users',
-    //   limit: 1,
-    // })
-    // if (existingUsers.docs.length === 0) {
-    //   await payload.create({
-    //     collection: 'users',
-    //     data: {
-    //       email: 'dev@payloadcms.com',
-    //       password: 'test',
-    //     },
-    //   })
-    // }
   },
   // Sharp is now an optional dependency -
   // if you want to resize images, crop, set focal point, etc.

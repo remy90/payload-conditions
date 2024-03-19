@@ -32,7 +32,6 @@ const falseId: Field = {
   defaultValue: randomUUID(),
 }
 
-// TODO: Add style option: buttons, checkbox, dropdown, toggle
 export const booleanOptionsBlock: Block = {
   fields: [
     {

@@ -3,24 +3,23 @@ import { ReactSelect, useField, useFieldPath, useFormFields } from '@payloadcms/
 import type { OptionObject } from 'payload/types'
 import { useState, type FC } from 'react'
 import { useAnswerGeneration } from '../../../hooks/condition/useFormAnswer'
+import { filterKeysByPattern } from '../../../utilities'
+import { handleChange } from '../helper'
 
-const handleChange = (
-  option: OptionObject,
-  setSelectedValue: (val: string | undefined) => void,
-) => {
-  setSelectedValue(option?.value)
-}
-
-const AnswerCondition: FC<{ pageType: string }> = ({ pageType }) => {
+const AnswerCondition: FC = () => {
   const { path } = useFieldPath()
-  const { fields } = useFormFields(([formFields]) => ({ fields: formFields }))
-  console.log('fields', fields)
-  const generateAnswerOptions = useAnswerGeneration({
-    pageState: fields,
-    path,
-  })
+  const { fields } = useFormFields(([formFields]) => ({
+    fields: filterKeysByPattern({ obj: formFields, pattern }),
+  }))
 
-  const [options, setOptions] = useState<OptionObject[]>(generateAnswerOptions())
+  const generateAnswerOptions = useAnswerGeneration()
+
+  const [options, setOptions] = useState<OptionObject[]>(
+    generateAnswerOptions({
+      pageState: fields,
+      path,
+    }),
+  )
 
   const { setValue: setSelectedValue, value: selectedValue } = useField<string>({ path })
 
@@ -28,17 +27,43 @@ const AnswerCondition: FC<{ pageType: string }> = ({ pageType }) => {
     <ReactSelect
       isClearable
       onChange={(optionValue) => handleChange(optionValue, setSelectedValue)}
-      onMenuOpen={() => {
-        const t = generateAnswerOptions()
-        setOptions(t)
-      }} // ? still required with new data structure?
+      onMenuOpen={() =>
+        setOptions(
+          generateAnswerOptions({
+            pageState: fields,
+            path,
+          }),
+        )
+      }
       options={options}
       placeholder="Select an answer"
-      value={
-        options ? options.find(({ value }) => value === selectedValue) : { label: '', value: '' }
-      }
+      className={['render-fields', 'field-type'].join(' ')}
+      value={options?.find(({ value }) => value === selectedValue)}
     />
   )
 }
 
 export default AnswerCondition
+
+const pattern = new RegExp(
+  [
+    // First, an exact match on pages (for the page number)
+    '^(pages',
+
+    // Match each page index and questionAnswerPair index pages.0.questionAnswerPair.0
+    '|pages\\.\\d+\\.questionAnswerPair(?:\\.\\d+)?(?:\\.',
+
+    // Match answer followed optionally by an array index
+    '(answer(?:\\.\\d+)?(?:\\.',
+    // the expected fields within answer to match against
+    '(blockName|blockType|id|booleanOptions(?:\\.(falseId|falseOption|trueId|trueOption))?',
+    '|multipleChoice(?:\\.\\d+)?(?:\\.(id|option))?|inputText))?',
+
+    // Other fields to provide an exact match for (used for option value and label)
+    '|question|id))?',
+
+    // Used in the conditionalLogicGroup to determine what question was selected and derive possible answer options
+    '|pages\\.\\d+\\.conditionalLogicGroup(?:\\.\\d+)?(?:\\.',
+    '(answerValue|id|operatorType|questionValue))?)$',
+  ].join(''),
+)

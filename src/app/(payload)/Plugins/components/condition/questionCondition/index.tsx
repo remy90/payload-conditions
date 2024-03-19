@@ -3,13 +3,17 @@ import { ReactSelect, useField, useFieldPath, useFormFields } from '@payloadcms/
 import type { OptionObject } from 'payload/types'
 import { useState, type FC } from 'react'
 import { useFormQuestions } from '../../../hooks/condition/useFormQuestions'
+import { filterKeysByPattern } from '../../../utilities'
+import { handleChange } from '../helper'
 
-const handleChange = (option: OptionObject, setSelectedValue: (val: string | undefined) => void) =>
-  setSelectedValue(option?.value)
+const pattern =
+  /^(pages|pages\.\d+\.questionAnswerPair|pages\.\d+\.questionAnswerPair\.\d+\.(question|id))$/
 
 const QuestionCondition: FC<{ pageType: string }> = ({ pageType }) => {
   const { path } = useFieldPath()
-  const { fields } = useFormFields(([formFields]) => ({ fields: formFields }))
+  const { fields } = useFormFields(([formFields]) => ({
+    fields: filterKeysByPattern({ obj: formFields, pattern }),
+  }))
 
   const generateQuestionOptions = useFormQuestions()
 
@@ -17,7 +21,7 @@ const QuestionCondition: FC<{ pageType: string }> = ({ pageType }) => {
     generateQuestionOptions({
       pageData: fields,
       path,
-      pageName: pageType, // possibly from schemaName?
+      pageName: pageType,
     }),
   )
   const { setValue: setSelectedValue, value: selectedValue } = useField<string>({ path })
@@ -38,6 +42,7 @@ const QuestionCondition: FC<{ pageType: string }> = ({ pageType }) => {
       options={options}
       placeholder="Select a question"
       value={options?.find(({ value }) => value === selectedValue)}
+      className={['render-fields', 'field-type'].join(' ')}
     />
   )
 }
