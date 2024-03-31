@@ -1,0 +1,91 @@
+{
+  "name": "payload-conditions",
+  "version": "0.1.0",
+  "private": false,
+  "type": "module",
+  "description": "plugin for Payload CMS, which enables conditional logic for pages to display",
+  "license": "MIT",
+  "author": {
+    "name": "Remy",
+    "url": "https://github.com/remy90"
+  },
+  "homepage": "https://github.com/remy90/payload-conditions#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/remy90/payload-conditions.git"
+  },
+  "keywords": [
+    "payload",
+    "cms",
+    "react",
+    "plugin",
+    "payload-plugin",
+    "conditions",
+    "iff",
+    "ifttt",
+    "prerequisite"
+  ],
+  "bugs": {
+    "url": "https://github.com/w41x/payload-conditions/issues"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": ["dist"],
+  "scripts": {
+    "dev": "next dev",
+    "build": "pnpm build:swc && pnpm build:types",
+    "build:swc": "swc src -d dist --config-file .swcrc --strip-leading-paths",
+    "build:types": "tsc --emitDeclarationOnly --outDir dist",
+    "clean": "rimraf {dist, tsconfig.tsbuildinfo}",
+    "prepublishOnly": "pnpm clean && pnpm turbo build"
+  },
+  "engines": {
+    "node": ">=18.19.0"
+  },
+  "dependencies": {
+    "payload": "3.0.0-alpha.49",
+    "react": "^17.0.0 || ^18.0.0"
+  },
+  "devDependencies": {
+    "@payloadcms/ui": "3.0.0-alpha.49",
+    "@swc/cli": "^0.3.10",
+    "@swc/core": "^1.4.11",
+    "@types/node": "^20.11.30",
+    "@types/react": "^18.2.64",
+    "eslint": "^8.57.0",
+    "rimraf": "^5.0.5",
+    "tsx": "^4.7.1",
+    "typescript": "^5.4.2"
+  },  
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./types": {
+      "import": "./dist/types.js",
+      "require": "./dist/types.js",
+      "types": "./dist/types.d.ts"
+    }
+  },
+  "publishConfig": {
+    "access": "public",
+    "exports": {
+      ".": {
+        "import": "./dist/index.js",
+        "require": "./dist/index.js",
+        "types": "./dist/index.d.ts"
+      },
+      "./types": {
+        "import": "./dist/types.js",
+        "require": "./dist/types.js",
+        "types": "./dist/types.d.ts"
+      }
+    },
+    "main": "./dist/index.js",
+    "registry": "https://registry.npmjs.org",
+    "types": "./dist/index.d.ts"
+  },
+  "packageManager": "pnpm@8.15.5"
+}
