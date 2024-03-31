@@ -19,6 +19,8 @@
 # production
 /build
 /dist
+
+tsconfig.tsbuildinfo
 # misc
 .DS_Store
 *.pem
@@ -41,3 +43,6 @@ next-env.d.ts
 .env
 
 /media
+
+#turbo
+.turbo

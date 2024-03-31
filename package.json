@@ -30,7 +30,9 @@
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "dev": "next dev",
     "build": "pnpm build:swc && pnpm build:types",
@@ -55,8 +57,9 @@
     "eslint": "^8.57.0",
     "rimraf": "^5.0.5",
     "tsx": "^4.7.1",
+    "turbo": "^1.13.0",
     "typescript": "^5.4.2"
-  },  
+  },
   "exports": {
     ".": {
       "import": "./dist/index.js",
