@@ -1,5 +1,5 @@
 {
-  "name": "payload-conditions",
+  "name": "payload-conditions-plugin",
   "version": "0.1.0",
   "private": false,
   "type": "module",

@@ -7,7 +7,7 @@ This plugin provides criteria for conditional content, which can be specified by
 
 ## Installation
 ```shell
-pnpm add payload-conditions
+pnpm add payload-conditions-plugin
 ```
 
 ## How to use

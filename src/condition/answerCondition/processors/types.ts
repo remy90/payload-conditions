@@ -1,4 +1,5 @@
-import type { StandardPage } from '@/payload-types'
+import { StandardPage } from './../../../payload-types';
+
 import type { FormState, OptionObject } from 'payload/types'
 
 export type CMSAnswerBlockType = NonNullable<
