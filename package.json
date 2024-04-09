@@ -76,7 +76,7 @@
   "publishConfig": {
     "access": "public",
     "main": "./dist/index.js",
-    "registry": "https://npm.pkg.github.com",
+    "registry": "https://registry.npmjs.org/",
     "types": "./dist/index.d.ts"
   },
   "packageManager": "pnpm@8.15.5"
