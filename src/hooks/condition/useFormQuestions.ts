@@ -1,17 +1,16 @@
 'use client'
-import type { Data, OptionObject } from 'payload/types'
+import type {  OptionObject } from 'payload/types'
 import { useCallback } from 'react'
-import { numberToArray } from '../../utilities'
+import { numberToArray } from '@/utilities.js'
 import { getCurrentPageNoFromPath } from './helper.js'
 import { reduceFieldsToValues } from '@payloadcms/ui/utilities/reduceFieldsToValues'
 
 export const useFormQuestions = (): ((props: {
-  pageData: Data
+  pageData: any // Data
   path: string
   pageName: string
 }) => OptionObject[]) =>
   useCallback(({ pageData, path, pageName = 'pages' }) => {
-    console.log('filtered question fields', pageData)
     const fieldValues = reduceFieldsToValues(pageData)
     const numberOfPages = pageData.pages?.value ?? 0
     const pageNumbers = numberToArray(numberOfPages)

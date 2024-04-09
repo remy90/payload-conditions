@@ -1,7 +1,7 @@
-import questionAnswerPair from '@/collections/questionAnswerPair'
-import AnswerCondition from '@/condition/answerCondition'
-import QuestionCondition from '@/condition/questionCondition'
-import { allOrAnyCondition } from '@/fields/questionAnswerCondition'
+import questionAnswerPair from '../collections/questionAnswerPair.js'
+import AnswerCondition from '@/condition/answerCondition/index.js'
+import QuestionCondition from '@/condition/questionCondition/index.js'
+import { allOrAnyCondition } from '@/fields/questionAnswerCondition.js'
 import type { Block, Field, OptionObject } from 'payload/types'
 
 export const pageFields: Field[] = [

@@ -3,6 +3,10 @@
   "sourceMaps": true,
   "jsc": {
     "target": "esnext",
+    "baseUrl": "./",
+    "paths": {
+      "@/*": ["src/*"]
+    },
     "parser": {
       "syntax": "typescript",
       "tsx": true,

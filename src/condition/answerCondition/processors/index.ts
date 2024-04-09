@@ -1,7 +1,7 @@
-import { processBooleanOptions } from './booleanProcessor'
-import { processInputTextChoice } from './inputTextProcessor'
-import { processMultipleChoice } from './multipleChoiceProcessor'
-import type { AnswerProcessor, CMSAnswerBlockType } from './types'
+import { processBooleanOptions } from './booleanProcessor.js'
+import { processInputTextChoice } from './inputTextProcessor.js'
+import { processMultipleChoice } from './multipleChoiceProcessor.js'
+import type { AnswerProcessor, CMSAnswerBlockType } from './types.js'
 
 export const processorLookup: Record<CMSAnswerBlockType, AnswerProcessor> = {
   booleanOptions: processBooleanOptions,

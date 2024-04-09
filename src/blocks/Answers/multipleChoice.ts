@@ -7,8 +7,7 @@ export const multipleChoiceBlock: Block = {
     {
       name: 'multipleChoice',
       type: 'array',
-      label: 'option',
-
+      label: false,
       labels: { singular: 'option', plural: 'options' },
       minRows: 2,
       fields: [

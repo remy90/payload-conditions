@@ -45,16 +45,17 @@
     "node": ">=18.19.0"
   },
   "dependencies": {
-    "payload": "3.0.0-alpha.49",
+    "payload": "3.0.0-beta.0",
     "react": "^17.0.0 || ^18.0.0"
   },
   "devDependencies": {
-    "@payloadcms/ui": "3.0.0-alpha.49",
+    "@payloadcms/ui": "3.0.0-beta.0",
     "@swc/cli": "^0.3.10",
     "@swc/core": "^1.4.11",
     "@types/node": "^20.11.30",
     "@types/react": "^18.2.64",
     "eslint": "^8.57.0",
+    "eslint-config-next": "^14.1.4",
     "rimraf": "^5.0.5",
     "tsx": "^4.7.1",
     "turbo": "^1.13.0",
@@ -74,18 +75,6 @@
   },
   "publishConfig": {
     "access": "public",
-    "exports": {
-      ".": {
-        "import": "./dist/index.js",
-        "require": "./dist/index.js",
-        "types": "./dist/index.d.ts"
-      },
-      "./types": {
-        "import": "./dist/types.js",
-        "require": "./dist/types.js",
-        "types": "./dist/types.d.ts"
-      }
-    },
     "main": "./dist/index.js",
     "registry": "https://registry.npmjs.org",
     "types": "./dist/index.d.ts"

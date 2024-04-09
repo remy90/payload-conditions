@@ -1,5 +1,5 @@
 import type { Field } from 'payload/types'
-import allAnswers from '@/blocks/Answers'
+import allAnswers from '@/blocks/Answers/index.js'
 
 export const answer: Field = {
   name: 'answer',

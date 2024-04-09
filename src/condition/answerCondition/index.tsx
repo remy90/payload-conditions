@@ -1,17 +1,18 @@
 'use client'
 import type { OptionObject } from 'payload/types'
 import { useState, type FC } from 'react'
-import { useAnswerGeneration } from '@/hooks/condition/useFormAnswer'
-import { filterKeysByPattern } from '@/utilities'
-import { handleChange } from '../helper'
+import { useAnswerGeneration } from '@/hooks/condition/useFormAnswer.js'
+import { filterKeysByPattern } from '@/utilities.js'
+import { handleChange } from '../helper.js'
 import { ReactSelect } from '@payloadcms/ui/elements'
 import { useField } from '@payloadcms/ui/forms/useField'
-import { useFormFields } from '@payloadcms/ui/forms/Form'
+
 import { useFieldProps } from '@payloadcms/ui/forms/FieldPropsProvider'
+import { useFormFields } from '@payloadcms/ui/forms/Form'
 
 const AnswerCondition: FC = () => {
   const { path } = useFieldProps()
-  const { fields } = useFormFields(([formFields]) => ({
+  const { fields } = useFormFields(([formFields]: any /*FormState*/) => ({
     fields: filterKeysByPattern({ obj: formFields, pattern }),
   }))
 
@@ -29,7 +30,7 @@ const AnswerCondition: FC = () => {
   return (
     <ReactSelect
       isClearable
-      onChange={(optionValue) => handleChange(optionValue, setSelectedValue)}
+      onChange={(optionValue: OptionObject) => handleChange(optionValue, setSelectedValue)}
       onMenuOpen={() =>
         setOptions(
           generateAnswerOptions({

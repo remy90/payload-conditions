@@ -1,5 +1,5 @@
 import type { CollectionConfig } from 'payload/types'
-import { StandardPage } from '@/blocks/formPage'
+import { StandardPage } from '@/blocks/formPage.js'
 
 export const Questionnaire: CollectionConfig = {
   slug: 'questionnaire',

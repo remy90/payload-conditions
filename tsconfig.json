@@ -6,6 +6,7 @@
     "composite": true,
     "allowJs": true,
     "checkJs": false,
+    "rootDir": "./src",
     "skipLibCheck": true,
     "strict": true,
     "noEmit": false,
@@ -14,10 +15,11 @@
     "declaration": true,
     "declarationMap": true,
     "esModuleInterop": true,
-    "module": "esnext",
-    "sourceMap": true,
+    "outDir": "./dist",
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
     "target": "esnext",
-    "moduleResolution": "bundler",
+    "sourceMap": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "preserve",
@@ -29,7 +31,7 @@
     ],
     "paths": {
       "@/*": ["./src/*"],
-      "@payload-config": ["src/payload.config.ts"]
+      "@payload-config": ["./payload.config.ts"]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],

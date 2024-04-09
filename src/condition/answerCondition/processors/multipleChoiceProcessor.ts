@@ -1,6 +1,6 @@
 import { OptionObject } from 'payload/types'
-import { AnswerProcessor } from './types'
-import { numberToArray } from '@/utilities'
+import { AnswerProcessor } from './types.js'
+import { numberToArray } from '@/utilities.js'
 
 export const processMultipleChoice: AnswerProcessor = (field, answerBlockType) =>
   numberToArray(
