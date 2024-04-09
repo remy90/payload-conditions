@@ -1,6 +1,6 @@
 {
-  "name": "payload-conditions-plugin",
-  "version": "0.1.0",
+  "name": "@remy90/payload-conditions-plugin",
+  "version": "0.2.0",
   "private": false,
   "type": "module",
   "description": "plugin for Payload CMS, which enables conditional logic for pages to display",
@@ -76,7 +76,7 @@
   "publishConfig": {
     "access": "public",
     "main": "./dist/index.js",
-    "registry": "https://registry.npmjs.org",
+    "registry":"https://npm.pkg.github.com",
     "types": "./dist/index.d.ts"
   },
   "packageManager": "pnpm@8.15.5"

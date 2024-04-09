@@ -14,7 +14,7 @@ const pattern =
 
 const QuestionCondition: FC<{ pageType: string }> = ({ pageType }) => {
   const { path } = useFieldProps()
-  const { fields } = useFormFields(([formFields]) => ({
+  const { fields } = useFormFields(([formFields]: any) => ({
     fields: filterKeysByPattern({ obj: formFields, pattern }),
   }))
 
@@ -32,7 +32,7 @@ const QuestionCondition: FC<{ pageType: string }> = ({ pageType }) => {
   return (
     <ReactSelect
       isClearable
-      onChange={(optionValue) => handleChange(optionValue, setSelectedValue)}
+      onChange={(optionValue: OptionObject) => handleChange(optionValue, setSelectedValue)}
       onMenuOpen={() => {
         setOptions(
           generateQuestionOptions({
