@@ -1,6 +1,6 @@
 {
   "name": "@remy90/payload-conditions-plugin",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "private": false,
   "type": "module",
   "description": "plugin for Payload CMS, which enables conditional logic for pages to display",
