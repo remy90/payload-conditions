@@ -38,7 +38,7 @@
     "build:swc": "swc src -d dist --config-file .swcrc --strip-leading-paths",
     "build:types": "tsc --emitDeclarationOnly --outDir dist",
     "clean": "rimraf dist tsconfig.tsbuildinfo",
-    "typecheck": "tsc --noEmit --emitDeclarationOnly false",
+    "typecheck": "tsc --project tsconfig.test.json",
     "test": "vitest run",
     "prepublishOnly": "pnpm build"
   },

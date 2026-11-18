@@ -113,7 +113,7 @@ describe('answer options', () => {
       for (const field of group.fields) {
         if (!('name' in field) || !('defaultValue' in field)) continue
         values[`booleanOptions.${field.name}`] = typeof field.defaultValue === 'function'
-          ? field.defaultValue({}) : field.defaultValue
+          ? Reflect.apply(field.defaultValue, undefined, []) : field.defaultValue
       }
     }
     const options = buildAnswerOptions(answerState(values), answerPath)
