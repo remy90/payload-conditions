@@ -3,17 +3,17 @@
 import { SelectInput, useField, useFormFields } from '@payloadcms/ui'
 import type { SelectFieldClientComponent } from 'payload'
 import { useEffect, useMemo } from 'react'
-import { buildOperatorOptions, operatorValue } from '../options.js'
+import { buildOperatorOptions, operatorState } from '../options.js'
 import { selectedOptionValue } from '../helper.js'
 
 export const OperatorCondition: SelectFieldClientComponent = ({ path: fieldPath, field, readOnly }) => {
   const { path, value, setValue, showError, disabled } = useField<string | null>({ potentiallyStalePath: fieldPath })
   const fields = useFormFields(([fields]) => fields)
   const options = useMemo(() => buildOperatorOptions(fields, path), [fields, path])
-  const mappedValue = operatorValue(fields, path, value)
+  const { value: mappedValue, update } = operatorState(fields, path, value)
   useEffect(() => {
-    if (mappedValue !== value && !readOnly && !disabled) setValue(mappedValue)
-  }, [mappedValue, value, readOnly, disabled, setValue])
+    if (update !== undefined && !readOnly && !disabled) setValue(update)
+  }, [update, readOnly, disabled, setValue])
 
   return (
     <SelectInput

@@ -39,6 +39,7 @@ describe('request validation index', () => {
       }] }] },
       { id: 'later', blockType: 'standardPage' },
     ] }
+    expect(validateConditionOperator('is', { data, siblingData: { questionId: 'q' }, req: {}, path: operatorPath })).toBe(true)
     const context = { data, siblingData: { questionId: 'q' }, req: { context: {} } }
     expect(validateConditionOperator('is', { ...context, path: operatorPath })).toBe(true)
     expect(validateConditionOperator('is', {

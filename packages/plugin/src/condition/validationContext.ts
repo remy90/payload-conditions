@@ -5,7 +5,7 @@ export type ConditionValidationContext = {
   data?: unknown
   path?: (number | string)[]
   siblingData?: { questionId?: unknown }
-  req?: { context: Record<string, unknown> }
+  req?: { context?: Record<string, unknown> }
 }
 const record = (value: unknown): value is Record<string, unknown> => value !== null && typeof value === 'object'
 
@@ -30,7 +30,7 @@ const buildIndex = (pages: unknown[]): Index => {
 }
 
 const requestIndex = (pages: unknown[], req: ConditionValidationContext['req']): Index => {
-  if (!req) return buildIndex(pages)
+  if (!req?.context) return buildIndex(pages)
   // Payload creates validationData per field, retaining its source arrays.
   // Keep the cache in the request so each save sees current answer settings.
   let cache = req.context[cacheKey]

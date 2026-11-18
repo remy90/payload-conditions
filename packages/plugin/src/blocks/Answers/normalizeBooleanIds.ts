@@ -31,7 +31,7 @@ const booleanSites = (
         const question = fromPayloadQuestionnaire({ pages: [{ id: '_', blockType: 'standardPage',
           questionAnswerPair: [value],
         }] } as StoredQuestionnaire).pages[0]?.questions[0]
-        if (question) questions.set(question.id, operatorsFor(question.answer))
+        if (question && !questions.has(question.id)) questions.set(question.id, operatorsFor(question.answer))
       }
       if (Array.isArray(value.conditionGroups)) {
         for (const group of value.conditionGroups) {

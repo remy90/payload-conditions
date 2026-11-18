@@ -2,7 +2,7 @@ import type { FormState } from 'payload'
 import { describe, expect, it } from 'vitest'
 import { normalizeBooleanIds } from '../src/blocks/Answers/normalizeBooleanIds.js'
 import { normalizeOperator } from '../src/condition/normalizeOperator.js'
-import { operatorValue } from '../src/condition/options.js'
+import { operatorState } from '../src/condition/options.js'
 
 const choices = (multiple: boolean) => ({ blockType: 'multipleChoice', allowMultipleSelection: multiple })
 const bool = { blockType: 'booleanOptions', booleanOptions: { trueId: 'yes', falseId: 'no' } }
@@ -33,6 +33,12 @@ describe('equivalent condition operators', () => {
     expect(normalizeBooleanIds(result, () => 'unused', { blocksField: 'pages' })).toBe(result)
   })
 
+  it('uses the first question when malformed data repeats an id', () => {
+    const data = document(choices(false), 'is')
+    data.pages[0].questionAnswerPair.push({ id: 'q', answer: [choices(true)] })
+    expect(normalizeBooleanIds(data, () => 'unused')).toBe(data)
+  })
+
   it('combines operator mapping and boolean id rewrites in one save', () => {
     const data = document({ ...bool, booleanOptions: { trueId: 'yes', falseId: 'yes' } }, 'excludes')
     const result = normalizeBooleanIds(data, () => 'fresh') as typeof data
@@ -40,7 +46,7 @@ describe('equivalent condition operators', () => {
     expect((result.pages[0].questionAnswerPair[0].answer[0] as typeof bool).booleanOptions.falseId).toBe('fresh')
   })
 
-  it('shows and dispatches the equivalent value for the selected question', () => {
+  it('derives the displayed value and pending dispatch for the selected question', () => {
     const path = 'pages.1.conditionGroups.0.conditions.0.operator'
     const fields: FormState = {
       pages: { rows: [{ id: 'p1', blockType: 'standardPage' }, { id: 'p2', blockType: 'standardPage' }] },
@@ -50,8 +56,8 @@ describe('equivalent condition operators', () => {
       'pages.1.conditionGroups.0.conditions.0.questionId': { value: 'q' },
       [path]: { value: 'isNot' },
     }
-    expect(operatorValue(fields, path, 'isNot')).toBe('excludes')
-    expect(operatorValue(fields, path, 'includes')).toBe('includes')
+    expect(operatorState(fields, path, 'isNot')).toEqual({ value: 'excludes', update: 'excludes' })
+    expect(operatorState(fields, path, 'includes')).toEqual({ value: 'includes', update: undefined })
     expect(fields[path].value).toBe('isNot')
   })
 })
