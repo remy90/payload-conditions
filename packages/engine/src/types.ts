@@ -10,14 +10,25 @@ export type Answer =
 export type Question = { id: string; text: string; optional: boolean; answer: Answer }
 export type Condition = { questionId: string; operator: Operator; answerId: string }
 export type ConditionGroup = { match: Match; conditions: Condition[] }
-export type Page = { id: string; skippable: boolean; questions: Question[]; match: Match; conditionGroups: ConditionGroup[] }
+export type Page = {
+  id: string
+  skippable: boolean
+  questions: Question[]
+  match: Match
+  conditionGroups: ConditionGroup[]
+}
 export type Questionnaire = { id: string; title: string; pages: Page[] }
 export type Answers = ReadonlyMap<string, readonly string[]>
-export type AnswerIssue = { questionId: string; issue: 'required' | 'unknownOption' | 'tooManySelections' }
+export type AnswerIssue = {
+  questionId: string
+  issue: 'required' | 'unknownOption' | 'tooManySelections'
+}
 
 const singleOperators = ['is', 'isNot'] as const
 const multipleOperators = ['includes', 'excludes'] as const
 export function operatorsFor(answer: Answer): readonly Operator[] {
   if (answer.type === 'inputText') return []
-  return answer.type === 'multipleChoice' && answer.allowMultipleSelection ? multipleOperators : singleOperators
+  return answer.type === 'multipleChoice' && answer.allowMultipleSelection
+    ? multipleOperators
+    : singleOperators
 }

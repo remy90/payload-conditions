@@ -36,7 +36,11 @@ describe('navigation', () => {
   it('skips pages with unanswered prerequisites and keeps empty pages visible', () => {
     // ohme skips empty standard/multi-question pages. Here an unconditioned
     // page is visible regardless of its question count.
-    const q = questionnaire(page('one', [booleanQuestion('a')]), page('hidden', [], [condition('a')]), page('empty'))
+    const q = questionnaire(
+      page('one', [booleanQuestion('a')]),
+      page('hidden', [], [condition('a')]),
+      page('empty'),
+    )
     const { visiblePageIds } = resolveVisibility(q, new Map())
     expect([...visiblePageIds]).toEqual(['one', 'empty'])
     expect(nextPageId(q, visiblePageIds, 'one')).toBe('empty')
@@ -44,7 +48,7 @@ describe('navigation', () => {
   })
 
   it('uses the position of a hidden current page and handles unknown or omitted current ids', () => {
-    const q = questionnaire(...['a', 'b', 'c', 'd', 'e'].map(id => page(id)))
+    const q = questionnaire(...['a', 'b', 'c', 'd', 'e'].map((id) => page(id)))
     const visible = new Set(['b', 'd', 'foreign'])
     expect(nextPageId(q, visible)).toBe('b')
     expect(nextPageId(q, visible, 'unknown')).toBe('b')

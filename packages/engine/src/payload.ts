@@ -1,4 +1,12 @@
-import { operators, type Answer, type Condition, type Match, type Page, type Question, type Questionnaire } from './types.js'
+import {
+  operators,
+  type Answer,
+  type Condition,
+  type Match,
+  type Page,
+  type Question,
+  type Questionnaire,
+} from './types.js'
 
 export type StoredId = string | number
 export type StoredOption = { id?: StoredId | null; option?: string | null }
@@ -6,7 +14,12 @@ export type StoredBooleanOptions = {
   id?: StoredId | null
   blockName?: string | null
   blockType?: 'booleanOptions' | null
-  booleanOptions?: { trueOption?: string | null; trueId?: StoredId | null; falseOption?: string | null; falseId?: StoredId | null } | null
+  booleanOptions?: {
+    trueOption?: string | null
+    trueId?: StoredId | null
+    falseOption?: string | null
+    falseId?: StoredId | null
+  } | null
 }
 export type StoredMultipleChoice = {
   id?: StoredId | null
@@ -24,7 +37,8 @@ export type StoredInputText = {
 // Payload generates interfaces for custom blocks. An any-valued index also
 // accepts those interfaces, which have no index signature of their own.
 export type StoredUnknownBlock = { blockType: string; [field: string]: any }
-export type StoredAnswer = StoredBooleanOptions | StoredMultipleChoice | StoredInputText | StoredUnknownBlock
+export type StoredAnswer =
+  StoredBooleanOptions | StoredMultipleChoice | StoredInputText | StoredUnknownBlock
 export type StoredQuestionAnswerPair = {
   id?: StoredId | null
   question?: string | null
@@ -72,7 +86,11 @@ function convertAnswer(block: StoredAnswer): Answer | undefined {
       const trueId = id(source?.trueId)
       const falseId = id(source?.falseId)
       if (trueId === undefined || falseId === undefined) return undefined
-      return { type: 'boolean', trueOption: { id: trueId, label: source?.trueOption ?? '' }, falseOption: { id: falseId, label: source?.falseOption ?? '' } }
+      return {
+        type: 'boolean',
+        trueOption: { id: trueId, label: source?.trueOption ?? '' },
+        falseOption: { id: falseId, label: source?.falseOption ?? '' },
+      }
     }
     case 'multipleChoice': {
       const source = block as StoredMultipleChoice
@@ -81,10 +99,16 @@ function convertAnswer(block: StoredAnswer): Answer | undefined {
         const optionId = id(row.id)
         if (optionId !== undefined) options.push({ id: optionId, label: row.option ?? '' })
       }
-      return { type: 'multipleChoice', allowMultipleSelection: source.allowMultipleSelection ?? false, options }
+      return {
+        type: 'multipleChoice',
+        allowMultipleSelection: source.allowMultipleSelection ?? false,
+        options,
+      }
     }
-    case 'inputText': return { type: 'inputText', prompt: (block as StoredInputText).inputText ?? '' }
-    default: return undefined
+    case 'inputText':
+      return { type: 'inputText', prompt: (block as StoredInputText).inputText ?? '' }
+    default:
+      return undefined
   }
 }
 
@@ -93,7 +117,8 @@ function convertQuestion(row: StoredQuestionAnswerPair): Question | undefined {
   if (questionId === undefined) return undefined
   for (const block of row.answer ?? []) {
     const answer = convertAnswer(block)
-    if (answer) return { id: questionId, text: row.question ?? '', optional: row.optional ?? false, answer }
+    if (answer)
+      return { id: questionId, text: row.question ?? '', optional: row.optional ?? false, answer }
   }
   return undefined
 }
@@ -102,7 +127,7 @@ function convertCondition(row: StoredCondition): Condition | undefined {
   if (id(row.id) === undefined) return undefined
   const questionId = id(row.questionId)
   const answerId = id(row.answerId)
-  const operator = operators.find(operator => operator === row.operator)
+  const operator = operators.find((operator) => operator === row.operator)
   // Keep incomplete id-bearing rows in the group. Empty references always fail,
   // including for negative operators, so a broken row cannot expose a page.
   if (questionId === undefined || answerId === undefined || operator === undefined) {
@@ -127,7 +152,13 @@ function convertPage(source: StoredStandardPage, pageId: string): Page {
     }
     if (conditions.length) conditionGroups.push({ match: match(group.match), conditions })
   }
-  return { id: pageId, skippable: source.skippable ?? false, questions, match: match(source.match), conditionGroups }
+  return {
+    id: pageId,
+    skippable: source.skippable ?? false,
+    questions,
+    match: match(source.match),
+    conditionGroups,
+  }
 }
 
 export function fromPayloadQuestionnaire(doc: StoredQuestionnaire): Questionnaire {

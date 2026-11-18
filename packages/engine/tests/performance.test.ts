@@ -8,12 +8,17 @@ it('resolves 200 pages × 10 questions × 5 conditions in under 25 ms', () => {
   const warm: number[] = []
   const clearing: number[] = []
   for (let run = 0; run < 5; run++) {
-    const pages = Array.from({ length: 200 }, (_, p) => page(`p${p}`,
-      Array.from({ length: 10 }, (_, q) => booleanQuestion(`p${p}q${q}`)),
-      p === 0 ? [] : Array.from({ length: 50 }, (_, c) => condition(`p${p - 1}q${c % 10}`)),
-    ))
+    const pages = Array.from({ length: 200 }, (_, p) =>
+      page(
+        `p${p}`,
+        Array.from({ length: 10 }, (_, q) => booleanQuestion(`p${p}q${q}`)),
+        p === 0 ? [] : Array.from({ length: 50 }, (_, c) => condition(`p${p - 1}q${c % 10}`)),
+      ),
+    )
     const q = questionnaire(...pages)
-    const answers = new Map<string, readonly string[]>(pages.flatMap(p => p.questions.map(question => [question.id, ['yes']] as const)))
+    const answers = new Map<string, readonly string[]>(
+      pages.flatMap((p) => p.questions.map((question) => [question.id, ['yes']] as const)),
+    )
     let start = performance.now()
     const initial = resolveVisibility(q, answers)
     cold.push(performance.now() - start)
@@ -35,5 +40,9 @@ it('resolves 200 pages × 10 questions × 5 conditions in under 25 ms', () => {
   expect(Math.min(...cold)).toBeLessThan(25)
   expect(Math.min(...warm)).toBeLessThan(25)
   expect(Math.min(...clearing)).toBeLessThan(25)
-  console.info('visibility timing (ms)', { cold: Math.min(...cold), warm: Math.min(...warm), clearing: Math.min(...clearing) })
+  console.info('visibility timing (ms)', {
+    cold: Math.min(...cold),
+    warm: Math.min(...warm),
+    clearing: Math.min(...clearing),
+  })
 })
