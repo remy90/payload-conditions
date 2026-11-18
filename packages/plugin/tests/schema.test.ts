@@ -42,6 +42,16 @@ const row = (fields: Field[], data: Record<string, unknown>): Record<string, unk
 }
 
 describe('stored schema', () => {
+  it('requires at least two multiple-choice options', () => {
+    const answer = named(children(named(StandardPage.fields, 'questionAnswerPair')), 'answer')
+    if (answer.type !== 'blocks') throw new Error('Expected answer blocks')
+    const multipleChoice = answer.blocks.find((block) => typeof block !== 'string' && block.slug === 'multipleChoice')
+    if (!multipleChoice || typeof multipleChoice === 'string') throw new Error('Missing multiple choice')
+    const options = named(multipleChoice.fields, 'multipleChoice')
+    expect(options.type === 'array' && options.minRows).toBe(2)
+    expect('required' in options && options.required).toBe(true)
+  })
+
   it('round-trips configured fields through the engine adapter', () => {
     expect(values(named(StandardPage.fields, 'match'))).toEqual([...matchModes])
     const groups = children(named(StandardPage.fields, 'conditionGroups'))

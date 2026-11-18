@@ -11,6 +11,7 @@ export const multipleChoiceBlock: Block = {
       label: false,
       labels: { singular: 'option', plural: 'options' },
       minRows: 2,
+      required: true,
       fields: [
         {
           name: 'option',

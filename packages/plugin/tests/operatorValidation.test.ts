@@ -15,6 +15,26 @@ const validate = (operator: unknown, questionId = 'choice', multiple = false, pa
   })
 
 describe('operator field validation', () => {
+  it('supports Payload field-state builds that omit the path', () => {
+    expect(validateConditionOperator('is', { siblingData: { questionId: 'boolean' } })).toBe(true)
+    expect(validateConditionOperator(null, {})).toEqual(expect.any(String))
+    expect(validateConditionOperator('1', {})).toEqual(expect.any(String))
+  })
+
+  it('validates current settings when a hook updates the same data array', () => {
+    const question = choice(false)
+    const context = {
+      data: { pages: [{ id: 'first', blockType: 'standardPage', questionAnswerPair: [question] },
+        { id: 'second', blockType: 'standardPage' }] },
+      path: ['pages', 1, 'conditionGroups', 0, 'conditions', 0, 'operator'],
+      siblingData: { questionId: 'choice' },
+    }
+    expect(validateConditionOperator('is', context)).toBe(true)
+    question.answer[0].allowMultipleSelection = true
+    expect(validateConditionOperator('is', context)).toEqual(expect.any(String))
+    expect(validateConditionOperator('includes', context)).toBe(true)
+  })
+
   it.each(['is', 'isNot'])('accepts %s for single selection and boolean questions', (operator) => {
     expect(validate(operator)).toBe(true)
     expect(validate(operator, 'boolean')).toBe(true)
