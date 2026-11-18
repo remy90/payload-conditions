@@ -4,6 +4,11 @@
   "type": "module",
   "description": "Framework-free conditional questionnaire evaluation",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/remy90/payload-conditions.git",
+    "directory": "packages/engine"
+  },
   "files": [
     "dist",
     "README.md"
@@ -23,7 +28,8 @@
     }
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "pnpm clean && tsc -p tsconfig.json",
+    "clean": "node --input-type=module -e \"import { rmSync } from 'node:fs'; rmSync('dist', { recursive: true, force: true })\"",
     "typecheck": "tsc -p tsconfig.test.json",
     "test": "vitest run",
     "prepublishOnly": "pnpm build"

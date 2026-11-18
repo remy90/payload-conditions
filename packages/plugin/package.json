@@ -12,7 +12,8 @@
   "homepage": "https://github.com/remy90/payload-conditions#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/remy90/payload-conditions.git"
+    "url": "git+https://github.com/remy90/payload-conditions.git",
+    "directory": "packages/plugin"
   },
   "keywords": [
     "payload",
