@@ -33,12 +33,31 @@ describe('two-level prerequisites', () => {
   })
 
   it('returns false for unknown, unanswered, same-page and later-page sources', () => {
+    // ohme's getAllQuestions allowed prerequisites to reference questions on any page.
+    // The engine deliberately allows earlier pages only.
     for (const questionId of ['unknown', 'earlier', 'same', 'later']) {
       const q = questionnaire(page('source', [booleanQuestion('earlier')]),
         page('target', [booleanQuestion('same')], [condition(questionId)]), page('end', [booleanQuestion('later')]))
       expect(evaluatePage(q, 'target', new Map([['same', ['yes']], ['later', ['yes']]]))).toBe(false)
       expect(evaluatePage(q, 'unknown', new Map())).toBe(false)
     }
+  })
+
+  it('returns false for an unknown page match mode', () => {
+    const source = page('source', [booleanQuestion('a')])
+    const target = page('target', [], [condition('a')])
+    const answers = new Map([['a', ['yes']]])
+    expect(evaluatePage(questionnaire(source, target), 'target', answers)).toBe(true)
+    expect(evaluatePage(questionnaire(source, { ...target, match: 'future' as Match }), 'target', answers)).toBe(false)
+  })
+
+  it.each(matchModes)('returns false for an unknown group match mode on an %s page', match => {
+    const source = page('source', [booleanQuestion('a')])
+    const target = { ...page('target', [], [condition('a')]), match }
+    const answers = new Map([['a', ['yes']]])
+    expect(evaluatePage(questionnaire(source, target), 'target', answers)).toBe(true)
+    const invalid = { ...target, conditionGroups: [{ match: 'future' as Match, conditions: [condition('a')] }] }
+    expect(evaluatePage(questionnaire(source, invalid), 'target', answers)).toBe(false)
   })
 
   it('rejects text prerequisites and unknown answer types and operators', () => {

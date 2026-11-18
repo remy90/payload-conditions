@@ -69,6 +69,8 @@ function pageMatches(page: Page, position: number, index: Index, answers: Answer
     if (page.match === 'all' && !matched) return false
     if (page.match === 'any' && matched) return true
   }
+  // ohme threw PrerequisiteConditionNotSupported for an unknown page match mode.
+  // With nonempty groups, the engine returns false and fails closed.
   return !hasGroup || page.match === 'all'
 }
 
