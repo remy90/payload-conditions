@@ -26,6 +26,7 @@ Version 0.2.2 never loaded, so there is no migration.
 - Validate condition answer ids against the selected question's current options. Payload skips field validation on drafts with the collection's default settings.
 - Clear the answer when a condition's question changes, retaining compatible operators. Apply field changes together so Payload can preserve them through autosave.
 - Share one form-state index across condition selects per snapshot, with direct path lookups and cached question options for each page.
+- Share one source-question index across server field validators per document in the request context.
 - Create boolean answer ids through field defaults and regenerate missing or duplicate ids on save. Keep stored ownership when copies are reordered. Conditions under `conditionGroups[].conditions[]` follow regenerated ids throughout the document. No-op saves return the same data reference; rewrites preserve untouched branches.
 - Normalize restored versions using their own data and document order.
 - Keep incoming plugin config unchanged and enable the plugin by default.
