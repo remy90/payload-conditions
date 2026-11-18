@@ -43,9 +43,28 @@ Changing a condition's question clears its answer. Boolean answers receive ids w
 
 ## Exports and upgrading
 
-The server entry point exports `payloadConditions`, `Questionnaire` and the `StandardPage` block. It also exports the data types `StandardPage`, `BooleanOptions`, `MultipleChoice` and `InputText`.
+The server entry point exports `payloadConditions`, `Questionnaire`, the `StandardPage` block and `normalizeBooleanIdsHook`. It also exports the data types `StandardPage`, `BooleanOptions`, `MultipleChoice` and `InputText`.
 
-Use `StandardPage` in your own blocks field to reuse the editor. Page conditions work under nested field paths as well as `pages`.
+Use `StandardPage` in your own blocks field to reuse the editor. Page conditions work under nested field paths as well as `pages`. Add the collection hook when embedding the block elsewhere:
+
+```ts
+import type { CollectionConfig } from 'payload'
+import { normalizeBooleanIdsHook, StandardPage } from '@remy90/payload-conditions-plugin'
+
+export const Survey: CollectionConfig = {
+  slug: 'surveys',
+  hooks: {
+    beforeChange: [normalizeBooleanIdsHook('surveyPages')],
+  },
+  fields: [
+    { name: 'surveyPages', type: 'blocks', blocks: [StandardPage] },
+  ],
+}
+```
+
+`normalizeBooleanIdsHook(blocksField = 'pages')` returns a Payload `CollectionBeforeChangeHook`. Pass the top-level blocks field name. Each hook normalizes boolean ids within that field and updates matching `conditionalLogicGroup` references anywhere in the document. `Questionnaire` already includes the hook for `pages`. Standalone `StandardPage` blocks require this opt-in.
+
+On save, missing or duplicate boolean ids receive fresh ids. A question row that held an id in the stored document keeps it after copies are reordered. When no stored holder remains, the first occurrence in document order keeps it. Conditions targeting a copied question row follow its regenerated answer ids. Restoring a version uses that version's data and document order without borrowing ids or ownership from the current document.
 
 The `@remy90/payload-conditions-plugin/client` entry point exports `QuestionCondition`, `AnswerCondition` and `QuestionAnswerRowLabel`. The plugin config already references these through Payload's import map.
 
