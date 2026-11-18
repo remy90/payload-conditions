@@ -3,6 +3,7 @@ import { questionAnswerPair } from '../fields/questionAnswerPair.js'
 import { match } from '../fields/questionAnswerCondition.js'
 import type { Block, Field } from 'payload'
 import { validateConditionOperator } from '../condition/validateOperator.js'
+import { validateConditionAnswer } from '../condition/validateAnswer.js'
 
 export const pageFields: Field[] = [
   {
@@ -65,6 +66,7 @@ export const StandardPage: Block = {
               label: 'Answer condition',
               name: 'answerId',
               required: true,
+              validate: validateConditionAnswer,
               admin: { components: { Field: '@remy90/payload-conditions-plugin/client#AnswerCondition' } },
             },
           ],

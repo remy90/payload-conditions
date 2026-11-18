@@ -3,14 +3,14 @@ import { validateConditionOperator } from '../src/condition/validateOperator.js'
 
 const bool = { id: 'boolean', answer: [{ blockType: 'booleanOptions', booleanOptions: { trueId: 'yes', falseId: 'no' } }] }
 const choice = (allowMultipleSelection: boolean) => ({ id: 'choice', answer: [{ blockType: 'multipleChoice', allowMultipleSelection }] })
-const validate = (operator: unknown, questionId = 'choice', multiple = false, pageIndex = 1) =>
+const validate = (operator: unknown, questionId = 'choice', multiple = false, pageIndex: string | number = '1') =>
   validateConditionOperator(operator, {
     data: { content: { survey: [
       { id: 'first', blockType: 'standardPage', questionAnswerPair: [bool, choice(multiple),
         { id: 'text', answer: [{ blockType: 'inputText', inputText: 'Name' }] }] },
       { id: 'second', blockType: 'standardPage' },
     ] } },
-    path: ['content', 'survey', pageIndex, 'conditionGroups', 0, 'conditions', 0, 'operator'],
+    path: ['content', 'survey', pageIndex, 'conditionGroups', '0', 'conditions', '0', 'operator'],
     siblingData: { questionId },
   })
 
@@ -26,7 +26,7 @@ describe('operator field validation', () => {
     const context = {
       data: { pages: [{ id: 'first', blockType: 'standardPage', questionAnswerPair: [question] },
         { id: 'second', blockType: 'standardPage' }] },
-      path: ['pages', 1, 'conditionGroups', 0, 'conditions', 0, 'operator'],
+      path: ['pages', '1', 'conditionGroups', '0', 'conditions', '0', 'operator'],
       siblingData: { questionId: 'choice' },
     }
     expect(validateConditionOperator('is', context)).toBe(true)
@@ -57,7 +57,15 @@ describe('operator field validation', () => {
     expect(validate('is', questionId)).toEqual(expect.any(String))
   })
 
-  it('rejects same-page references', () => {
-    expect(validate('is', 'boolean', false, 0)).toEqual(expect.any(String))
+  it.each(['0', 0])('rejects same-page references with path segment %s', (index) => {
+    expect(validate('is', 'boolean', false, index)).toEqual(expect.any(String))
+  })
+
+  it.each(['1', 1])('accepts earlier references with path segment %s', (index) => {
+    expect(validate('is', 'boolean', false, index)).toBe(true)
+  })
+
+  it.each(['', '-1', '1.5', 'nope'])('rejects malformed page index %s', (index) => {
+    expect(validate('is', 'boolean', false, index)).toEqual(expect.any(String))
   })
 })

@@ -41,7 +41,9 @@ Create a questionnaire and add standard pages. Each page contains question-and-a
 
 A page matches `all` or `any` of its condition groups. Each group matches `all` or `any` of its conditions. Only boolean and multiple-choice questions on earlier pages appear as sources. Boolean and single-select questions offer `is` and `isNot` (labelled “is not”). Multi-select questions offer `includes` and `excludes`.
 
-Changing a condition's question clears its answer and clears an incompatible operator. Toggling multiple selection updates the available operators; saving with an incompatible operator shows a validation error. Boolean answers receive ids when their fields initialize, so you can select them before saving.
+Changing a condition's question clears its answer and clears an incompatible operator. Toggling multiple selection or changing an answer type maps equivalent operators: `is` ↔ `includes` and `isNot` ↔ `excludes`. The admin displays and saves that equivalent; the collection hook also maps operators on save. Boolean answers receive ids when their fields initialize, so you can select them before saving.
+
+Publishing validates condition operators and requires an answer id from the selected question's current options. The collection allows drafts to skip field validation. A host collection with `drafts.validate: true` validates drafts too. After deleting an option, select another answer or remove its condition. The engine can treat a stale answer id under `isNot` or `excludes` as true, so data written outside the plugin needs the same validation.
 
 ## Stored schema and engine
 
