@@ -7,7 +7,7 @@ import { buildQuestionOptions } from '../options.js'
 import { selectedOptionValue } from '../helper.js'
 
 export const QuestionCondition: TextFieldClientComponent = ({ path: fieldPath, field, readOnly }) => {
-  const { path, value, setValue, showError } = useField<string | null>({ potentiallyStalePath: fieldPath })
+  const { path, value, setValue, showError, disabled } = useField<string | null>({ potentiallyStalePath: fieldPath })
   const fields = useFormFields(([fields]) => fields)
   const dispatch = useFormFields(([, dispatch]) => dispatch)
   const options = useMemo(() => buildQuestionOptions(fields, path), [fields, path])
@@ -18,7 +18,9 @@ export const QuestionCondition: TextFieldClientComponent = ({ path: fieldPath, f
       path={path}
       label={field.label}
       required={field.required}
-      readOnly={readOnly}
+      readOnly={readOnly || disabled}
+      description={field.admin?.description}
+      localized={field.localized}
       showError={showError}
       isClearable
       onChange={(option) => {
