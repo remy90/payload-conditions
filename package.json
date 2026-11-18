@@ -5,6 +5,7 @@
   "scripts": {
     "build": "pnpm -r build",
     "typecheck": "pnpm -r typecheck",
-    "test": "pnpm -r test"
+    "test": "pnpm -r test",
+    "release": "pnpm -r build && pnpm -r test && pnpm -r publish --access public"
   }
 }
