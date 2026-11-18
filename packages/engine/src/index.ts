@@ -72,6 +72,53 @@ function pageMatches(page: Page, position: number, index: Index, answers: Answer
   return !hasGroup || page.match === 'all'
 }
 
+export function resolveVisibility(questionnaire: Questionnaire, answers: Answers): { visiblePageIds: ReadonlySet<string>; answers: Answers } {
+  const index = indexFor(questionnaire)
+  const contains = membership()
+  const visiblePageIds = new Set<string>()
+  let cleared: Map<string, readonly string[]> | undefined
+  questionnaire.pages.forEach((page, position) => {
+    if (pageMatches(page, position, index, cleared ?? answers, contains)) {
+      visiblePageIds.add(page.id)
+    } else {
+      for (const question of page.questions) {
+        if ((cleared ?? answers).has(question.id)) {
+          cleared ??= new Map(answers)
+          cleared.delete(question.id)
+        }
+      }
+    }
+  })
+  return { visiblePageIds, answers: cleared ?? answers }
+}
+
+export function applyAnswer(questionnaire: Questionnaire, answers: Answers, questionId: string, values: readonly string[]): { visiblePageIds: ReadonlySet<string>; answers: Answers } {
+  if (!indexFor(questionnaire).questions.has(questionId)) return resolveVisibility(questionnaire, answers)
+  const updated = new Map(answers)
+  if (values.length === 0) updated.delete(questionId)
+  else updated.set(questionId, [...values])
+  return resolveVisibility(questionnaire, updated)
+}
+
+export function nextPageId(questionnaire: Questionnaire, visiblePageIds: ReadonlySet<string>, currentPageId?: string): string | undefined {
+  const position = currentPageId === undefined ? undefined : indexFor(questionnaire).pagePositions.get(currentPageId)
+  for (let i = (position ?? -1) + 1; i < questionnaire.pages.length; i++) {
+    const id = questionnaire.pages[i].id
+    if (visiblePageIds.has(id)) return id
+  }
+  return undefined
+}
+
+export function previousPageId(questionnaire: Questionnaire, visiblePageIds: ReadonlySet<string>, currentPageId?: string): string | undefined {
+  const position = currentPageId === undefined ? undefined : indexFor(questionnaire).pagePositions.get(currentPageId)
+  if (position === undefined) return undefined
+  for (let i = position - 1; i >= 0; i--) {
+    const id = questionnaire.pages[i].id
+    if (visiblePageIds.has(id)) return id
+  }
+  return undefined
+}
+
 export function evaluatePage(questionnaire: Questionnaire, pageId: string, answers: Answers): boolean {
   const index = indexFor(questionnaire)
   const position = index.pagePositions.get(pageId)
