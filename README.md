@@ -2,6 +2,13 @@
 
 A Payload CMS plugin for authoring page conditions based on answers to earlier questions. Answer types include boolean options, multiple choice and input text. Your frontend uses the saved conditions to decide which pages to show.
 
+## Workspace
+
+- [`packages/plugin`](packages/plugin/README.md): Payload CMS editor and collection.
+- [`packages/engine`](packages/engine/README.md): framework-free evaluation, answer validation and navigation, with a Payload document adapter.
+
+From the root, run `pnpm install`, then `pnpm build`, `pnpm typecheck` or `pnpm test`. These commands run across the workspace packages.
+
 ## Install
 
 ```sh
