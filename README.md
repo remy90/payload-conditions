@@ -12,7 +12,7 @@ From the root, run `pnpm install`, then `pnpm build`, `pnpm typecheck` or `pnpm 
 ## Install
 
 ```sh
-pnpm add @remy90/payload-conditions-plugin
+pnpm add @remy90/payload-conditions-plugin @remy90/payload-conditions-engine
 ```
 
 Version 1.0.0 targets Payload 3.94. Install matching versions of `payload` and `@payloadcms/ui` (`^3.94.0`) in your app, with React 19 and a matching `react-dom`. Payload 3.94 supports React `~19.0.9 || ~19.1.10 || ~19.2.9 || ^19.3.1`.
@@ -44,13 +44,34 @@ Keep your app's `admin.importMap.baseDir` and generated import-map location conf
 
 ## Author conditions
 
-Create a questionnaire and add standard pages. Each page contains question-and-answer pairs. On a later page, choose a question from an earlier page, an operator and an answer. Select whether all or any conditions must match.
+Create a questionnaire and add standard pages. Each page contains question-and-answer pairs, with an `optional` checkbox for each question. Multiple-choice answers have an `allowMultipleSelection` checkbox. Both default to false.
 
-Changing a condition's question clears its answer. Boolean answers receive ids when their fields initialize, so you can select them before saving.
+A page matches `all` or `any` of its condition groups. Each group matches `all` or `any` of its conditions. Only boolean and multiple-choice questions on earlier pages appear as sources. Boolean and single-select questions offer `is` and `isNot` (labelled “is not”). Multi-select questions offer `includes` and `excludes`.
+
+Changing a condition's question clears its answer and clears an incompatible operator. Toggling multiple selection updates the available operators; saving with an incompatible operator shows a validation error. Boolean answers receive ids when their fields initialize, so you can select them before saving.
+
+## Stored schema and engine
+
+The plugin pairs with `@remy90/payload-conditions-engine` 1.0.0, which it also uses as a runtime dependency. The engine shares the stored types and operator definitions with the editor. Use its Payload adapter in your frontend:
+
+```ts
+import { fromPayloadQuestionnaire } from '@remy90/payload-conditions-engine/payload'
+import { resolveVisibility } from '@remy90/payload-conditions-engine'
+
+const questionnaire = fromPayloadQuestionnaire(document)
+const { visiblePageIds, answers } = resolveVisibility(questionnaire, new Map())
+```
+
+The `questionnaire` collection stores `title` and `pages`, a blocks field with `standardPage` blocks. A page stores:
+
+- `skippable`, default false, and `questionAnswerPair` rows with `id`, `question`, `optional` and exactly one block in `answer`.
+- `match`, default `all`, and `conditionGroups` rows with `id`, their own `match` and `conditions`.
+
+Each condition stores `{ id, questionId, operator, answerId }`; its references and operator are required. `questionId` is the question row id. `answerId` is a boolean `trueId`/`falseId` or a multiple-choice option row id. Boolean answers keep their `booleanOptions` group. Multiple-choice blocks store `multipleChoice: [{ id, option }]` (at least two rows) and `allowMultipleSelection`. Input-text blocks store `inputText` and remain available as questions.
 
 ## Exports and upgrading
 
-The server entry point exports `payloadConditions`, `Questionnaire`, the `StandardPage` block and `normalizeBooleanIdsHook`. It also exports the data types `StandardPage`, `BooleanOptions`, `MultipleChoice` and `InputText`.
+The server entry point exports `payloadConditions`, `Questionnaire`, the `StandardPage` block and `normalizeBooleanIdsHook`. It re-exports the engine's stored types, including `StoredQuestionnaire` and `StoredStandardPage`. The names `StandardPage`, `BooleanOptions`, `MultipleChoice` and `InputText` remain as type aliases.
 
 Use `StandardPage` in your own blocks field to reuse the editor. Page conditions work under nested field paths as well as `pages`. Add the collection hook when embedding the block elsewhere:
 
@@ -69,10 +90,12 @@ export const Survey: CollectionConfig = {
 }
 ```
 
-`normalizeBooleanIdsHook(blocksField = 'pages')` returns a Payload `CollectionBeforeChangeHook`. Pass the top-level blocks field name. Each hook normalizes boolean ids within that field and updates matching `conditionalLogicGroup` references anywhere in the document. `Questionnaire` already includes the hook for `pages`. Standalone `StandardPage` blocks require this opt-in.
+`normalizeBooleanIdsHook(blocksField = 'pages')` returns a Payload `CollectionBeforeChangeHook`. Pass the top-level blocks field name. Each hook normalizes boolean ids within that field and updates matching `conditionGroups[].conditions[]` references anywhere in the document. `Questionnaire` already includes the hook for `pages`. Standalone `StandardPage` blocks require this opt-in.
 
 On save, missing or duplicate boolean ids receive fresh ids. A question row that held an id in the stored document keeps it after copies are reordered. When no stored holder remains, the first occurrence in document order keeps it. Conditions targeting a copied question row follow its regenerated answer ids. Restoring a version uses that version's data and document order without borrowing ids or ownership from the current document.
 
-The `@remy90/payload-conditions-plugin/client` entry point exports `QuestionCondition`, `AnswerCondition` and `QuestionAnswerRowLabel`. The plugin config already references these through Payload's import map.
+The `@remy90/payload-conditions-plugin/client` entry point exports the condition selects (`QuestionCondition`, `OperatorCondition`, `AnswerCondition`) and `QuestionAnswerRowLabel`. The plugin config already references these through Payload's import map.
 
-Version 1.0.0 replaces the alpha Payload API and removes the old `/types` subpath. Import types from the package root. This package ships ESM; use `import`. Existing field names, slugs and stored document shapes stay the same.
+Version 1.0.0 replaces `allOrAnyCondition` with `match`, and replaces `conditionalLogicGroup` with `conditionGroups[].conditions[]`. Conditions now use `questionId`, `operator` and `answerId`, with readable operator values. Version 0.2.2 never loaded, so there is no migration.
+
+The alpha Payload API and the old `/types` subpath have been removed. Import types from the package root. This package ships ESM; use `import`.
