@@ -31,6 +31,23 @@ describe('Payload document adapter', () => {
     expect(doc).toEqual(before)
   })
 
+  it('accepts generated interfaces containing additional page and answer blocks', () => {
+    interface ExtraPage { blockType: 'extraPage'; id: string; content: string }
+    interface ExtraAnswer { blockType: 'extraAnswer'; id: string; content: string }
+    interface StandardPage {
+      blockType: 'standardPage'
+      id: string
+      questionAnswerPair: { id: string; answer: ExtraAnswer[] }[]
+    }
+    interface GeneratedDocument { id: number; pages: (ExtraPage | StandardPage)[] }
+    const generated: GeneratedDocument = { id: 1, pages: [
+      { blockType: 'extraPage', id: 'extra', content: '' },
+      { blockType: 'standardPage', id: 'page', questionAnswerPair: [{ id: 'question', answer: [{ blockType: 'extraAnswer', id: 'answer', content: '' }] }] },
+    ] }
+    const stored: StoredQuestionnaire = generated
+    expect(fromPayloadQuestionnaire(stored).pages.map(page => page.id)).toEqual(['page'])
+  })
+
   it('accepts nullable fields, unknown blocks and missing row ids', () => {
     const doc: StoredQuestionnaire = { id: null, title: null, pages: [
       { blockType: 'futurePage', id: 'unknown', future: true },
@@ -58,6 +75,31 @@ describe('Payload document adapter', () => {
     expect(fromPayloadQuestionnaire({ pages: null })).toEqual({ id: '', title: '', pages: [] })
   })
 
+  it('skips incomplete boolean answers and uses the first usable answer block', () => {
+    const q = fromPayloadQuestionnaire({ pages: [{ id: 'page', blockType: 'standardPage', questionAnswerPair: [
+      { id: 'noBooleanIds', answer: [{ blockType: 'booleanOptions', booleanOptions: null }] },
+      { id: 'oneBooleanId', answer: [{ blockType: 'booleanOptions', booleanOptions: { trueId: 'yes' } }] },
+      { id: 'fallback', answer: [{ blockType: 'booleanOptions' }, { blockType: 'inputText', inputText: 'Prompt' }] },
+      { id: '', answer: [{ blockType: 'inputText' }] },
+    ] }] })
+    expect(q.pages[0].questions).toEqual([{ id: 'fallback', text: '', optional: false, answer: { type: 'inputText', prompt: 'Prompt' } }])
+  })
+
+  it('fails closed on unknown stored operators and combines incomplete rows with any', () => {
+    const source = { id: 'source', blockType: 'standardPage' as const, questionAnswerPair: [
+      { id: 'a', answer: [{ blockType: 'multipleChoice' as const, multipleChoice: [{ id: 'yes' }] }] },
+    ] }
+    const q = fromPayloadQuestionnaire({ pages: [source,
+      { id: 'broken', blockType: 'standardPage', conditionGroups: [{ id: 'g', conditions: [{ id: 'c', questionId: 'a', operator: 'future', answerId: 'yes' }] }] },
+      { id: 'any', blockType: 'standardPage', conditionGroups: [{ id: 'g', match: 'any', conditions: [
+        { id: 'incomplete' }, { id: 'valid', questionId: 'a', operator: 'is', answerId: 'yes' },
+      ] }] },
+    ] })
+    const answers = new Map([['a', ['yes']]])
+    expect(evaluatePage(q, 'broken', answers)).toBe(false)
+    expect(evaluatePage(q, 'any', answers)).toBe(true)
+  })
+
   it.each(['questionId', 'operator', 'answerId'] as const)('keeps id-bearing rows missing %s false, including negative operators', missing => {
     const storedCondition = { id: 'condition', questionId: 'a', operator: 'isNot', answerId: 'yes', [missing]: null }
     const q = fromPayloadQuestionnaire({ pages: [
@@ -65,6 +107,7 @@ describe('Payload document adapter', () => {
       { id: 'target', blockType: 'standardPage', conditionGroups: [{ id: 'group', conditions: [storedCondition] }] },
     ] })
     expect(q.pages[1].conditionGroups[0].conditions).toHaveLength(1)
+    expect(q.pages[1].conditionGroups[0].match).toBe('all')
     expect(evaluatePage(q, 'target', new Map([['a', ['no']]]))).toBe(false)
   })
 })

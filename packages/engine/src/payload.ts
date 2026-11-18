@@ -21,7 +21,9 @@ export type StoredInputText = {
   blockType?: 'inputText' | null
   inputText?: string | null
 }
-export type StoredUnknownBlock = { blockType: string; [field: string]: unknown }
+// Payload generates interfaces for custom blocks. An any-valued index also
+// accepts those interfaces, which have no index signature of their own.
+export type StoredUnknownBlock = { blockType: string; [field: string]: any }
 export type StoredAnswer = StoredBooleanOptions | StoredMultipleChoice | StoredInputText | StoredUnknownBlock
 export type StoredQuestionAnswerPair = {
   id?: StoredId | null
