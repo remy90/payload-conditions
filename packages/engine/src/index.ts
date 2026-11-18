@@ -1,5 +1,5 @@
 export * from './types.js'
-import type { Answers, Condition, Page, Question, Questionnaire } from './types.js'
+import type { AnswerIssue, Answers, Condition, Page, Question, Questionnaire } from './types.js'
 
 type Entry = { question: Question; pagePosition: number; optionIds: ReadonlySet<string> }
 type Index = { questions: Map<string, Entry>; pagePositions: Map<string, number> }
@@ -117,6 +117,28 @@ export function previousPageId(questionnaire: Questionnaire, visiblePageIds: Rea
     if (visiblePageIds.has(id)) return id
   }
   return undefined
+}
+
+export function validatePageAnswers(questionnaire: Questionnaire, pageId: string, answers: Answers): AnswerIssue[] {
+  const index = indexFor(questionnaire)
+  const position = index.pagePositions.get(pageId)
+  if (position === undefined) return []
+  const page = questionnaire.pages[position]
+  const issues: AnswerIssue[] = []
+  for (const question of page.questions) {
+    const values = answers.get(question.id) ?? []
+    if (!page.skippable && !question.optional && !values.some(value => value.trim().length > 0)) {
+      issues.push({ questionId: question.id, issue: 'required' })
+    }
+    if (question.answer.type === 'boolean' || question.answer.type === 'multipleChoice') {
+      const entry = index.questions.get(question.id)!
+      if (values.some(value => !entry.optionIds.has(value))) issues.push({ questionId: question.id, issue: 'unknownOption' })
+      if (values.length > 1 && (question.answer.type === 'boolean' || !question.answer.allowMultipleSelection)) {
+        issues.push({ questionId: question.id, issue: 'tooManySelections' })
+      }
+    }
+  }
+  return issues
 }
 
 export function evaluatePage(questionnaire: Questionnaire, pageId: string, answers: Answers): boolean {
