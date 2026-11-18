@@ -4,7 +4,7 @@ import { SelectInput, useField, useFormFields } from '@payloadcms/ui'
 import type { TextFieldClientComponent } from 'payload'
 import { useMemo } from 'react'
 import { buildQuestionOptions } from '../options.js'
-import { selectedOptionValue } from '../helper.js'
+import { questionChangeActions, selectedOptionValue } from '../helper.js'
 
 export const QuestionCondition: TextFieldClientComponent = ({ path: fieldPath, field, readOnly }) => {
   const { path, value, setValue, showError, disabled } = useField<string | null>({ potentiallyStalePath: fieldPath })
@@ -25,8 +25,9 @@ export const QuestionCondition: TextFieldClientComponent = ({ path: fieldPath, f
       isClearable
       onChange={(option) => {
         const nextValue = selectedOptionValue(option)
-        if (nextValue !== (value ?? null)) {
-          dispatch({ type: 'UPDATE', path: path.replace(/questionValue$/, 'answerValue'), value: null })
+        const actions = questionChangeActions(path, value, nextValue)
+        if (actions.length) {
+          actions.forEach(dispatch)
           setValue(nextValue)
         }
       }}
