@@ -1,0 +1,16 @@
+import type { Block } from 'payload'
+
+export const inputTextBlock: Block = {
+  slug: 'inputText',
+  dbName: ({ tableName }) => `${tableName}_text`,
+  labels: { singular: 'Input text', plural: 'Input text' },
+  fields: [
+    {
+      name: 'inputText',
+      type: 'text',
+      required: true,
+      label: 'Input text',
+    },
+  ],
+  interfaceName: 'InputText',
+}

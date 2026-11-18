@@ -1,18 +1,33 @@
 # Payload conditions
 
-This plugin provides criteria for conditional content, which can be specified by content writers. It uses existing payload select components and currently allows for boolean, multiple choice and input text string answer types.
+A workspace for authoring conditional questionnaires in Payload CMS and evaluating them in your frontend.
 
-> [!IMPORTANT]
-> This package is for v3 (currently in alpha) and above.
+## Packages
 
-## Installation
-```shell
-pnpm add payload-conditions-plugin
+- [Plugin](packages/plugin/README.md): Payload CMS editor, collection, configuration and stored schema.
+- [Engine](packages/engine/README.md): framework-free evaluation, answer validation and navigation, with a Payload document adapter.
+
+## Releasing
+
+Publish the engine first, then the plugin. Always use `pnpm publish` or `pnpm -r publish`: pnpm rewrites the plugin's `workspace:^` engine dependency to `^1.0.0` in the published package.
+
+From the workspace root, run:
+
+```sh
+pnpm release
 ```
 
-## How to use
-- Add this package
-- Declare questions and answers from the question &amp; answer pairs
-- Specify the question-answer combinations that results in a page being shown
+The release script runs `pnpm -r build && pnpm -r test && pnpm -r publish --access public`. pnpm's topological order publishes the engine before the plugin.
 
-#### If you've found this plugin helpful, please leave a star ⭐️
+## Development
+
+Use the pnpm version pinned in `package.json`. From the workspace root:
+
+```sh
+pnpm install
+pnpm build
+pnpm typecheck
+pnpm test
+```
+
+Build, typecheck and test run across both packages.
