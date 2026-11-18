@@ -1,0 +1,79 @@
+export * from './types.js'
+import type { Answers, Condition, Page, Question, Questionnaire } from './types.js'
+
+type Entry = { question: Question; pagePosition: number; optionIds: ReadonlySet<string> }
+type Index = { questions: Map<string, Entry>; pagePositions: Map<string, number> }
+const indexes = new WeakMap<Questionnaire, Index>()
+
+function indexFor(questionnaire: Questionnaire): Index {
+  const cached = indexes.get(questionnaire)
+  if (cached) return cached
+  const questions = new Map<string, Entry>()
+  const pagePositions = new Map<string, number>()
+  questionnaire.pages.forEach((page, pagePosition) => {
+    pagePositions.set(page.id, pagePosition)
+    for (const question of page.questions) {
+      const answer = question.answer
+      const optionIds = new Set(answer.type === 'boolean'
+        ? [answer.trueOption.id, answer.falseOption.id]
+        : answer.type === 'multipleChoice' ? answer.options.map(option => option.id) : [])
+      questions.set(question.id, { question, pagePosition, optionIds })
+    }
+  })
+  const index = { questions, pagePositions }
+  indexes.set(questionnaire, index)
+  return index
+}
+
+// Membership sets live for one evaluation, so caller-owned arrays are never cached.
+function membership() {
+  const sets = new Map<readonly string[], Set<string>>()
+  return (values: readonly string[], value: string): boolean => {
+    if (values.length <= 8) {
+      for (const selected of values) if (selected === value) return true
+      return false
+    }
+    let set = sets.get(values)
+    if (!set) { set = new Set(values); sets.set(values, set) }
+    return set.has(value)
+  }
+}
+type Contains = ReturnType<typeof membership>
+
+function conditionMatches(condition: Condition, pagePosition: number, index: Index, answers: Answers, contains: Contains): boolean {
+  const entry = index.questions.get(condition.questionId)
+  if (!entry || entry.pagePosition >= pagePosition) return false
+  const type = entry.question.answer.type
+  if (type !== 'boolean' && type !== 'multipleChoice') return false
+  if (!condition.questionId || !condition.answerId) return false
+  const values = answers.get(condition.questionId)
+  if (!values?.length) return false
+  switch (condition.operator) {
+    case 'is': case 'includes': return contains(values, condition.answerId)
+    case 'isNot': case 'excludes': return !contains(values, condition.answerId)
+    default: return false
+  }
+}
+
+function pageMatches(page: Page, position: number, index: Index, answers: Answers, contains: Contains): boolean {
+  let hasGroup = false
+  for (const group of page.conditionGroups) {
+    if (group.conditions.length === 0) continue
+    hasGroup = true
+    let matched = group.match === 'all'
+    for (const condition of group.conditions) {
+      const result = conditionMatches(condition, position, index, answers, contains)
+      if (group.match === 'all' && !result) { matched = false; break }
+      if (group.match === 'any' && result) { matched = true; break }
+    }
+    if (page.match === 'all' && !matched) return false
+    if (page.match === 'any' && matched) return true
+  }
+  return !hasGroup || page.match === 'all'
+}
+
+export function evaluatePage(questionnaire: Questionnaire, pageId: string, answers: Answers): boolean {
+  const index = indexFor(questionnaire)
+  const position = index.pagePositions.get(pageId)
+  return position !== undefined && pageMatches(questionnaire.pages[position], position, index, answers, membership())
+}
