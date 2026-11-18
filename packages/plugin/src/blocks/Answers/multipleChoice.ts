@@ -4,6 +4,7 @@ export const multipleChoiceBlock: Block = {
   slug: 'multipleChoice',
   labels: { singular: 'Multiple choice', plural: 'Multiple choice' },
   fields: [
+    { name: 'allowMultipleSelection', type: 'checkbox', defaultValue: false },
     {
       name: 'multipleChoice',
       type: 'array',

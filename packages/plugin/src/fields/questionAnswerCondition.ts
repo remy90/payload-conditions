@@ -1,19 +1,11 @@
+import { matchModes } from '@remy90/payload-conditions-engine'
 import type { Field } from 'payload'
 
-export const allOrAnyCondition: Field = {
-  name: 'allOrAnyCondition',
+export const match: Field = {
+  name: 'match',
   type: 'select',
   defaultValue: 'all',
   label: false,
-  options: [
-    {
-      label: 'Any',
-      value: 'any',
-    },
-    {
-      label: 'All',
-      value: 'all',
-    },
-  ],
+  options: matchModes.map((value) => ({ label: value === 'all' ? 'All' : 'Any', value })),
   required: true,
 }
