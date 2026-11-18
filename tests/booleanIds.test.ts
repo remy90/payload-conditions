@@ -16,6 +16,21 @@ const ids = () => {
 }
 
 describe('StandardPage boolean id hook', () => {
+  it('uses version data without merging the current document during restore', () => {
+    const originalDoc = { pages: [{ id: 'page', blockType: 'standardPage', questionAnswerPair: [{
+      id: 'question', answer: [{ ...boolean('current-yes', 'current-no'), id: 'answer' }],
+    }] }] }
+    const value = [{ id: 'question', answer: [{ id: 'answer', blockType: 'booleanOptions' }] }]
+    const data = { pages: [{ id: 'page', blockType: 'standardPage', questionAnswerPair: value }] }
+    const result = normalizePageBooleanIds({ data, originalDoc, value,
+      path: ['pages', 0, 'questionAnswerPair'], req: { context: { isRestoringVersion: true } } })
+    expect(JSON.stringify(result)).not.toContain('current-yes')
+    expect(JSON.stringify(result)).not.toContain('current-no')
+    expect(result).toEqual([{ id: 'question', answer: [{ id: 'answer', blockType: 'booleanOptions',
+      booleanOptions: { trueId: expect.any(String), falseId: expect.any(String) },
+    }] }])
+  })
+
   it.each([false, true])('keeps document order when page hooks run in reverse order (already normalized: %s)', (normalizedFirst) => {
     const first = page(boolean('yes', 'no'))
     const second = page(boolean('yes', 'no'))

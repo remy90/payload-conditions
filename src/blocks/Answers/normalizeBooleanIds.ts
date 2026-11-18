@@ -66,8 +66,12 @@ const atPath = (value: unknown, path: (string | number)[]): unknown =>
   path.reduce<unknown>((parent, key) =>
     Array.isArray(parent) ? parent[Number(key)] : isObject(parent) ? parent[key] : undefined, value)
 
-type PageHookArgs = Pick<Parameters<FieldHook>[0], 'data' | 'originalDoc' | 'path' | 'value'>
+type PageHookArgs = Pick<Parameters<FieldHook>[0], 'data' | 'originalDoc' | 'path' | 'value'> & {
+  req?: Pick<Parameters<FieldHook>[0]['req'], 'context'>
+}
 
 /** Return only this page's rows; Payload traverses sibling pages concurrently. */
-export const normalizePageBooleanIds = ({ data, originalDoc, path, value }: PageHookArgs): unknown =>
-  atPath(normalizeBooleanIds(withStoredValues(data, originalDoc), () => crypto.randomUUID()), path) ?? value
+export const normalizePageBooleanIds = ({ data, originalDoc, path, value, req }: PageHookArgs): unknown => {
+  const document = req?.context?.isRestoringVersion ? data : withStoredValues(data, originalDoc)
+  return atPath(normalizeBooleanIds(document, () => crypto.randomUUID()), path) ?? value
+}
