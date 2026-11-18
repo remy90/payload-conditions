@@ -1,7 +1,7 @@
 'use client'
-import type {  OptionObject } from 'payload/types'
+import type {  OptionObject } from 'payload'
 import { useCallback } from 'react'
-import { numberToArray } from '@/utilities.js'
+import { numberToArray } from '../../utilities.js'
 import { getCurrentPageNoFromPath } from './helper.js'
 import { reduceFieldsToValues } from '@payloadcms/ui/utilities/reduceFieldsToValues'
 

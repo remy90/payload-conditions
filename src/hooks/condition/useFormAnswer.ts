@@ -1,9 +1,9 @@
-import type { Data, OptionObject } from 'payload/types'
+import type { Data, OptionObject } from 'payload'
 import { useCallback } from 'react'
-import { numberToArray } from '@/utilities.js'
+import { numberToArray } from '../../utilities.js'
 import { getCurrentPageNoFromPath } from './helper.js'
-import type { CMSAnswerBlockType } from '@/condition/answerCondition/processors/types.js'
-import { processorLookup } from '@/condition/answerCondition/processors/index.js'
+import type { CMSAnswerBlockType } from '../../condition/answerCondition/processors/types.js'
+import { processorLookup } from '../../condition/answerCondition/processors/index.js'
 
 export const useAnswerGeneration = (): (({
   pageState,

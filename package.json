@@ -1,6 +1,6 @@
 {
   "name": "@remy90/payload-conditions-plugin",
-  "version": "0.2.2",
+  "version": "1.0.0",
   "private": false,
   "type": "module",
   "description": "plugin for Payload CMS, which enables conditional logic for pages to display",
@@ -26,7 +26,7 @@
     "prerequisite"
   ],
   "bugs": {
-    "url": "https://github.com/w41x/payload-conditions/issues"
+    "url": "https://github.com/remy90/payload-conditions/issues"
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -34,43 +34,39 @@
     "dist"
   ],
   "scripts": {
-    "dev": "next dev",
-    "build": "pnpm build:swc && pnpm build:types",
+    "build": "pnpm clean && pnpm build:swc && pnpm build:types",
     "build:swc": "swc src -d dist --config-file .swcrc --strip-leading-paths",
     "build:types": "tsc --emitDeclarationOnly --outDir dist",
-    "clean": "rimraf {dist, tsconfig.tsbuildinfo}",
-    "prepublishOnly": "pnpm clean && pnpm turbo build"
+    "clean": "rimraf dist tsconfig.tsbuildinfo",
+    "typecheck": "tsc --noEmit --emitDeclarationOnly false",
+    "test": "vitest run",
+    "prepublishOnly": "pnpm build"
   },
   "engines": {
-    "node": ">=18.19.0"
-  },
-  "dependencies": {
-    "payload": "3.0.0-beta.0",
-    "react": "^17.0.0 || ^18.0.0"
+    "node": ">=22.23.5"
   },
   "devDependencies": {
-    "@payloadcms/ui": "3.0.0-beta.0",
-    "@swc/cli": "^0.3.10",
-    "@swc/core": "^1.4.11",
-    "@types/node": "^20.11.30",
-    "@types/react": "^18.2.64",
-    "eslint": "^8.57.0",
-    "eslint-config-next": "^14.1.4",
-    "rimraf": "^5.0.5",
-    "tsx": "^4.7.1",
-    "turbo": "^1.13.0",
-    "typescript": "^5.4.2"
+    "@payloadcms/ui": "3.94.0",
+    "@swc/cli": "^0.8.0",
+    "@swc/core": "^1.15.0",
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "payload": "3.94.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "rimraf": "^6.0.0",
+    "typescript": "^5.9.0",
+    "vitest": "^3.2.0"
   },
   "exports": {
     ".": {
-      "import": "./dist/index.js",
-      "require": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
     },
-    "./types": {
-      "import": "./dist/types.js",
-      "require": "./dist/types.js",
-      "types": "./dist/types.d.ts"
+    "./client": {
+      "types": "./dist/client.d.ts",
+      "import": "./dist/client.js"
     }
   },
   "publishConfig": {
@@ -79,5 +75,11 @@
     "registry": "https://registry.npmjs.org/",
     "types": "./dist/index.d.ts"
   },
-  "packageManager": "pnpm@8.15.5"
+  "packageManager": "pnpm@10.34.9",
+  "peerDependencies": {
+    "@payloadcms/ui": "^3.94.0",
+    "payload": "^3.94.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  }
 }

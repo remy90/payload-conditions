@@ -1,4 +1,4 @@
-import { Config } from 'payload/config'
+import { Config } from 'payload'
 import questionAnswerPair from './collections/questionAnswerPair.js'
 import { Questionnaire } from './collections/Questionnaire.js'
 

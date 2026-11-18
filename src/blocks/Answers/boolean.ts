@@ -1,5 +1,5 @@
 import { randomUUID } from 'crypto'
-import type { Block, Field, FieldHook } from 'payload/types'
+import type { Block, Field, FieldHook } from 'payload'
 
 const booleanIdBeforeValidate: FieldHook<any, any, any>[] = [({value}) => {
   value = value ?? randomUUID()

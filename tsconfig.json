@@ -1,15 +1,14 @@
 {
   "$schema": "https://json.schemastore.org/tsconfig",
   "compilerOptions": {
-    "baseUrl": ".",
-    "lib": ["dom", "dom.iterable", "esnext"],
-    "composite": true,
-    "allowJs": true,
-    "checkJs": false,
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
     "rootDir": "./src",
     "skipLibCheck": true,
     "strict": true,
-    "noEmit": false,
     "emitDeclarationOnly": true,
     "forceConsistentCasingInFileNames": true,
     "declaration": true,
@@ -18,22 +17,16 @@
     "outDir": "./dist",
     "module": "nodenext",
     "moduleResolution": "nodenext",
-    "target": "esnext",
-    "sourceMap": true,
-    "resolveJsonModule": true,
+    "target": "es2022",
     "isolatedModules": true,
-    "jsx": "preserve",
-    "incremental": true,
-    "plugins": [
-      {
-        "name": "next"
-      }
-    ],
-    "paths": {
-      "@/*": ["./src/*"],
-      "@payload-config": ["./payload.config.ts"]
-    }
+    "jsx": "react-jsx"
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["dev", "dist", "node_modules"]
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.tsx"
+  ],
+  "exclude": [
+    "dist",
+    "node_modules"
+  ]
 }

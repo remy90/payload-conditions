@@ -1,6 +1,6 @@
-import { answer } from '@/fields/answer.js'
-import { question } from '@/fields/question.js'
-import type { CollectionConfig } from 'payload/types'
+import { answer } from '../fields/answer.js'
+import { question } from '../fields/question.js'
+import type { CollectionConfig } from 'payload'
 import type {} from '@payloadcms/ui/forms/Form'
 
 const questionAnswerPair: CollectionConfig = {

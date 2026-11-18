@@ -1,4 +1,4 @@
-import type { OptionObject } from 'payload/types'
+import type { OptionObject } from 'payload'
 import type { AnswerProcessor } from './types.js'
 
 export const processInputTextChoice: AnswerProcessor = (field, answerBlockType) => [

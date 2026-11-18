@@ -1,4 +1,4 @@
-import type { FormState, OptionObject } from 'payload/types'
+import type { FormState, OptionObject } from 'payload'
 
 export interface BooleanOptions {
   booleanOptions: {

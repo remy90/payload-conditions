@@ -1,4 +1,4 @@
-import { OptionObject } from 'payload/types'
+import { OptionObject } from 'payload'
 import { AnswerProcessor } from './types.js'
 
 export const processBooleanOptions: AnswerProcessor = (fields, answerBlockType) => {

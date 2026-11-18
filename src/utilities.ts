@@ -1,4 +1,4 @@
-import type {  } from 'payload/types'
+import type {  } from 'payload'
 
 export const numberToArray: (numberOfIndices: number) => number[] = (numberOfIndices: number) => [
   ...Array(numberOfIndices).keys(),

@@ -1,4 +1,4 @@
-import { OptionObject } from 'payload/types'
+import { OptionObject } from 'payload'
 
 export const handleChange = (
   option: OptionObject,
