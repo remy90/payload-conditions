@@ -11,7 +11,9 @@
   },
   "files": [
     "dist",
-    "README.md"
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
   ],
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -33,6 +35,9 @@
     "typecheck": "tsc -p tsconfig.test.json",
     "test": "vitest run",
     "prepublishOnly": "pnpm build"
+  },
+  "engines": {
+    "node": ">=20"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
