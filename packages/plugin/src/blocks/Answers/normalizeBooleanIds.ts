@@ -1,4 +1,7 @@
 import type { CollectionBeforeChangeHook } from 'payload'
+import { operatorsFor, type Operator } from '@remy90/payload-conditions-engine'
+import { fromPayloadQuestionnaire, type StoredQuestionnaire } from '@remy90/payload-conditions-engine/payload'
+import { normalizeOperator } from '../../condition/normalizeOperator.js'
 
 const isObject = (value: unknown): value is Record<string, unknown> =>
   value !== null && typeof value === 'object' &&
@@ -13,19 +16,37 @@ type BooleanSite = {
   questionId?: string
 }
 
-const booleanSites = (document: unknown): BooleanSite[] => {
+const booleanSites = (
+  document: unknown,
+  blocksField?: string,
+  questions = new Map<string, readonly Operator[]>(),
+  conditions: Record<string, unknown>[] = [],
+): BooleanSite[] => {
   const sites: BooleanSite[] = []
-  const visit = (value: unknown, questionId?: string): void => {
-    if (Array.isArray(value)) value.forEach((child) => visit(child, questionId))
+  const visit = (value: unknown, questionId?: string, inScope = blocksField === undefined): void => {
+    if (Array.isArray(value)) value.forEach((child) => visit(child, questionId, inScope))
     else if (isObject(value)) {
-      if (Array.isArray(value.answer)) questionId = isId(value.id) ? value.id : undefined
-      if (value.blockType === 'booleanOptions') {
+      if (inScope && Array.isArray(value.answer)) {
+        questionId = isId(value.id) ? value.id : undefined
+        const question = fromPayloadQuestionnaire({ pages: [{ id: '_', blockType: 'standardPage',
+          questionAnswerPair: [value],
+        }] } as StoredQuestionnaire).pages[0]?.questions[0]
+        if (question && !questions.has(question.id)) questions.set(question.id, operatorsFor(question.answer))
+      }
+      if (Array.isArray(value.conditionGroups)) {
+        for (const group of value.conditionGroups) {
+          if (isObject(group) && Array.isArray(group.conditions)) {
+            for (const condition of group.conditions) if (isObject(condition)) conditions.push(condition)
+          }
+        }
+      }
+      if (inScope && value.blockType === 'booleanOptions') {
         const group = isObject(value.booleanOptions) ? value.booleanOptions : {}
         for (const key of ['trueId', 'falseId'] as const) {
           sites.push({ block: value, key, id: group[key], questionId })
         }
       }
-      Object.values(value).forEach((child) => visit(child, questionId))
+      Object.entries(value).forEach(([key, child]) => visit(child, questionId, inScope || (value === document && key === blocksField)))
     }
   }
   visit(document)
@@ -38,14 +59,29 @@ export const normalizeBooleanIds = (
   createId: () => string,
   { originalDoc, blocksField }: { originalDoc?: unknown; blocksField?: string } = {},
 ): unknown => {
-  const scope = (value: unknown): unknown =>
-    blocksField === undefined ? value : isObject(value) ? value[blocksField] : undefined
+  const questions = new Map<string, readonly Operator[]>()
+  const conditions: Record<string, unknown>[] = []
+  const sites = booleanSites(document, blocksField, questions, conditions)
+  const operatorRewrites = new Map<Record<string, unknown>, unknown>()
+  for (const condition of conditions) {
+    const allowed = typeof condition.questionId === 'string' ? questions.get(condition.questionId) : undefined
+    if (!allowed) continue
+    const operator = normalizeOperator(condition.operator, allowed)
+    if (operator !== condition.operator) operatorRewrites.set(condition, operator)
+  }
+  const seen = new Set<string>()
+  const validIds = sites.every(({ id }) => {
+    if (!isId(id) || seen.has(id)) return false
+    seen.add(id)
+    return true
+  })
+  if (validIds && !operatorRewrites.size) return document
+
   const owners = new Map<string, string>()
-  for (const site of booleanSites(scope(originalDoc))) {
+  for (const site of validIds ? [] : booleanSites(originalDoc, blocksField)) {
     if (isId(site.id) && site.questionId && !owners.has(site.id)) owners.set(site.id, site.questionId)
   }
 
-  const sites = booleanSites(scope(document))
   const reserved = new Set(sites.flatMap(({ id }) => typeof id === 'string' ? [id] : []))
   const keepers = new Map<string, BooleanSite>()
   for (const site of sites) {
@@ -74,17 +110,45 @@ export const normalizeBooleanIds = (
     }
   }
 
+  if (!replacements.size && !operatorRewrites.size) return document
+
+  const mapChanged = (values: unknown[], transform: (value: unknown) => unknown): unknown[] => {
+    let result = values
+    values.forEach((value, index) => {
+      const next = transform(value)
+      if (next !== value) {
+        if (result === values) result = values.slice()
+        result[index] = next
+      }
+    })
+    return result
+  }
+  const rewriteGroups = (groups: unknown): unknown => !Array.isArray(groups) ? groups : mapChanged(groups, (group) => {
+    if (!isObject(group) || !Array.isArray(group.conditions)) return group
+    const conditions = mapChanged(group.conditions, (condition) => {
+      if (!isObject(condition)) return condition
+      const answerId = isId(condition.questionId) && isId(condition.answerId)
+        ? conditionRewrites.get(condition.questionId)?.get(condition.answerId) : undefined
+      const operator = operatorRewrites.get(condition)
+      return answerId === undefined && operator === undefined ? condition : {
+        ...condition, ...(answerId === undefined ? {} : { answerId }),
+        ...(operator === undefined ? {} : { operator }),
+      }
+    })
+    return conditions === group.conditions ? group : { ...group, conditions }
+  })
   const visit = (value: unknown): unknown => {
-    if (Array.isArray(value)) return value.map(visit)
+    if (Array.isArray(value)) return mapChanged(value, visit)
     if (!isObject(value)) return value
-    const result = Object.fromEntries(Object.entries(value).map(([key, child]) => [key, visit(child)]))
-    if (replacements.has(value)) result.booleanOptions = replacements.get(value)
-    if (Array.isArray(result.conditionalLogicGroup)) {
-      result.conditionalLogicGroup = result.conditionalLogicGroup.map((condition: unknown) => {
-        if (!isObject(condition) || !isId(condition.questionValue) || !isId(condition.answerValue)) return condition
-        const answerValue = conditionRewrites.get(condition.questionValue)?.get(condition.answerValue)
-        return answerValue === undefined ? condition : { ...condition, answerValue }
-      })
+    const replacement = replacements.get(value)
+    let result = replacement ? { ...value, booleanOptions: replacement } : value
+    for (const [key, child] of Object.entries(value)) {
+      if (replacement && key === 'booleanOptions') continue
+      const next = visit(key === 'conditionGroups' ? rewriteGroups(child) : child)
+      if (next !== child) {
+        if (result === value) result = { ...value }
+        result[key] = next
+      }
     }
     return result
   }

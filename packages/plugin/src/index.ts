@@ -21,3 +21,4 @@ export { normalizeBooleanIdsHook } from './blocks/Answers/normalizeBooleanIds.js
 export const StandardPage = StandardPageBlock
 export type StandardPage = import('./types.js').StandardPage
 export type { BooleanOptions, MultipleChoice, InputText } from './types.js'
+export type * from '@remy90/payload-conditions-engine/payload'

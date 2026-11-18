@@ -1,6 +1,9 @@
+import { operators, type Operator } from '@remy90/payload-conditions-engine'
 import { questionAnswerPair } from '../fields/questionAnswerPair.js'
-import { allOrAnyCondition } from '../fields/questionAnswerCondition.js'
-import type { Block, Field, OptionObject } from 'payload'
+import { match } from '../fields/questionAnswerCondition.js'
+import type { Block, Field } from 'payload'
+import { validateConditionOperator } from '../condition/validateOperator.js'
+import { validateConditionAnswer } from '../condition/validateAnswer.js'
 
 export const pageFields: Field[] = [
   {
@@ -13,69 +16,64 @@ export const pageFields: Field[] = [
   questionAnswerPair,
 ]
 
-const options: OptionObject[] = [
-  {
-    label: 'is',
-    value: '1',
-  },
-  {
-    label: 'is not',
-    value: '-1',
-  },
-  {
-    label: 'contains',
-    value: '2',
-  },
-  {
-    label: 'excludes',
-    value: '-2',
-  },
-]
+const operatorLabels: Record<Operator, string> = {
+  is: 'is', isNot: 'is not', includes: 'includes', excludes: 'excludes',
+}
 
 export const StandardPage: Block = {
   slug: 'standardPage',
+  dbName: ({ tableName }) => `${tableName}_page`,
   fields: [
     ...pageFields,
-    allOrAnyCondition,
+    match,
     {
       type: 'array',
-      name: 'conditionalLogicGroup',
-      label: 'Conditional logic group',
-      labels: { singular: 'conditional logic group', plural: 'conditional logic groups' },
+      name: 'conditionGroups',
+      dbName: ({ tableName }) => `${tableName}_cg`,
+      label: 'Condition groups',
       fields: [
+        match,
         {
-          type: 'text',
-          label: 'Question condition',
-          name: 'questionValue',
-          admin: {
-            className: 'page-content',
-            components: { Field: '@remy90/payload-conditions-plugin/client#QuestionCondition' },
-          },
-        },
-        {
-          name: 'operatorType',
-          type: 'select',
-          admin: {
-            className: 'operator',
-            isClearable: false,
-          },
-          defaultValue: options[0].value,
-          label: false,
-          options,
-          required: true,
-        },
-        {
-          type: 'text',
-          label: 'Answer condition',
-          name: 'answerValue',
-          admin: { components: { Field: '@remy90/payload-conditions-plugin/client#AnswerCondition' } },
+          type: 'array',
+          name: 'conditions',
+          dbName: ({ tableName }) => `${tableName}_cond`,
+          fields: [
+            {
+              type: 'text',
+              label: 'Question condition',
+              name: 'questionId',
+              required: true,
+              admin: {
+                className: 'page-content',
+                components: { Field: '@remy90/payload-conditions-plugin/client#QuestionCondition' },
+              },
+            },
+            {
+              name: 'operator',
+              enumName: ({ tableName }) => `e_${tableName}_op`,
+              type: 'select',
+              admin: {
+                className: 'operator',
+                components: { Field: '@remy90/payload-conditions-plugin/client#OperatorCondition' },
+              },
+              label: false,
+              options: operators.map((value) => ({ label: operatorLabels[value], value })),
+              validate: validateConditionOperator,
+              required: true,
+            },
+            {
+              type: 'text',
+              label: 'Answer condition',
+              name: 'answerId',
+              required: true,
+              validate: validateConditionAnswer,
+              admin: { components: { Field: '@remy90/payload-conditions-plugin/client#AnswerCondition' } },
+            },
+          ],
         },
       ],
     },
   ],
   interfaceName: 'StandardPage',
-  labels: {
-    plural: 'Standard pages',
-    singular: 'Standard page',
-  },
+  labels: { plural: 'Standard pages', singular: 'Standard page' },
 }

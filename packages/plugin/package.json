@@ -79,6 +79,9 @@
     "types": "./dist/index.d.ts"
   },
   "packageManager": "pnpm@10.34.9",
+  "dependencies": {
+    "@remy90/payload-conditions-engine": "workspace:^"
+  },
   "peerDependencies": {
     "@payloadcms/ui": "^3.94.0",
     "payload": "^3.94.0",
