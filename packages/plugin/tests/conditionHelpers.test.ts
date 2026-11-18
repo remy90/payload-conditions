@@ -43,19 +43,28 @@ describe('changing a condition question', () => {
     })
   })
 
-  it.each(['multi', null, 'missing'])('clears an incompatible operator when selecting %s', (next) => {
-    expect(questionChangeFields(state('is'), path, 'old', next)).toEqual({
-      [path]: { value: next, valid: true, isModified: true },
-      [`${row}.answerId`]: { value: null, valid: true, isModified: true },
-      [`${row}.operator`]: { value: null, valid: true, isModified: true },
-    })
-  })
+  it.each(['multi', null, 'missing'])(
+    'clears an incompatible operator when selecting %s',
+    (next) => {
+      expect(questionChangeFields(state('is'), path, 'old', next)).toEqual({
+        [path]: { value: next, valid: true, isModified: true },
+        [`${row}.answerId`]: { value: null, valid: true, isModified: true },
+        [`${row}.operator`]: { value: null, valid: true, isModified: true },
+      })
+    },
+  )
 
   it('preserves multi-select operators for another multi-select question', () => {
-    expect(questionChangeFields(state('excludes'), path, 'old', 'multi')[`${row}.operator`]).toBeUndefined()
+    expect(
+      questionChangeFields(state('excludes'), path, 'old', 'multi')[`${row}.operator`],
+    ).toBeUndefined()
   })
 
-  it.each([['same', 'same'], [null, null], [undefined, null]])('keeps fields when the question is unchanged: %s', (current, next) => {
+  it.each([
+    ['same', 'same'],
+    [null, null],
+    [undefined, null],
+  ])('keeps fields when the question is unchanged: %s', (current, next) => {
     expect(questionChangeFields(state('is'), path, current, next ?? null)).toEqual({})
   })
 })

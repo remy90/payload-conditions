@@ -6,8 +6,14 @@ import { useEffect, useMemo } from 'react'
 import { buildOperatorOptions, operatorState } from '../options.js'
 import { selectedOptionValue } from '../helper.js'
 
-export const OperatorCondition: SelectFieldClientComponent = ({ path: fieldPath, field, readOnly }) => {
-  const { path, value, setValue, showError, disabled } = useField<string | null>({ potentiallyStalePath: fieldPath })
+export const OperatorCondition: SelectFieldClientComponent = ({
+  path: fieldPath,
+  field,
+  readOnly,
+}) => {
+  const { path, value, setValue, showError, disabled } = useField<string | null>({
+    potentiallyStalePath: fieldPath,
+  })
   const fields = useFormFields(([fields]) => fields)
   const options = useMemo(() => buildOperatorOptions(fields, path), [fields, path])
   const { value: mappedValue, update } = operatorState(fields, path, value)

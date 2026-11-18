@@ -1,15 +1,37 @@
 import { describe, expect, it } from 'vitest'
 import { validateConditionOperator } from '../src/condition/validateOperator.js'
 
-const bool = { id: 'boolean', answer: [{ blockType: 'booleanOptions', booleanOptions: { trueId: 'yes', falseId: 'no' } }] }
-const choice = (allowMultipleSelection: boolean) => ({ id: 'choice', answer: [{ blockType: 'multipleChoice', allowMultipleSelection }] })
-const validate = (operator: unknown, questionId = 'choice', multiple = false, pageIndex: string | number = '1') =>
+const bool = {
+  id: 'boolean',
+  answer: [{ blockType: 'booleanOptions', booleanOptions: { trueId: 'yes', falseId: 'no' } }],
+}
+const choice = (allowMultipleSelection: boolean) => ({
+  id: 'choice',
+  answer: [{ blockType: 'multipleChoice', allowMultipleSelection }],
+})
+const validate = (
+  operator: unknown,
+  questionId = 'choice',
+  multiple = false,
+  pageIndex: string | number = '1',
+) =>
   validateConditionOperator(operator, {
-    data: { content: { survey: [
-      { id: 'first', blockType: 'standardPage', questionAnswerPair: [bool, choice(multiple),
-        { id: 'text', answer: [{ blockType: 'inputText', inputText: 'Name' }] }] },
-      { id: 'second', blockType: 'standardPage' },
-    ] } },
+    data: {
+      content: {
+        survey: [
+          {
+            id: 'first',
+            blockType: 'standardPage',
+            questionAnswerPair: [
+              bool,
+              choice(multiple),
+              { id: 'text', answer: [{ blockType: 'inputText', inputText: 'Name' }] },
+            ],
+          },
+          { id: 'second', blockType: 'standardPage' },
+        ],
+      },
+    },
     path: ['content', 'survey', pageIndex, 'conditionGroups', '0', 'conditions', '0', 'operator'],
     siblingData: { questionId },
   })
@@ -24,8 +46,12 @@ describe('operator field validation', () => {
   it('validates current settings when a hook updates the same data array', () => {
     const question = choice(false)
     const context = {
-      data: { pages: [{ id: 'first', blockType: 'standardPage', questionAnswerPair: [question] },
-        { id: 'second', blockType: 'standardPage' }] },
+      data: {
+        pages: [
+          { id: 'first', blockType: 'standardPage', questionAnswerPair: [question] },
+          { id: 'second', blockType: 'standardPage' },
+        ],
+      },
       path: ['pages', '1', 'conditionGroups', '0', 'conditions', '0', 'operator'],
       siblingData: { questionId: 'choice' },
     }
@@ -49,9 +75,12 @@ describe('operator field validation', () => {
     expect(validate(operator, 'choice', true)).toEqual(expect.any(String))
   })
 
-  it.each([undefined, null, '', '1', 'unknown', ['is']])('rejects missing or invalid operators: %s', (operator) => {
-    expect(validate(operator)).toEqual(expect.any(String))
-  })
+  it.each([undefined, null, '', '1', 'unknown', ['is']])(
+    'rejects missing or invalid operators: %s',
+    (operator) => {
+      expect(validate(operator)).toEqual(expect.any(String))
+    },
+  )
 
   it.each(['missing', 'text'])('rejects unsupported source %s', (questionId) => {
     expect(validate('is', questionId)).toEqual(expect.any(String))

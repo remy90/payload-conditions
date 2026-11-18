@@ -11,10 +11,15 @@ type Named = { dbName?: Block['dbName']; enumName?: Block['dbName'] }
 const generatedNames = (versions: boolean): string[] => {
   const root = versions ? '_questionnaire_v' : 'questionnaire'
   const names = [root]
-  const name = (config: Named, fallback: string, parent: string, target: keyof Named = 'dbName') => {
+  const name = (
+    config: Named,
+    fallback: string,
+    parent: string,
+    target: keyof Named = 'dbName',
+  ) => {
     const override = config[target] ?? (target === 'enumName' ? config.dbName : undefined)
     const result = typeof override === 'function' ? override({ tableName: parent }) : override
-    return result ? versions && target === 'dbName' ? `_${result}_v` : result : fallback
+    return result ? (versions && target === 'dbName' ? `_${result}_v` : result) : fallback
   }
   const walk = (fields: Field[], table: string) => {
     for (const field of fields) {
@@ -42,10 +47,13 @@ const generatedNames = (versions: boolean): string[] => {
 }
 
 describe('SQL schema identifiers', () => {
-  it.each([false, true])('fits tables and enums within Postgres limits (versions: %s)', (versions) => {
-    const names = generatedNames(versions)
-    expect(names.length).toBeGreaterThan(10)
-    expect(names.filter((name) => name.length > 63)).toEqual([])
-    expect(new Set(names).size).toBe(names.length)
-  })
+  it.each([false, true])(
+    'fits tables and enums within Postgres limits (versions: %s)',
+    (versions) => {
+      const names = generatedNames(versions)
+      expect(names.length).toBeGreaterThan(10)
+      expect(names.filter((name) => name.length > 63)).toEqual([])
+      expect(new Set(names).size).toBe(names.length)
+    },
+  )
 })

@@ -10,7 +10,8 @@ export interface PluginTypes {
   enabled?: boolean
 }
 
-export const payloadConditions = ({ enabled = true }: PluginTypes = {}): Plugin =>
+export const payloadConditions =
+  ({ enabled = true }: PluginTypes = {}): Plugin =>
   (config) => ({
     ...config,
     ...(enabled ? { collections: [...(config.collections ?? []), Questionnaire] } : {}),

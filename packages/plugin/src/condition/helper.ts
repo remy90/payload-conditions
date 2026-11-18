@@ -3,12 +3,19 @@ import type { FormState } from 'payload'
 import { selectedQuestion } from './formIndex.js'
 
 export const selectedOptionValue = (option: unknown): string | null =>
-  option && typeof option === 'object' && !Array.isArray(option) &&
-    'value' in option && typeof option.value === 'string' ? option.value : null
+  option &&
+  typeof option === 'object' &&
+  !Array.isArray(option) &&
+  'value' in option &&
+  typeof option.value === 'string'
+    ? option.value
+    : null
 
 export const questionRowLabel = (question: unknown, rowNumber?: number): string =>
   typeof question === 'string' && question
-    ? question.length > 20 ? question.substring(0, 20) + '...' : question
+    ? question.length > 20
+      ? question.substring(0, 20) + '...'
+      : question
     : `Question ${(rowNumber ?? 0) + 1}`
 
 export const questionChangeFields = (

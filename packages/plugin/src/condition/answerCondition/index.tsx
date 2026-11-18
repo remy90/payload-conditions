@@ -7,7 +7,9 @@ import { buildAnswerOptions } from '../options.js'
 import { selectedOptionValue } from '../helper.js'
 
 export const AnswerCondition: TextFieldClientComponent = ({ path: fieldPath, field, readOnly }) => {
-  const { path, value, setValue, showError, disabled } = useField<string | null>({ potentiallyStalePath: fieldPath })
+  const { path, value, setValue, showError, disabled } = useField<string | null>({
+    potentiallyStalePath: fieldPath,
+  })
   const fields = useFormFields(([fields]) => fields)
   const options = useMemo(() => buildAnswerOptions(fields, path), [fields, path])
 

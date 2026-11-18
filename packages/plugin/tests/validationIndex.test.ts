@@ -8,11 +8,26 @@ const answerPath = [...operatorPath.slice(0, -1), 'answerId']
 describe('request validation index', () => {
   it('builds once across fields and Payload validationData wrappers, with isolated requests and documents', () => {
     let builds = 0
-    const firstPage = { id: 'first', blockType: 'standardPage', get questionAnswerPair() {
-      builds++
-      return [{ id: 'q', answer: [{ blockType: 'booleanOptions', booleanOptions: { trueId: 'yes', falseId: 'no' } }] }]
-    } }
-    const pages = [firstPage, { id: 'unknown', blockType: 'anotherBlock' }, { id: 'second', blockType: 'standardPage' }]
+    const firstPage = {
+      id: 'first',
+      blockType: 'standardPage',
+      get questionAnswerPair() {
+        builds++
+        return [
+          {
+            id: 'q',
+            answer: [
+              { blockType: 'booleanOptions', booleanOptions: { trueId: 'yes', falseId: 'no' } },
+            ],
+          },
+        ]
+      },
+    }
+    const pages = [
+      firstPage,
+      { id: 'unknown', blockType: 'anotherBlock' },
+      { id: 'second', blockType: 'standardPage' },
+    ]
     const req = { context: {} }
     for (let row = 0; row < 100; row++) {
       // Payload deep-merges a new data wrapper per field and preserves the pages array.
@@ -21,32 +36,69 @@ describe('request validation index', () => {
       expect(validateConditionAnswer('yes', { ...context, path: answerPath })).toBe(true)
     }
     expect(builds).toBe(1)
-    expect(validateConditionOperator('is', {
-      data: { pages }, siblingData: { questionId: 'q' }, path: operatorPath, req: { context: {} },
-    })).toBe(true)
+    expect(
+      validateConditionOperator('is', {
+        data: { pages },
+        siblingData: { questionId: 'q' },
+        path: operatorPath,
+        req: { context: {} },
+      }),
+    ).toBe(true)
     expect(builds).toBe(2)
-    expect(validateConditionOperator('is', {
-      data: { pages: [...pages] }, siblingData: { questionId: 'q' }, path: operatorPath, req,
-    })).toBe(true)
+    expect(
+      validateConditionOperator('is', {
+        data: { pages: [...pages] },
+        siblingData: { questionId: 'q' },
+        path: operatorPath,
+        req,
+      }),
+    ).toBe(true)
     expect(builds).toBe(3)
   })
 
   it('uses original page positions when unknown pages precede the source', () => {
-    const data = { pages: [
-      { id: 'unknown', blockType: 'anotherBlock' },
-      { id: 'source', blockType: 'standardPage', questionAnswerPair: [{ id: 'q', answer: [{
-        blockType: 'booleanOptions', booleanOptions: { trueId: 'yes', falseId: 'no' },
-      }] }] },
-      { id: 'later', blockType: 'standardPage' },
-    ] }
-    expect(validateConditionOperator('is', { data, siblingData: { questionId: 'q' }, req: {}, path: operatorPath })).toBe(true)
+    const data = {
+      pages: [
+        { id: 'unknown', blockType: 'anotherBlock' },
+        {
+          id: 'source',
+          blockType: 'standardPage',
+          questionAnswerPair: [
+            {
+              id: 'q',
+              answer: [
+                {
+                  blockType: 'booleanOptions',
+                  booleanOptions: { trueId: 'yes', falseId: 'no' },
+                },
+              ],
+            },
+          ],
+        },
+        { id: 'later', blockType: 'standardPage' },
+      ],
+    }
+    expect(
+      validateConditionOperator('is', {
+        data,
+        siblingData: { questionId: 'q' },
+        req: {},
+        path: operatorPath,
+      }),
+    ).toBe(true)
     const context = { data, siblingData: { questionId: 'q' }, req: { context: {} } }
     expect(validateConditionOperator('is', { ...context, path: operatorPath })).toBe(true)
-    expect(validateConditionOperator('is', {
-      ...context, path: ['pages', '1', ...operatorPath.slice(2)],
-    })).toEqual(expect.any(String))
-    expect(validateConditionOperator('is', {
-      ...context, path: ['pages', '0', ...operatorPath.slice(2)],
-    })).toEqual(expect.any(String))
+    expect(
+      validateConditionOperator('is', {
+        ...context,
+        path: ['pages', '1', ...operatorPath.slice(2)],
+      }),
+    ).toEqual(expect.any(String))
+    expect(
+      validateConditionOperator('is', {
+        ...context,
+        path: ['pages', '0', ...operatorPath.slice(2)],
+      }),
+    ).toEqual(expect.any(String))
   })
 })

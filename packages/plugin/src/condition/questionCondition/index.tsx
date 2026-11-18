@@ -6,8 +6,14 @@ import { useMemo } from 'react'
 import { buildQuestionOptions } from '../options.js'
 import { questionChangeFields, selectedOptionValue } from '../helper.js'
 
-export const QuestionCondition: TextFieldClientComponent = ({ path: fieldPath, field, readOnly }) => {
-  const { path, value, showError, disabled } = useField<string | null>({ potentiallyStalePath: fieldPath })
+export const QuestionCondition: TextFieldClientComponent = ({
+  path: fieldPath,
+  field,
+  readOnly,
+}) => {
+  const { path, value, showError, disabled } = useField<string | null>({
+    potentiallyStalePath: fieldPath,
+  })
   const fields = useFormFields(([fields]) => fields)
   const { dispatchFields, setModified } = useForm()
   const options = useMemo(() => buildQuestionOptions(fields, path), [fields, path])

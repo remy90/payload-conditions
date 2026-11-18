@@ -17,7 +17,10 @@ export const pageFields: Field[] = [
 ]
 
 const operatorLabels: Record<Operator, string> = {
-  is: 'is', isNot: 'is not', includes: 'includes', excludes: 'excludes',
+  is: 'is',
+  isNot: 'is not',
+  includes: 'includes',
+  excludes: 'excludes',
 }
 
 export const StandardPage: Block = {
@@ -67,7 +70,9 @@ export const StandardPage: Block = {
               name: 'answerId',
               required: true,
               validate: validateConditionAnswer,
-              admin: { components: { Field: '@remy90/payload-conditions-plugin/client#AnswerCondition' } },
+              admin: {
+                components: { Field: '@remy90/payload-conditions-plugin/client#AnswerCondition' },
+              },
             },
           ],
         },

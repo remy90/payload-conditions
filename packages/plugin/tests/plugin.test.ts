@@ -4,7 +4,12 @@ import { payloadConditions, Questionnaire } from '../src/index.js'
 
 const baseConfig: Config = {
   secret: 'test',
-  db: { defaultIDType: 'text', init: () => { throw new Error('Unexpected database initialization') } },
+  db: {
+    defaultIDType: 'text',
+    init: () => {
+      throw new Error('Unexpected database initialization')
+    },
+  },
 }
 
 describe('payloadConditions', () => {
@@ -37,7 +42,10 @@ describe('payloadConditions', () => {
 
   it('adds the questionnaire when no collections were configured', async () => {
     const config = Object.freeze({ ...baseConfig })
-    expect(await payloadConditions({ enabled: true })(config)).toEqual({ ...baseConfig, collections: [Questionnaire] })
+    expect(await payloadConditions({ enabled: true })(config)).toEqual({
+      ...baseConfig,
+      collections: [Questionnaire],
+    })
     expect(config).toEqual(baseConfig)
   })
 })

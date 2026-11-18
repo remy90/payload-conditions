@@ -1,4 +1,7 @@
-import { fromPayloadQuestionnaire, type StoredQuestionnaire } from '@remy90/payload-conditions-engine/payload'
+import {
+  fromPayloadQuestionnaire,
+  type StoredQuestionnaire,
+} from '@remy90/payload-conditions-engine/payload'
 import type { Question } from '@remy90/payload-conditions-engine'
 
 export type ConditionValidationContext = {
@@ -7,7 +10,8 @@ export type ConditionValidationContext = {
   siblingData?: { questionId?: unknown }
   req?: { context?: Record<string, unknown> }
 }
-const record = (value: unknown): value is Record<string, unknown> => value !== null && typeof value === 'object'
+const record = (value: unknown): value is Record<string, unknown> =>
+  value !== null && typeof value === 'object'
 
 type Index = Map<string, { question: Question; pageIndex: number }>
 const cacheKey = '__payloadConditionsValidationIndexes'
@@ -15,7 +19,13 @@ const cacheKey = '__payloadConditionsValidationIndexes'
 const buildIndex = (pages: unknown[]): Index => {
   const positions: number[] = []
   pages.forEach((page, index) => {
-    if (record(page) && page.blockType === 'standardPage' && page.id !== undefined && page.id !== null && page.id !== '') {
+    if (
+      record(page) &&
+      page.blockType === 'standardPage' &&
+      page.id !== undefined &&
+      page.id !== null &&
+      page.id !== ''
+    ) {
       positions.push(index)
     }
   })
@@ -23,7 +33,8 @@ const buildIndex = (pages: unknown[]): Index => {
   const index: Index = new Map()
   questionnaire.pages.forEach((page, offset) => {
     for (const question of page.questions) {
-      if (!index.has(question.id)) index.set(question.id, { question, pageIndex: positions[offset] })
+      if (!index.has(question.id))
+        index.set(question.id, { question, pageIndex: positions[offset] })
     }
   })
   return index
@@ -47,7 +58,12 @@ const requestIndex = (pages: unknown[], req: ConditionValidationContext['req']):
   return index
 }
 
-export const conditionQuestion = ({ data, path = [], siblingData, req }: ConditionValidationContext): Question | undefined => {
+export const conditionQuestion = ({
+  data,
+  path = [],
+  siblingData,
+  req,
+}: ConditionValidationContext): Question | undefined => {
   let pages: unknown = data
   for (const segment of path.slice(0, -6)) pages = record(pages) ? pages[segment] : undefined
   const segment = path[path.length - 6]
