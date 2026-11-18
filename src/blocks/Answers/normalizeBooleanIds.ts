@@ -67,7 +67,7 @@ export const normalizeBooleanIds = (
     const group = replacements.get(site.block) ?? (isObject(site.block.booleanOptions) ? { ...site.block.booleanOptions } : {})
     group[site.key] = replacement
     replacements.set(site.block, group)
-    if (isId(site.id) && site.questionId) {
+    if (isId(site.id) && site.questionId && keepers.get(site.id)?.questionId !== site.questionId) {
       const rewrites = conditionRewrites.get(site.questionId) ?? new Map<string, string>()
       if (!rewrites.has(site.id)) rewrites.set(site.id, replacement)
       conditionRewrites.set(site.questionId, rewrites)

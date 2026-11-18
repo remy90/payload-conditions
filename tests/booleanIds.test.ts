@@ -103,6 +103,18 @@ describe('collection boolean id hook', () => {
     expect(data).toEqual({ pages: [copy, original, other] })
   })
 
+  it('rewrites restored conditions using the version\'s own id ownership', async () => {
+    const first = questionPage('first-page', question('first'))
+    const second = questionPage('second-page', question('second'))
+    const data = { pages: [first, second], conditionalLogicGroup: [condition('first', 'yes'), condition('second', 'no')] }
+    const result = await runHook(data, { pages: [second] }, 'pages', true)
+    const replacement = result.pages[1].questionAnswerPair[0].answer[0].booleanOptions
+    expect(result.pages[0]).toEqual(first)
+    expect(replacement.falseId).not.toBe('no')
+    expect(result.conditionalLogicGroup).toEqual([condition('first', 'yes'), condition('second', replacement.falseId)])
+    expect(data.conditionalLogicGroup).toEqual([condition('first', 'yes'), condition('second', 'no')])
+  })
+
   it('uses version data without merging the current document during restore', async () => {
     const originalDoc = { pages: [{ id: 'page', blockType: 'standardPage', questionAnswerPair: [{
       id: 'question', answer: [{ ...boolean('current-yes', 'current-no'), id: 'answer' }],
@@ -153,6 +165,19 @@ describe('boolean answer ids', () => {
     })
     expect(document).toEqual(snapshot)
     expect(normalizeBooleanIds(result, ids(), { originalDoc })).toEqual(result)
+  })
+
+  it('keeps conditions on an id retained by the same question when both choices shared it', () => {
+    const original = questionPage('original-page', question('original', 'shared', 'shared'))
+    const document = {
+      pages: [questionPage('copy-page', question('copy', 'shared', 'shared')), original],
+      conditionalLogicGroup: [condition('original', 'shared'), condition('copy', 'shared')],
+    }
+    expect(normalizeBooleanIds(document, ids(), { originalDoc: { pages: [original] } })).toEqual({
+      pages: [questionPage('copy-page', question('copy', 'generated-1', 'generated-2')),
+        questionPage('original-page', question('original', 'shared', 'generated-3'))],
+      conditionalLogicGroup: [condition('original', 'shared'), condition('copy', 'generated-1')],
+    })
   })
 
   it('falls back to document order when the stored holder is absent', () => {
