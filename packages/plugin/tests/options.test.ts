@@ -221,18 +221,31 @@ describe('question options', () => {
       pages: 3,
       'pages.1.conditionGroups.0.conditions.0.questionId': '',
       'pages.0.questionAnswerPair.0.answer.0.blockType': 'booleanOptions',
-      'pages.0.questionAnswerPair': 1,
+      'pages.0.questionAnswerPair': 3,
+      'pages.0.questionAnswerPair.1.id': 'text',
+      'pages.0.questionAnswerPair.1.answer.0.blockType': 'inputText',
+      'pages.0.questionAnswerPair.2.id': 'multiple',
+      'pages.0.questionAnswerPair.2.question': 'Pick one',
+      'pages.0.questionAnswerPair.2.answer.0.blockType': 'multipleChoice',
       'pages.0.questionAnswerPair.0.id': 'first',
       'pages.0.questionAnswerPair.0.question': 'First question',
       'pages.1.questionAnswerPair': 1,
       'pages.1.questionAnswerPair.0.id': 'current',
+      'pages.1.questionAnswerPair.0.answer.0.blockType': 'booleanOptions',
       'pages.1.questionAnswerPair.0.question': 'Current question',
       'pages.2.questionAnswerPair': 1,
       'pages.2.questionAnswerPair.0.id': 'later',
+      'pages.2.questionAnswerPair.0.answer.0.blockType': 'multipleChoice',
       'pages.2.questionAnswerPair.0.question': 'Later question',
     })
     expect(buildQuestionOptions(fields, 'pages.1.conditionGroups.0.conditions.0.questionId')).toEqual([
       { label: 'First question', value: 'first' },
+      { label: 'Pick one', value: 'multiple' },
     ])
+    for (const id of ['current', 'later', 'text']) {
+      const selected = { ...fields, 'pages.1.conditionGroups.0.conditions.0.questionId': { value: id } }
+      expect(buildAnswerOptions(selected, answerPath)).toEqual([])
+      expect(buildOperatorOptions(selected, answerPath)).toEqual([])
+    }
   })
 })
