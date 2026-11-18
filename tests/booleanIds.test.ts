@@ -11,6 +11,10 @@ const page = (...answers: ReturnType<typeof boolean>[]) => ({
   blockType: 'standardPage',
   questionAnswerPair: answers.map((answer) => ({ answer: [answer] })),
 })
+const question = (id: string, trueId = 'yes', falseId = 'no') => ({ id, answer: [boolean(trueId, falseId)] })
+const questionPage = (id: string, ...rows: ReturnType<typeof question>[]) => ({
+  id, blockType: 'standardPage', questionAnswerPair: rows,
+})
 const ids = () => {
   let next = 0
   return () => `generated-${++next}`
@@ -40,6 +44,26 @@ describe('collection boolean id hook', () => {
     expect(data).toEqual({ pages: [page(boolean(null, ''))] })
   })
 
+  it.each([false, true])('handles a duplicated page placed first (restoring: %s)', async (restoring) => {
+    const original = questionPage('original-page', question('original'))
+    const copy = questionPage('copy-page', question('copy'))
+    const other = questionPage('other-page', question('other', 'other-yes', 'other-no'))
+    const originalDoc = { pages: [other, original] }
+    const data = { pages: [copy, original, other] }
+    const result = await runHook(data, originalDoc, 'pages', restoring)
+    const regenerated = restoring ? question('original', expect.any(String), expect.any(String))
+      : question('copy', expect.any(String), expect.any(String))
+    expect(result).toEqual({ pages: restoring
+      ? [copy, questionPage('original-page', regenerated), other]
+      : [questionPage('copy-page', regenerated), original, other],
+    })
+    const copyIds = result.pages[0].questionAnswerPair[0].answer[0].booleanOptions
+    const originalIds = result.pages[1].questionAnswerPair[0].answer[0].booleanOptions
+    expect(copyIds.trueId).not.toBe(originalIds.trueId)
+    expect(copyIds.falseId).not.toBe(originalIds.falseId)
+    expect(data).toEqual({ pages: [copy, original, other] })
+  })
+
   it('uses version data without merging the current document during restore', async () => {
     const originalDoc = { pages: [{ id: 'page', blockType: 'standardPage', questionAnswerPair: [{
       id: 'question', answer: [{ ...boolean('current-yes', 'current-no'), id: 'answer' }],
@@ -58,6 +82,23 @@ describe('collection boolean id hook', () => {
 })
 
 describe('boolean answer ids', () => {
+  it('keeps stored ids on their question row when a copy is dragged above it', () => {
+    const originalDoc = { pages: [questionPage('page', question('original'))] }
+    const document = { pages: [questionPage('page', question('copy'), question('original'))] }
+    expect(normalizeBooleanIds(document, ids(), { originalDoc })).toEqual({
+      pages: [questionPage('page', question('copy', 'generated-1', 'generated-2'), question('original'))],
+    })
+    expect(document.pages[0].questionAnswerPair[0]).toEqual(question('copy'))
+  })
+
+  it('falls back to document order when the stored holder is absent', () => {
+    const originalDoc = { pages: [questionPage('page', question('removed'))] }
+    const document = { pages: [questionPage('page', question('first'), question('second'))] }
+    expect(normalizeBooleanIds(document, ids(), { originalDoc })).toEqual({
+      pages: [questionPage('page', question('first'), question('second', 'generated-1', 'generated-2'))],
+    })
+  })
+
   it('fills missing or invalid ids without touching other answer types', () => {
     const document = Object.freeze({
       pages: Object.freeze([page(boolean(null, ''), boolean(7, '   '))]),
