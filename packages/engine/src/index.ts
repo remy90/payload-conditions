@@ -13,6 +13,7 @@ function indexFor(questionnaire: Questionnaire): Index {
   questionnaire.pages.forEach((page, pagePosition) => {
     pagePositions.set(page.id, pagePosition)
     for (const question of page.questions) {
+      if (questions.has(question.id)) continue
       const answer = question.answer
       const optionIds = new Set(
         answer.type === 'boolean'

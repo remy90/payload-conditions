@@ -34,6 +34,34 @@ describe('answer options', () => {
     }), answerPath)).toEqual([])
   })
 
+  it.each(['booleanOptions', 'inputText'])('uses the first duplicate question id when its answer is %s', (blockType) => {
+    const fields = answerState({
+      blockType,
+      'booleanOptions.trueOption': 'First answer',
+      'booleanOptions.trueId': 'first-answer',
+    })
+    Object.assign(fields, state({
+      pages: 4,
+      'pages.0.questionAnswerPair.0.question': 'First question',
+      'pages.2.questionAnswerPair': 1,
+      'pages.2.questionAnswerPair.0.id': 'question-id',
+      'pages.2.questionAnswerPair.0.question': 'Duplicate question',
+      'pages.2.questionAnswerPair.0.answer.0.blockType': 'booleanOptions',
+      'pages.2.questionAnswerPair.0.answer.0.booleanOptions.trueOption': 'Later answer',
+      'pages.2.questionAnswerPair.0.answer.0.booleanOptions.trueId': 'later-answer',
+      'pages.3.conditionGroups.0.conditions.0.questionId': 'question-id',
+    }))
+    for (const page of [1, 3]) {
+      const path = `pages.${page}.conditionGroups.0.conditions.0`
+      expect(buildAnswerOptions(fields, `${path}.answerId`)).toEqual(
+        blockType === 'inputText' ? [] : [{ label: 'First answer', value: 'first-answer' }],
+      )
+      expect(buildQuestionOptions(fields, `${path}.questionId`)).toEqual(
+        blockType === 'inputText' ? [] : [{ label: 'First question', value: 'question-id' }],
+      )
+    }
+  })
+
   it('limits answers to the selected earlier question', () => {
     const fields = answerState({ blockType: 'booleanOptions', 'booleanOptions.trueOption': 'First answer', 'booleanOptions.trueId': 'first-answer' })
     Object.assign(fields, state({

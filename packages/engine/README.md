@@ -92,6 +92,8 @@ Each question's answer map entry holds selected option ids, or `[text]` for inpu
 
 ### Evaluation semantics
 
+If question ids repeat, the index uses the first occurrence in document order.
+
 - A condition can reference a boolean or multiple-choice question on an earlier page. Its answer must contain at least one value. Unknown questions, unknown operators, unsupported answer types, same-page references and later-page references evaluate false.
 - `is` and `includes` test membership of `answerId`. `isNot` and `excludes` require a non-empty answer that lacks `answerId`. Conditions evaluate the supplied values; use validation to detect unknown option ids.
 - A group combines its conditions with `all` or `any`. The page applies its own `all` or `any` mode to the groups. Empty groups are ignored. A page with no remaining groups is visible, including a page with no questions.

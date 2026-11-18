@@ -51,13 +51,16 @@ const readAnswer = (fields: FormState, path: string): { answer: Answer; options:
 
 const buildPages = (fields: FormState, root: string): PagesIndex => {
   const pages: PagesIndex = { questions: new Map(), eligible: [], ends: [], before: new Map() }
+  const seen = new Set<string>()
   for (let pageIndex = 0; pageIndex < rowCount(fields, root); pageIndex++) {
     const parent = `${root}.${pageIndex}.questionAnswerPair`
     for (let row = 0; row < rowCount(fields, parent); row++) {
       const path = `${parent}.${row}`
       const id = rowString(fields, parent, row, 'id')
+      if (!id || seen.has(id)) continue
+      seen.add(id)
       const source = readAnswer(fields, path)
-      if (!id || !source) continue
+      if (!source) continue
       pages.questions.set(id, { path, pageIndex, ...source,
         operators: operatorsFor(source.answer).map((value) => ({ value, label: value === 'isNot' ? 'is not' : value })),
       })

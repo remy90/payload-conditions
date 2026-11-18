@@ -53,6 +53,15 @@ describe('two-level prerequisites', () => {
     expect(evaluatePage(q, 'target', new Map([['a', values]]))).toBe(expected)
   })
 
+  it('uses the first question in document order when question ids repeat', () => {
+    const q = questionnaire(
+      page('source', [booleanQuestion('a')]),
+      page('target', [], [condition('a')]),
+      page('end', [booleanQuestion('a')]),
+    )
+    expect(evaluatePage(q, 'target', new Map([['a', ['yes']]]))).toBe(true)
+  })
+
   it('returns false for unknown, unanswered, same-page and later-page sources', () => {
     // ohme's getAllQuestions allowed prerequisites to reference questions on any page.
     // The engine deliberately allows earlier pages only.

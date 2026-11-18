@@ -45,6 +45,8 @@ Changing a condition's question clears its answer and clears an incompatible ope
 
 Publishing validates condition operators and requires an answer id from the selected question's current options. The collection allows drafts to skip field validation. A host collection with `drafts.validate: true` validates drafts too. After deleting an option, select another answer or remove its condition. The engine can treat a stale answer id under `isNot` or `excludes` as true, so data written outside the plugin needs the same validation.
 
+If question ids repeat, the admin uses the first occurrence in document order for condition sources.
+
 ## Stored schema and engine
 
 The plugin pairs with `@remy90/payload-conditions-engine` 1.0.0, which it also uses as a runtime dependency. The engine shares the stored types and operator definitions with the editor. Use its Payload adapter in your frontend:
