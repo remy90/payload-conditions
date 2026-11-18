@@ -24,6 +24,18 @@ describe('forward visibility', () => {
     expect(q).toEqual(before)
   })
 
+  it('keeps negative dependents hidden after clearing their source answer', () => {
+    for (const operator of ['isNot', 'excludes'] as const) {
+      const q = questionnaire(
+        page('A', [booleanQuestion('a')]),
+        page('B', [booleanQuestion('b')], [condition('a')]),
+        page('C', [], [{ ...condition('b', 'no'), operator }]),
+      )
+      const answers = new Map([['a', ['no']], ['b', ['yes']]])
+      expect([...resolveVisibility(q, answers).visiblePageIds]).toEqual(['A'])
+    }
+  })
+
   it('preserves the answers reference when no entries need clearing', () => {
     const answers = new Map([['a', ['yes']], ['b', ['yes']]])
     expect(resolveVisibility(chain(), answers).answers).toBe(answers)
@@ -48,6 +60,13 @@ describe('applying answers', () => {
     expect([...applyAnswer(chain(), answers, 'unknown', ['yes']).answers]).toEqual([['a', ['no']]])
     const empty = new Map()
     expect(applyAnswer(chain(), empty, 'unknown', []).answers).toBe(empty)
+  })
+
+  it('clears an answer submitted to a hidden question in the same call', () => {
+    const answers = new Map([['a', ['no']]])
+    const result = applyAnswer(chain(), answers, 'b', ['yes'])
+    expect([...result.answers]).toEqual([['a', ['no']]])
+    expect([...result.visiblePageIds]).toEqual(['A'])
   })
 
   it('copies submitted values so later caller edits do not alter the result', () => {

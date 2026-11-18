@@ -18,6 +18,13 @@ describe('navigation', () => {
     expect(previousPageId(single, visiblePageIds, 'one')).toBeUndefined()
   })
 
+  it('moves between two unconditional pages', () => {
+    const q = questionnaire(page('one'), page('two'))
+    const { visiblePageIds } = resolveVisibility(q, new Map())
+    expect(nextPageId(q, visiblePageIds, 'one')).toBe('two')
+    expect(previousPageId(q, visiblePageIds, 'two')).toBe('one')
+  })
+
   it('moves to a second page when its prerequisite holds', () => {
     const q = questionnaire(page('one', [booleanQuestion('a')]), page('two', [], [condition('a')]))
     const { visiblePageIds } = resolveVisibility(q, new Map([['a', ['yes']]]))
