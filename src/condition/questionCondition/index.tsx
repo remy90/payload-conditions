@@ -1,53 +1,36 @@
 'use client'
-import type { OptionObject } from 'payload'
-import { useState, type FC } from 'react'
-import { useFormQuestions } from '../../hooks/condition/useFormQuestions.js'
-import { filterKeysByPattern } from '../../utilities.js'
-import { handleChange } from '../helper.js'
-import { useFieldProps } from '@payloadcms/ui/forms/FieldPropsProvider'
-import { useFormFields } from '@payloadcms/ui/forms/Form'
-import { ReactSelect } from '@payloadcms/ui/elements'
-import { useField } from '@payloadcms/ui/forms/useField'
 
-const pattern =
-  /^(pages|pages\.\d+\.questionAnswerPair|pages\.\d+\.questionAnswerPair\.\d+\.(question|id))$/
+import { SelectInput, useField, useFormFields } from '@payloadcms/ui'
+import type { TextFieldClientComponent } from 'payload'
+import { useMemo } from 'react'
+import { buildQuestionOptions } from '../options.js'
+import { selectedOptionValue } from '../helper.js'
 
-const QuestionCondition: FC<{ pageType: string }> = ({ pageType }) => {
-  const { path } = useFieldProps()
-  const { fields } = useFormFields(([formFields]: any) => ({
-    fields: filterKeysByPattern({ obj: formFields, pattern }),
-  }))
-
-  const generateQuestionOptions = useFormQuestions()
-
-  const [options, setOptions] = useState<OptionObject[]>(
-    generateQuestionOptions({
-      pageData: fields,
-      path,
-      pageName: pageType,
-    }),
-  )
-  const { setValue: setSelectedValue, value: selectedValue } = useField<string>({ path })
+export const QuestionCondition: TextFieldClientComponent = ({ path: fieldPath, field, readOnly }) => {
+  const { path, value, setValue, showError } = useField<string | null>({ potentiallyStalePath: fieldPath })
+  const fields = useFormFields(([fields]) => fields)
+  const dispatch = useFormFields(([, dispatch]) => dispatch)
+  const options = useMemo(() => buildQuestionOptions(fields, path), [fields, path])
 
   return (
-    <ReactSelect
+    <SelectInput
+      name={field.name}
+      path={path}
+      label={field.label}
+      required={field.required}
+      readOnly={readOnly}
+      showError={showError}
       isClearable
-      onChange={(optionValue: OptionObject) => handleChange(optionValue, setSelectedValue)}
-      onMenuOpen={() => {
-        setOptions(
-          generateQuestionOptions({
-            pageData: fields,
-            path,
-            pageName: pageType,
-          }),
-        )
+      onChange={(option) => {
+        const nextValue = selectedOptionValue(option)
+        if (nextValue !== (value ?? null)) {
+          dispatch({ type: 'UPDATE', path: path.replace(/questionValue$/, 'answerValue'), value: null })
+          setValue(nextValue)
+        }
       }}
       options={options}
       placeholder="Select a question"
-      value={options?.find(({ value }) => value === selectedValue)}
-      className={['render-fields', 'field-type'].join(' ')}
+      value={value ?? ''}
     />
   )
 }
-
-export default QuestionCondition

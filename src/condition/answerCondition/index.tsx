@@ -1,73 +1,29 @@
 'use client'
-import type { OptionObject } from 'payload'
-import { useState, type FC } from 'react'
-import { useAnswerGeneration } from '../../hooks/condition/useFormAnswer.js'
-import { filterKeysByPattern } from '../../utilities.js'
-import { handleChange } from '../helper.js'
-import { ReactSelect } from '@payloadcms/ui/elements'
-import { useField } from '@payloadcms/ui/forms/useField'
 
-import { useFieldProps } from '@payloadcms/ui/forms/FieldPropsProvider'
-import { useFormFields } from '@payloadcms/ui/forms/Form'
+import { SelectInput, useField, useFormFields } from '@payloadcms/ui'
+import type { TextFieldClientComponent } from 'payload'
+import { useMemo } from 'react'
+import { buildAnswerOptions } from '../options.js'
+import { selectedOptionValue } from '../helper.js'
 
-const AnswerCondition: FC = () => {
-  const { path } = useFieldProps()
-  const { fields } = useFormFields(([formFields]: any /*FormState*/) => ({
-    fields: filterKeysByPattern({ obj: formFields, pattern }),
-  }))
-
-  const generateAnswerOptions = useAnswerGeneration()
-
-  const [options, setOptions] = useState<OptionObject[]>(
-    generateAnswerOptions({
-      pageState: fields,
-      path,
-    }),
-  )
-
-  const { setValue: setSelectedValue, value: selectedValue } = useField<string>({ path })
+export const AnswerCondition: TextFieldClientComponent = ({ path: fieldPath, field, readOnly }) => {
+  const { path, value, setValue, showError } = useField<string | null>({ potentiallyStalePath: fieldPath })
+  const fields = useFormFields(([fields]) => fields)
+  const options = useMemo(() => buildAnswerOptions(fields, path), [fields, path])
 
   return (
-    <ReactSelect
+    <SelectInput
+      name={field.name}
+      path={path}
+      label={field.label}
+      required={field.required}
+      readOnly={readOnly}
+      showError={showError}
       isClearable
-      onChange={(optionValue: OptionObject) => handleChange(optionValue, setSelectedValue)}
-      onMenuOpen={() =>
-        setOptions(
-          generateAnswerOptions({
-            pageState: fields,
-            path,
-          }),
-        )
-      }
+      onChange={(option) => setValue(selectedOptionValue(option))}
       options={options}
       placeholder="Select an answer"
-      className={['render-fields', 'field-type'].join(' ')}
-      value={options?.find(({ value }) => value === selectedValue)}
+      value={value ?? ''}
     />
   )
 }
-
-export default AnswerCondition
-
-const pattern = new RegExp(
-  [
-    // First, an exact match on pages (for the page number)
-    '^(pages',
-
-    // Match each page index and questionAnswerPair index pages.0.questionAnswerPair.0
-    '|pages\\.\\d+\\.questionAnswerPair(?:\\.\\d+)?(?:\\.',
-
-    // Match answer followed optionally by an array index
-    '(answer(?:\\.\\d+)?(?:\\.',
-    // the expected fields within answer to match against
-    '(blockName|blockType|id|booleanOptions(?:\\.(falseId|falseOption|trueId|trueOption))?',
-    '|multipleChoice(?:\\.\\d+)?(?:\\.(id|option))?|inputText))?',
-
-    // Other fields to provide an exact match for (used for option value and label)
-    '|question|id))?',
-
-    // Used in the conditionalLogicGroup to determine what question was selected and derive possible answer options
-    '|pages\\.\\d+\\.conditionalLogicGroup(?:\\.\\d+)?(?:\\.',
-    '(answerValue|id|operatorType|questionValue))?)$',
-  ].join(''),
-)

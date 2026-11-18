@@ -1,6 +1,3 @@
-import { OptionObject } from 'payload'
-
-export const handleChange = (
-  option: OptionObject,
-  setSelectedValue: (val: string | undefined) => void,
-) => setSelectedValue(option?.value)
+export const selectedOptionValue = (option: unknown): string | null =>
+  option && typeof option === 'object' && !Array.isArray(option) &&
+    'value' in option && typeof option.value === 'string' ? option.value : null

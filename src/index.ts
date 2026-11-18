@@ -1,25 +1,22 @@
-import { Config } from 'payload'
-import questionAnswerPair from './collections/questionAnswerPair.js'
+import type { Plugin } from 'payload'
 import { Questionnaire } from './collections/Questionnaire.js'
-
-export type Plugin = (config: Config) => Config | Promise<Config>
+import { StandardPage as StandardPageBlock } from './blocks/formPage.js'
 
 export interface PluginTypes {
   /**
-   * Enable or disable plugin
-   * @default false
+   * Enable or disable the plugin.
+   * @default true
    */
   enabled?: boolean
 }
 
-const payloadConditions =
-  ({ enabled = true }: PluginTypes): Plugin =>
-  (config) => {
-    if (!enabled) return config
+export const payloadConditions = ({ enabled = true }: PluginTypes = {}): Plugin =>
+  (config) => ({
+    ...config,
+    ...(enabled ? { collections: [...(config.collections ?? []), Questionnaire] } : {}),
+  })
 
-    config.collections = [...(config.collections || []), Questionnaire]
-
-    return config
-  }
-
-export { payloadConditions }
+export { Questionnaire }
+export const StandardPage = StandardPageBlock
+export type StandardPage = import('./types.js').StandardPage
+export type { BooleanOptions, MultipleChoice, InputText } from './types.js'

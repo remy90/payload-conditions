@@ -1,6 +1,4 @@
-import questionAnswerPair from '../collections/questionAnswerPair.js'
-import AnswerCondition from '../condition/answerCondition/index.js'
-import QuestionCondition from '../condition/questionCondition/index.js'
+import { questionAnswerPair } from '../fields/questionAnswerPair.js'
 import { allOrAnyCondition } from '../fields/questionAnswerCondition.js'
 import type { Block, Field, OptionObject } from 'payload'
 
@@ -12,7 +10,7 @@ export const pageFields: Field[] = [
     hidden: false,
     label: 'Page is skippable',
   },
-  ...questionAnswerPair.fields,
+  questionAnswerPair,
 ]
 
 const options: OptionObject[] = [
@@ -51,7 +49,7 @@ export const StandardPage: Block = {
           name: 'questionValue',
           admin: {
             className: 'page-content',
-            components: { Field: QuestionCondition },
+            components: { Field: '@remy90/payload-conditions-plugin/client#QuestionCondition' },
           },
         },
         {
@@ -70,7 +68,7 @@ export const StandardPage: Block = {
           type: 'text',
           label: 'Answer condition',
           name: 'answerValue',
-          admin: { components: { Field: AnswerCondition } },
+          admin: { components: { Field: '@remy90/payload-conditions-plugin/client#AnswerCondition' } },
         },
       ],
     },
