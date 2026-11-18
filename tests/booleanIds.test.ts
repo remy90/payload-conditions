@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { normalizeBooleanIds, normalizePageBooleanIds } from '../src/blocks/Answers/normalizeBooleanIds.js'
-import { StandardPage } from '../src/blocks/formPage.js'
+import type { CollectionBeforeChangeHook } from 'payload'
+import { normalizeBooleanIds } from '../src/blocks/Answers/normalizeBooleanIds.js'
+import { normalizeBooleanIdsHook, Questionnaire, StandardPage } from '../src/index.js'
 
 const boolean = (trueId?: unknown, falseId?: unknown) => ({
   blockType: 'booleanOptions',
@@ -15,71 +16,44 @@ const ids = () => {
   return () => `generated-${++next}`
 }
 
-describe('StandardPage boolean id hook', () => {
-  it('uses version data without merging the current document during restore', () => {
+const runHook = (
+  data: Record<string, unknown>,
+  originalDoc?: Record<string, unknown>,
+  blocksField = 'pages',
+  restoring = false,
+  hook: CollectionBeforeChangeHook = normalizeBooleanIdsHook(blocksField),
+) => hook({
+  data, originalDoc, operation: 'update', collection: Questionnaire, context: {},
+  req: { context: { isRestoringVersion: restoring } },
+} as unknown as Parameters<CollectionBeforeChangeHook>[0])
+
+describe('collection boolean id hook', () => {
+  it('ships once on Questionnaire and leaves StandardPage opt-in', async () => {
+    const hooks = Questionnaire.hooks?.beforeChange ?? []
+    expect(hooks).toHaveLength(1)
+    const field = StandardPage.fields.find((field) => 'name' in field && field.name === 'questionAnswerPair')
+    expect(field && 'hooks' in field ? field.hooks : undefined).toBeUndefined()
+    const data = { pages: [page(boolean(null, ''))] }
+    const result = await runHook(data, undefined, 'pages', false, hooks[0])
+    expect(result).toEqual({ pages: [page(boolean(expect.any(String), expect.any(String)))] })
+    expect(await runHook(result)).toEqual(result)
+    expect(data).toEqual({ pages: [page(boolean(null, ''))] })
+  })
+
+  it('uses version data without merging the current document during restore', async () => {
     const originalDoc = { pages: [{ id: 'page', blockType: 'standardPage', questionAnswerPair: [{
       id: 'question', answer: [{ ...boolean('current-yes', 'current-no'), id: 'answer' }],
     }] }] }
     const value = [{ id: 'question', answer: [{ id: 'answer', blockType: 'booleanOptions' }] }]
     const data = { pages: [{ id: 'page', blockType: 'standardPage', questionAnswerPair: value }] }
-    const result = normalizePageBooleanIds({ data, originalDoc, value,
-      path: ['pages', 0, 'questionAnswerPair'], req: { context: { isRestoringVersion: true } } })
+    const result = await runHook(data, originalDoc, 'pages', true)
     expect(JSON.stringify(result)).not.toContain('current-yes')
     expect(JSON.stringify(result)).not.toContain('current-no')
-    expect(result).toEqual([{ id: 'question', answer: [{ id: 'answer', blockType: 'booleanOptions',
-      booleanOptions: { trueId: expect.any(String), falseId: expect.any(String) },
-    }] }])
-  })
-
-  it.each([false, true])('keeps document order when page hooks run in reverse order (already normalized: %s)', (normalizedFirst) => {
-    const first = page(boolean('yes', 'no'))
-    const second = page(boolean('yes', 'no'))
-    const data = { pages: [first, second] }
-    const firstArgs = { data, originalDoc: undefined, path: ['pages', 0, 'questionAnswerPair'], value: first.questionAnswerPair }
-    if (normalizedFirst) {
-      Object.assign(first, { questionAnswerPair: normalizePageBooleanIds(firstArgs) })
-    }
-    const secondResult = normalizePageBooleanIds({ data, originalDoc: undefined,
-      path: ['pages', 1, 'questionAnswerPair'], value: second.questionAnswerPair })
-    Object.assign(second, { questionAnswerPair: secondResult })
-    expect(normalizePageBooleanIds(firstArgs)).toEqual(page(boolean('yes', 'no')).questionAnswerPair)
-    expect(JSON.stringify(secondResult)).not.toContain('"yes"')
-    expect(JSON.stringify(secondResult)).not.toContain('"no"')
-    expect(normalizePageBooleanIds({ data, originalDoc: undefined,
-      path: ['pages', 1, 'questionAnswerPair'], value: second.questionAnswerPair })).toEqual(secondResult)
-  })
-
-  it('uses stored rows by id when an earlier reordered page omits its questions', () => {
-    const originalDoc = { sections: [{ id: 'section', pages: [
-      { ...page(boolean('other-yes', 'other-no')), id: 'a' },
-      { ...page(boolean('yes', 'no')), id: 'b' },
-    ] }] }
-    const changed = { ...page(boolean('yes', 'no')), id: 'a' }
-    const data = { sections: [{ id: 'section', pages: [{ id: 'b' }, changed] }] }
-    const result = normalizePageBooleanIds({ data, originalDoc,
-      path: ['sections', 0, 'pages', 1, 'questionAnswerPair'], value: changed.questionAnswerPair })
-    expect(JSON.stringify(result)).not.toContain('"yes"')
-    expect(JSON.stringify(result)).not.toContain('"no"')
-    expect(normalizePageBooleanIds({ data, originalDoc,
-      path: ['sections', 0, 'pages', 0, 'questionAnswerPair'], value: originalDoc.sections[0].pages[1].questionAnswerPair,
-    })).toEqual(page(boolean('yes', 'no')).questionAnswerPair)
-    expect(data.sections[0].pages[0]).toEqual({ id: 'b' })
-  })
-
-  it('ships with StandardPage and normalizes across separately embedded page fields', () => {
-    const field = StandardPage.fields.find((field) => 'name' in field && field.name === 'questionAnswerPair')
-    expect(field && 'hooks' in field && field.hooks?.beforeValidate).toContain(normalizePageBooleanIds)
-    const first = page(boolean('yes', 'no'))
-    const second = page(boolean('yes', 'no'))
-    const data = { content: { first: [first], second: [second] } }
-    const result = normalizePageBooleanIds({ data, originalDoc: undefined,
-      path: ['content', 'second', '0', 'questionAnswerPair'], value: second.questionAnswerPair })
-    expect(result).toEqual([{ answer: [{ blockType: 'booleanOptions', booleanOptions: {
-      trueOption: 'Yes', falseOption: 'No', trueId: expect.any(String), falseId: expect.any(String),
-    } }] }])
-    expect(JSON.stringify(result)).not.toContain('"yes"')
-    expect(JSON.stringify(result)).not.toContain('"no"')
-    expect(data.content.second[0]).toEqual(second)
+    expect(result).toEqual({ pages: [{ id: 'page', blockType: 'standardPage', questionAnswerPair: [{
+      id: 'question', answer: [{ id: 'answer', blockType: 'booleanOptions',
+        booleanOptions: { trueId: expect.any(String), falseId: expect.any(String) },
+      }],
+    }] }] })
   })
 })
 

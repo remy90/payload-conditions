@@ -1,6 +1,6 @@
 import type { Block, Field, FieldHook } from 'payload'
 
-// StandardPage's questionAnswerPair hook handles document-wide duplicates before these fallbacks.
+// Fill legacy values before the collection hook resolves duplicate ids.
 const booleanIdBeforeValidate: FieldHook[] = [({ value }) => value ?? crypto.randomUUID()]
 
 const truthyField: Field = {

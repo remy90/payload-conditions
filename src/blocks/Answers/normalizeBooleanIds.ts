@@ -1,4 +1,4 @@
-import type { FieldHook } from 'payload'
+import type { CollectionBeforeChangeHook } from 'payload'
 
 const isObject = (value: unknown): value is Record<string, unknown> =>
   value !== null && typeof value === 'object' &&
@@ -47,31 +47,9 @@ export const normalizeBooleanIds = (document: unknown, createId: () => string): 
   return visit(document)
 }
 
-// Match Payload's fallback for omitted fields, including rows moved within arrays.
-const withStoredValues = (incoming: unknown, stored: unknown): unknown => {
-  if (incoming === undefined) return stored
-  if (Array.isArray(incoming)) {
-    return incoming.map((row) => withStoredValues(row,
-      isObject(row) && row.id != null && Array.isArray(stored)
-        ? stored.find((old) => isObject(old) && old.id === row.id) : undefined))
+/** Normalize one top-level blocks field after Payload has filled omitted fields. */
+export const normalizeBooleanIdsHook = (blocksField = 'pages'): CollectionBeforeChangeHook =>
+  ({ data }) => {
+    if (data[blocksField] === undefined) return data
+    return { ...data, [blocksField]: normalizeBooleanIds(data[blocksField], () => crypto.randomUUID()) }
   }
-  if (isObject(incoming) && isObject(stored)) {
-    return Object.fromEntries([...new Set([...Object.keys(stored), ...Object.keys(incoming)])]
-      .map((key) => [key, withStoredValues(incoming[key], stored[key])]))
-  }
-  return incoming
-}
-
-const atPath = (value: unknown, path: (string | number)[]): unknown =>
-  path.reduce<unknown>((parent, key) =>
-    Array.isArray(parent) ? parent[Number(key)] : isObject(parent) ? parent[key] : undefined, value)
-
-type PageHookArgs = Pick<Parameters<FieldHook>[0], 'data' | 'originalDoc' | 'path' | 'value'> & {
-  req?: Pick<Parameters<FieldHook>[0]['req'], 'context'>
-}
-
-/** Return only this page's rows; Payload traverses sibling pages concurrently. */
-export const normalizePageBooleanIds = ({ data, originalDoc, path, value, req }: PageHookArgs): unknown => {
-  const document = req?.context?.isRestoringVersion ? data : withStoredValues(data, originalDoc)
-  return atPath(normalizeBooleanIds(document, () => crypto.randomUUID()), path) ?? value
-}

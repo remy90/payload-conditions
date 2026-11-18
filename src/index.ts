@@ -17,6 +17,7 @@ export const payloadConditions = ({ enabled = true }: PluginTypes = {}): Plugin 
   })
 
 export { Questionnaire }
+export { normalizeBooleanIdsHook } from './blocks/Answers/normalizeBooleanIds.js'
 export const StandardPage = StandardPageBlock
 export type StandardPage = import('./types.js').StandardPage
 export type { BooleanOptions, MultipleChoice, InputText } from './types.js'
