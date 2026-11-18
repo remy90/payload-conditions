@@ -3,6 +3,7 @@ import type { Field } from 'payload'
 
 export const match: Field = {
   name: 'match',
+  enumName: ({ tableName }) => `e_${tableName}_match`,
   type: 'select',
   defaultValue: 'all',
   label: false,

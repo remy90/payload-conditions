@@ -2,6 +2,7 @@ import type { Block } from 'payload'
 
 export const inputTextBlock: Block = {
   slug: 'inputText',
+  dbName: ({ tableName }) => `${tableName}_text`,
   labels: { singular: 'Input text', plural: 'Input text' },
   fields: [
     {

@@ -21,18 +21,21 @@ const operatorLabels: Record<Operator, string> = {
 
 export const StandardPage: Block = {
   slug: 'standardPage',
+  dbName: ({ tableName }) => `${tableName}_page`,
   fields: [
     ...pageFields,
     match,
     {
       type: 'array',
       name: 'conditionGroups',
+      dbName: ({ tableName }) => `${tableName}_cg`,
       label: 'Condition groups',
       fields: [
         match,
         {
           type: 'array',
           name: 'conditions',
+          dbName: ({ tableName }) => `${tableName}_cond`,
           fields: [
             {
               type: 'text',
@@ -46,6 +49,7 @@ export const StandardPage: Block = {
             },
             {
               name: 'operator',
+              enumName: ({ tableName }) => `e_${tableName}_op`,
               type: 'select',
               admin: {
                 className: 'operator',
