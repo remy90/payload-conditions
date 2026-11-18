@@ -2,6 +2,7 @@ import { operators, type Operator } from '@remy90/payload-conditions-engine'
 import { questionAnswerPair } from '../fields/questionAnswerPair.js'
 import { match } from '../fields/questionAnswerCondition.js'
 import type { Block, Field } from 'payload'
+import { validateConditionOperator } from '../condition/validateOperator.js'
 
 export const pageFields: Field[] = [
   {
@@ -52,6 +53,7 @@ export const StandardPage: Block = {
               },
               label: false,
               options: operators.map((value) => ({ label: operatorLabels[value], value })),
+              validate: validateConditionOperator,
               required: true,
             },
             {

@@ -40,12 +40,19 @@ export const normalizeBooleanIds = (
 ): unknown => {
   const scope = (value: unknown): unknown =>
     blocksField === undefined ? value : isObject(value) ? value[blocksField] : undefined
+  const sites = booleanSites(scope(document))
+  const seen = new Set<string>()
+  if (sites.every(({ id }) => {
+    if (!isId(id) || seen.has(id)) return false
+    seen.add(id)
+    return true
+  })) return document
+
   const owners = new Map<string, string>()
   for (const site of booleanSites(scope(originalDoc))) {
     if (isId(site.id) && site.questionId && !owners.has(site.id)) owners.set(site.id, site.questionId)
   }
 
-  const sites = booleanSites(scope(document))
   const reserved = new Set(sites.flatMap(({ id }) => typeof id === 'string' ? [id] : []))
   const keepers = new Map<string, BooleanSite>()
   for (const site of sites) {
@@ -74,17 +81,40 @@ export const normalizeBooleanIds = (
     }
   }
 
+  if (!replacements.size) return document
+
+  const mapChanged = (values: unknown[], transform: (value: unknown) => unknown): unknown[] => {
+    let result = values
+    values.forEach((value, index) => {
+      const next = transform(value)
+      if (next !== value) {
+        if (result === values) result = values.slice()
+        result[index] = next
+      }
+    })
+    return result
+  }
+  const rewriteGroups = (groups: unknown): unknown => !Array.isArray(groups) ? groups : mapChanged(groups, (group) => {
+    if (!isObject(group) || !Array.isArray(group.conditions)) return group
+    const conditions = mapChanged(group.conditions, (condition) => {
+      if (!isObject(condition) || !isId(condition.questionId) || !isId(condition.answerId)) return condition
+      const answerId = conditionRewrites.get(condition.questionId)?.get(condition.answerId)
+      return answerId === undefined ? condition : { ...condition, answerId }
+    })
+    return conditions === group.conditions ? group : { ...group, conditions }
+  })
   const visit = (value: unknown): unknown => {
-    if (Array.isArray(value)) return value.map(visit)
+    if (Array.isArray(value)) return mapChanged(value, visit)
     if (!isObject(value)) return value
-    const result = Object.fromEntries(Object.entries(value).map(([key, child]) => [key, visit(child)]))
-    if (replacements.has(value)) result.booleanOptions = replacements.get(value)
-    if (Array.isArray(result.conditionalLogicGroup)) {
-      result.conditionalLogicGroup = result.conditionalLogicGroup.map((condition: unknown) => {
-        if (!isObject(condition) || !isId(condition.questionValue) || !isId(condition.answerValue)) return condition
-        const answerValue = conditionRewrites.get(condition.questionValue)?.get(condition.answerValue)
-        return answerValue === undefined ? condition : { ...condition, answerValue }
-      })
+    const replacement = replacements.get(value)
+    let result = replacement ? { ...value, booleanOptions: replacement } : value
+    for (const [key, child] of Object.entries(value)) {
+      if (replacement && key === 'booleanOptions') continue
+      const next = visit(key === 'conditionGroups' ? rewriteGroups(child) : child)
+      if (next !== child) {
+        if (result === value) result = { ...value }
+        result[key] = next
+      }
     }
     return result
   }

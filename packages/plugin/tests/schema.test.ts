@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { operators, matchModes } from '@remy90/payload-conditions-engine'
 import { fromPayloadQuestionnaire, type StoredQuestionnaire } from '@remy90/payload-conditions-engine/payload'
 import { StandardPage } from '../src/index.js'
+import { validateConditionOperator } from '../src/condition/validateOperator.js'
 
 const named = (fields: Field[], name: string) => {
   const field = fields.find((field) => 'name' in field && field.name === name)
@@ -46,7 +47,9 @@ describe('stored schema', () => {
     const groups = children(named(StandardPage.fields, 'conditionGroups'))
     expect(values(named(groups, 'match'))).toEqual([...matchModes])
     const conditions = children(named(groups, 'conditions'))
-    expect(values(named(conditions, 'operator'))).toEqual([...operators])
+    const operator = named(conditions, 'operator')
+    expect(values(operator)).toEqual([...operators])
+    expect('validate' in operator && operator.validate).toBe(validateConditionOperator)
     for (const name of ['questionId', 'operator', 'answerId']) {
       const field = named(conditions, name)
       expect('required' in field && field.required).toBe(true)

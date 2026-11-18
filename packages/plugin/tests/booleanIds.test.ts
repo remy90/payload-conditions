@@ -15,7 +15,8 @@ const question = (id: string, trueId = 'yes', falseId = 'no') => ({ id, answer: 
 const questionPage = (id: string, ...rows: ReturnType<typeof question>[]) => ({
   id, blockType: 'standardPage', questionAnswerPair: rows,
 })
-const condition = (questionValue: string, answerValue: string) => ({ questionValue, operatorType: '1', answerValue })
+const condition = (questionId: string, answerId: string) => ({ questionId, operator: 'is', answerId })
+const groups = (...conditions: ReturnType<typeof condition>[]) => [{ match: 'all', conditions }]
 const freeze = (value: unknown): void => {
   if (value && typeof value === 'object') {
     Object.values(value).forEach(freeze)
@@ -56,10 +57,10 @@ describe('collection boolean id hook', () => {
     const copy = questionPage('copy-page', question('copy'))
     const originalDoc = { [blocksField]: [original] }
     const data = {
-      before: { conditionalLogicGroup: [condition('copy', 'yes'), condition('copy', 'no')] },
+      before: { conditionGroups: groups(condition('copy', 'yes'), condition('copy', 'no')) },
       [blocksField]: [copy, original],
       elsewhere: [page(boolean('yes', 'no'))],
-      after: { conditionalLogicGroup: [condition('copy', 'yes'), condition('original', 'yes')] },
+      after: { conditionGroups: groups(condition('copy', 'yes'), condition('original', 'yes')) },
     }
     const snapshot = structuredClone(data)
     freeze(data)
@@ -69,10 +70,10 @@ describe('collection boolean id hook', () => {
     expect(replacement.trueId).not.toBe('yes')
     expect(replacement.falseId).not.toBe('no')
     expect(result).toEqual({
-      before: { conditionalLogicGroup: [condition('copy', replacement.trueId), condition('copy', replacement.falseId)] },
+      before: { conditionGroups: groups(condition('copy', replacement.trueId), condition('copy', replacement.falseId)) },
       [blocksField]: [questionPage('copy-page', question('copy', replacement.trueId, replacement.falseId)), original],
       elsewhere: data.elsewhere,
-      after: { conditionalLogicGroup: [condition('copy', replacement.trueId), condition('original', 'yes')] },
+      after: { conditionGroups: groups(condition('copy', replacement.trueId), condition('original', 'yes')) },
     })
     expect(data).toEqual(snapshot)
     expect(await runHook(result, originalDoc, blocksField)).toEqual(result)
@@ -106,13 +107,13 @@ describe('collection boolean id hook', () => {
   it('rewrites restored conditions using the version\'s own id ownership', async () => {
     const first = questionPage('first-page', question('first'))
     const second = questionPage('second-page', question('second'))
-    const data = { pages: [first, second], conditionalLogicGroup: [condition('first', 'yes'), condition('second', 'no')] }
+    const data = { pages: [first, second], conditionGroups: groups(condition('first', 'yes'), condition('second', 'no')) }
     const result = await runHook(data, { pages: [second] }, 'pages', true)
     const replacement = result.pages[1].questionAnswerPair[0].answer[0].booleanOptions
     expect(result.pages[0]).toEqual(first)
     expect(replacement.falseId).not.toBe('no')
-    expect(result.conditionalLogicGroup).toEqual([condition('first', 'yes'), condition('second', replacement.falseId)])
-    expect(data.conditionalLogicGroup).toEqual([condition('first', 'yes'), condition('second', 'no')])
+    expect(result.conditionGroups[0].conditions).toEqual([condition('first', 'yes'), condition('second', replacement.falseId)])
+    expect(data.conditionGroups[0].conditions).toEqual([condition('first', 'yes'), condition('second', 'no')])
   })
 
   it('uses version data without merging the current document during restore', async () => {
@@ -133,6 +134,21 @@ describe('collection boolean id hook', () => {
 })
 
 describe('boolean answer ids', () => {
+  it('returns the same data reference on a no-op save without copying or reading the original document', () => {
+    const data = { pages: [questionPage('page', question('question'))] }
+    const originalDoc = { get pages(): never { throw new Error('Unexpected original document traversal') } }
+    freeze(data)
+    expect(normalizeBooleanIds(data, () => { throw new Error('Unexpected id generation') }, { originalDoc, blocksField: 'pages' })).toBe(data)
+  })
+
+  it('keeps untouched page references when another page needs replacement', () => {
+    const untouched = questionPage('first', question('first'))
+    const data = { pages: [untouched, questionPage('copy', question('copy'))] }
+    const result = normalizeBooleanIds(data, ids()) as typeof data
+    expect(result.pages[0]).toBe(untouched)
+    expect(result.pages[1]).not.toBe(data.pages[1])
+  })
+
   it('keeps stored ids on their question row when a copy is dragged above it', () => {
     const originalDoc = { pages: [questionPage('page', question('original'))] }
     const document = { pages: [questionPage('page', question('copy'), question('original'))] }
@@ -145,10 +161,10 @@ describe('boolean answer ids', () => {
   it('purely rewrites matching conditions throughout the document when a copy gets new ids', () => {
     const originalDoc = { pages: [questionPage('original-page', question('original'))] }
     const document = {
-      before: { conditionalLogicGroup: [condition('copy', 'yes'), condition('original', 'yes'),
-        condition('copy', 'no'), condition('other', 'yes'), condition('copy', 'unrelated'), condition('copy', '')] },
+      before: { conditionGroups: groups(condition('copy', 'yes'), condition('original', 'yes'),
+        condition('copy', 'no'), condition('other', 'yes'), condition('copy', 'unrelated'), condition('copy', '')) },
       pages: [questionPage('copy-page', question('copy')), questionPage('original-page', question('original'))],
-      after: [{ nested: { conditionalLogicGroup: [condition('copy', 'yes'), condition('original', 'no')] } }],
+      after: [{ nested: { conditionGroups: groups(condition('copy', 'yes'), condition('original', 'no')) } }],
       unrelated: condition('copy', 'yes'),
     }
     const snapshot = structuredClone(document)
@@ -156,11 +172,11 @@ describe('boolean answer ids', () => {
     freeze(originalDoc)
     const result = normalizeBooleanIds(document, ids(), { originalDoc })
     expect(result).toEqual({
-      before: { conditionalLogicGroup: [condition('copy', 'generated-1'), condition('original', 'yes'),
-        condition('copy', 'generated-2'), condition('other', 'yes'), condition('copy', 'unrelated'), condition('copy', '')] },
+      before: { conditionGroups: groups(condition('copy', 'generated-1'), condition('original', 'yes'),
+        condition('copy', 'generated-2'), condition('other', 'yes'), condition('copy', 'unrelated'), condition('copy', '')) },
       pages: [questionPage('copy-page', question('copy', 'generated-1', 'generated-2')),
         questionPage('original-page', question('original'))],
-      after: [{ nested: { conditionalLogicGroup: [condition('copy', 'generated-1'), condition('original', 'no')] } }],
+      after: [{ nested: { conditionGroups: groups(condition('copy', 'generated-1'), condition('original', 'no')) } }],
       unrelated: condition('copy', 'yes'),
     })
     expect(document).toEqual(snapshot)
@@ -171,12 +187,12 @@ describe('boolean answer ids', () => {
     const original = questionPage('original-page', question('original', 'shared', 'shared'))
     const document = {
       pages: [questionPage('copy-page', question('copy', 'shared', 'shared')), original],
-      conditionalLogicGroup: [condition('original', 'shared'), condition('copy', 'shared')],
+      conditionGroups: groups(condition('original', 'shared'), condition('copy', 'shared')),
     }
     expect(normalizeBooleanIds(document, ids(), { originalDoc: { pages: [original] } })).toEqual({
       pages: [questionPage('copy-page', question('copy', 'generated-1', 'generated-2')),
         questionPage('original-page', question('original', 'shared', 'generated-3'))],
-      conditionalLogicGroup: [condition('original', 'shared'), condition('copy', 'generated-1')],
+      conditionGroups: groups(condition('original', 'shared'), condition('copy', 'generated-1')),
     })
   })
 
