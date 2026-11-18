@@ -1,10 +1,6 @@
-import { randomUUID } from 'crypto'
 import type { Block, Field, FieldHook } from 'payload'
 
-const booleanIdBeforeValidate: FieldHook<any, any, any>[] = [({value}) => {
-  value = value ?? randomUUID()
-  return value
-}]
+const booleanIdBeforeValidate: FieldHook[] = [({ value }) => value ?? crypto.randomUUID()]
 
 const truthyField: Field = {
   name: 'trueOption',
@@ -12,18 +8,16 @@ const truthyField: Field = {
   label: 'True option',
   defaultValue: 'Yes',
   required: true,
-  custom: {
-    id: 'custom id',
-  },
 }
 const trueId: Field = {
   name: 'trueId',
   type: 'text',
+  defaultValue: () => crypto.randomUUID(),
   admin: { hidden: true },
   required: true,
   hooks: {
     beforeValidate: booleanIdBeforeValidate,
-  }
+  },
 }
 
 const falsyField: Field = {
@@ -36,6 +30,8 @@ const falsyField: Field = {
 const falseId: Field = {
   name: 'falseId',
   type: 'text',
+  required: true,
+  defaultValue: () => crypto.randomUUID(),
   admin: { hidden: true },
   hooks: {
     beforeValidate: booleanIdBeforeValidate,

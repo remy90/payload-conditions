@@ -1,5 +1,6 @@
 import type { FormState } from 'payload'
 import { describe, expect, it } from 'vitest'
+import { booleanOptionsBlock } from '../src/blocks/Answers/boolean.js'
 import { buildAnswerOptions, buildQuestionOptions } from '../src/condition/options.js'
 
 // Payload 3 stores array and blocks row counts at their parent paths.
@@ -90,6 +91,24 @@ describe('answer options', () => {
   it('offers input text using the block id', () => {
     expect(buildAnswerOptions(answerState({ blockType: 'inputText', inputText: 'Expected text', id: 'text-id' }), answerPath))
       .toEqual([{ label: 'Expected text', value: 'text-id' }])
+  })
+
+  it('offers fresh boolean ids created by the field defaults before any validation hook', () => {
+    const values: Record<string, unknown> = { blockType: 'booleanOptions' }
+    for (const group of booleanOptionsBlock.fields) {
+      if (group.type !== 'group') continue
+      for (const field of group.fields) {
+        if (!('name' in field) || !('defaultValue' in field)) continue
+        values[`booleanOptions.${field.name}`] = typeof field.defaultValue === 'function'
+          ? field.defaultValue({}) : field.defaultValue
+      }
+    }
+    const options = buildAnswerOptions(answerState(values), answerPath)
+    expect(options).toEqual([
+      { label: 'Yes', value: expect.stringMatching(/^[0-9a-f-]{36}$/) },
+      { label: 'No', value: expect.stringMatching(/^[0-9a-f-]{36}$/) },
+    ])
+    expect(options[0].value).not.toBe(options[1].value)
   })
 
   it('offers both boolean answers from the selected question before saving', () => {
