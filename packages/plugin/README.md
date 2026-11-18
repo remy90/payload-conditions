@@ -85,7 +85,7 @@ export const Survey: CollectionConfig = {
 }
 ```
 
-`normalizeBooleanIdsHook(blocksField = 'pages')` returns a Payload `CollectionBeforeChangeHook`. Pass the top-level blocks field name. Each hook normalizes boolean ids within that field and updates matching `conditionGroups[].conditions[]` references anywhere in the document. `Questionnaire` already includes the hook for `pages`. Standalone `StandardPage` blocks require this opt-in.
+`normalizeBooleanIdsHook(blocksField = 'pages')` returns a Payload `CollectionBeforeChangeHook`. Pass the top-level blocks field name. Each hook normalizes boolean ids within that field and updates matching `conditionGroups[].conditions[]` references anywhere in the document. It also maps equivalent operators to the referenced question's current answer settings. `Questionnaire` already includes the hook for `pages`. Standalone `StandardPage` blocks require this opt-in.
 
 On save, missing or duplicate boolean ids receive fresh ids. A question row that held an id in the stored document keeps it after copies are reordered. When no stored holder remains, the first occurrence in document order keeps it. Conditions targeting a copied question row follow its regenerated answer ids. Restoring a version uses that version's data and document order without borrowing ids or ownership from the current document.
 
