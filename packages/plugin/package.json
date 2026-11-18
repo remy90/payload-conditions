@@ -1,0 +1,87 @@
+{
+  "name": "@remy90/payload-conditions-plugin",
+  "version": "1.0.0",
+  "private": false,
+  "type": "module",
+  "description": "plugin for Payload CMS, which enables conditional logic for pages to display",
+  "license": "MIT",
+  "author": {
+    "name": "Remy",
+    "url": "https://github.com/remy90"
+  },
+  "homepage": "https://github.com/remy90/payload-conditions#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/remy90/payload-conditions.git"
+  },
+  "keywords": [
+    "payload",
+    "cms",
+    "react",
+    "plugin",
+    "payload-plugin",
+    "conditions",
+    "iff",
+    "ifttt",
+    "prerequisite"
+  ],
+  "bugs": {
+    "url": "https://github.com/remy90/payload-conditions/issues"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "pnpm clean && pnpm build:swc && pnpm build:types",
+    "build:swc": "swc src -d dist --config-file .swcrc --strip-leading-paths",
+    "build:types": "tsc --emitDeclarationOnly --outDir dist",
+    "clean": "rimraf dist tsconfig.tsbuildinfo",
+    "typecheck": "tsc --project tsconfig.test.json",
+    "test": "vitest run",
+    "prepublishOnly": "pnpm build"
+  },
+  "engines": {
+    "node": ">=22.23.5"
+  },
+  "devDependencies": {
+    "@payloadcms/ui": "3.94.0",
+    "@swc/cli": "^0.8.0",
+    "@swc/core": "^1.15.0",
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "payload": "3.94.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "rimraf": "^6.0.0",
+    "typescript": "^5.9.0",
+    "vitest": "^3.2.0"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./client": {
+      "types": "./dist/client.d.ts",
+      "import": "./dist/client.js",
+      "default": "./dist/client.js"
+    }
+  },
+  "publishConfig": {
+    "access": "public",
+    "main": "./dist/index.js",
+    "registry": "https://registry.npmjs.org/",
+    "types": "./dist/index.d.ts"
+  },
+  "packageManager": "pnpm@10.34.9",
+  "peerDependencies": {
+    "@payloadcms/ui": "^3.94.0",
+    "payload": "^3.94.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  }
+}

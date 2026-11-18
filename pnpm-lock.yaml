@@ -6,7 +6,9 @@ settings:
 
 importers:
 
-  .:
+  .: {}
+
+  packages/plugin:
     devDependencies:
       '@payloadcms/ui':
         specifier: 3.94.0
