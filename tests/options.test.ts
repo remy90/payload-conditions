@@ -50,6 +50,19 @@ describe('answer options', () => {
     expect(buildAnswerOptions(fields, 'pages.0.conditionalLogicGroup.0.answerValue')).toEqual([])
   })
 
+  it.each(['booleanOptions', 'inputText'])('handles blockType and eOption inside parent field names: %s', (blockType) => {
+    const fields = answerState({
+      blockType,
+      inputText: 'Text',
+      id: 'text-id',
+      'booleanOptions.trueOption': 'Yes',
+      'booleanOptions.trueId': 'yes-id',
+    })
+    const nested = Object.fromEntries(Object.entries(fields).map(([path, value]) => [path.replace(/^pages/, 'someOptions.blockTypes'), value]))
+    expect(buildAnswerOptions(nested, 'someOptions.blockTypes.1.conditionalLogicGroup.0.answerValue'))
+      .toEqual(blockType === 'inputText' ? [{ label: 'Text', value: 'text-id' }] : [{ label: 'Yes', value: 'yes-id' }])
+  })
+
   it('follows nested page paths for answers', () => {
     const fields = answerState({ blockType: 'inputText', inputText: 'Text', id: 'text-id' })
     const nested = Object.fromEntries(Object.entries(fields).map(([path, value]) => [path.replace(/^pages/, 'content.survey'), value]))
