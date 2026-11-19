@@ -13,9 +13,7 @@ export const selectedOptionValue = (option: unknown): string | null =>
 
 export const questionRowLabel = (question: unknown, rowNumber?: number): string =>
   typeof question === 'string' && question
-    ? question.length > 20
-      ? question.substring(0, 20) + '...'
-      : question
+    ? question
     : `Question ${(rowNumber ?? 0) + 1}`
 
 export const questionChangeFields = (

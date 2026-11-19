@@ -6,6 +6,7 @@ import {
   type StoredQuestionnaire,
 } from '@remy90/payload-conditions-engine/payload'
 import { StandardPage } from '../src/index.js'
+import { booleanOptionsBlock } from '../src/blocks/Answers/boolean.js'
 import { validateConditionOperator } from '../src/condition/validateOperator.js'
 
 const named = (fields: Field[], name: string) => {
@@ -26,6 +27,10 @@ const values = (field: Field) => {
 const row = (fields: Field[], data: Record<string, unknown>): Record<string, unknown> => {
   const result: Record<string, unknown> = { id: data.id }
   for (const field of fields) {
+    if (field.type === 'row') {
+      Object.assign(result, row(field.fields, data))
+      continue
+    }
     if (!('name' in field)) continue
     let value = data[field.name] ?? ('defaultValue' in field ? field.defaultValue : undefined)
     if (field.type === 'array' && Array.isArray(value)) {
@@ -47,6 +52,20 @@ const row = (fields: Field[], data: Record<string, unknown>): Record<string, unk
 }
 
 describe('stored schema', () => {
+  it('lays out boolean labels in a presentational row while keeping hidden ids', () => {
+    const fields = children(named(booleanOptionsBlock.fields, 'booleanOptions'))
+    const layout = fields.find((field) => field.type === 'row')
+    expect(layout).toBeDefined()
+    expect(layout && children(layout).map((field) => 'name' in field && field.name)).toEqual([
+      'trueOption',
+      'falseOption',
+    ])
+    for (const name of ['trueId', 'falseId']) {
+      const field = named(fields, name)
+      expect(field.admin?.hidden).toBe(true)
+    }
+  })
+
   it('requires at least two multiple-choice options', () => {
     const answer = named(children(named(StandardPage.fields, 'questionAnswerPair')), 'answer')
     if (answer.type !== 'blocks') throw new Error('Expected answer blocks')

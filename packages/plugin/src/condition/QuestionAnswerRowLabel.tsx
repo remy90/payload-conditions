@@ -5,5 +5,20 @@ import { questionRowLabel } from './helper.js'
 
 export const QuestionAnswerRowLabel = () => {
   const { data, rowNumber } = useRowLabel<{ question?: string | null }>()
-  return questionRowLabel(data?.question, rowNumber)
+  const label = questionRowLabel(data?.question, rowNumber)
+  return (
+    <span
+      className="row-label"
+      title={label}
+      style={{
+        display: 'block',
+        minWidth: 0,
+        overflow: 'hidden',
+        whiteSpace: 'nowrap',
+        textOverflow: 'ellipsis',
+      }}
+    >
+      {label}
+    </span>
+  )
 }

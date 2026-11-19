@@ -14,8 +14,8 @@ describe('question row labels', () => {
   it.each([
     ['Short question', 'Short question'],
     ['12345678901234567890', '12345678901234567890'],
-    ['123456789012345678901', '12345678901234567890...'],
-  ])('truncates questions longer than twenty characters: %s', (question, label) => {
+    ['123456789012345678901', '123456789012345678901'],
+  ])('preserves the full question: %s', (question, label) => {
     expect(questionRowLabel(question, 0)).toBe(label)
   })
 })
