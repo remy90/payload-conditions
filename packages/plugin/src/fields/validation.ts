@@ -18,11 +18,17 @@ const at = (data: unknown, path: (string | number)[]): unknown =>
     data,
   )
 
+const isRow = (value: unknown): value is Record<string, unknown> =>
+  !!value && typeof value === 'object' && !Array.isArray(value)
+
+// Offsets from the end of pages.N.questions.M.name.
+const nameFieldPathOffsets = { pageIndex: -4, questionIndex: -2 } as const
+
 const rowArrays = (data: unknown, key: string): Record<string, unknown>[][] => {
   if (Array.isArray(data)) return data.flatMap((value) => rowArrays(value, key))
   if (!data || typeof data !== 'object') return []
   return Object.entries(data).flatMap(([name, value]) =>
-    name === key && Array.isArray(value) ? [value] : rowArrays(value, key),
+    name === key && Array.isArray(value) ? [value.filter(isRow)] : rowArrays(value, key),
   )
 }
 
@@ -42,11 +48,16 @@ export const validateName = (value: unknown, context: Context): true | string =>
       : true
   }
   const path = context.path
-  const pages = at(context.data, path.slice(0, -4))
+  const pages = at(context.data, path.slice(0, nameFieldPathOffsets.pageIndex))
   if (Array.isArray(pages)) {
     for (const [p, page] of pages.entries()) {
       for (const [q, question] of (Array.isArray(page?.questions) ? page.questions : []).entries()) {
-        if (String(p) === String(path.at(-4)) && String(q) === String(path.at(-2))) continue
+        if (!isRow(question)) continue
+        if (
+          String(p) === String(path.at(nameFieldPathOffsets.pageIndex)) &&
+          String(q) === String(path.at(nameFieldPathOffsets.questionIndex))
+        )
+          continue
         if (typeof question.name === 'string' && question.name.trim() === name)
           return translate(context, 'duplicateName')
       }
@@ -68,6 +79,7 @@ export const validateOptionLabel = (value: unknown, context: Context): true | st
   return Array.isArray(options) &&
     options.some(
       (option, index) =>
+        isRow(option) &&
         (path
           ? String(index) !== String(path.at(-2))
           : option.id !== context.siblingData?.id) &&

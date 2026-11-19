@@ -37,6 +37,23 @@ it('keeps name uniqueness errors during form-state validation without a path', (
   expect(validateName('same', { data, siblingData })).toBe(true)
 })
 
+it.each([null, undefined, 42, 'row', false, []])(
+  'ignores malformed question rows (%j) when checking names',
+  (row) => {
+    const siblingData = { id: 'q2', name: 'same' }
+    const data = {
+      pages: [{ questions: [row, { id: 'q1', name: 'same' }, siblingData] }],
+    }
+    for (const context of [
+      { data, siblingData },
+      { data, path: ['pages', '0', 'questions', '2', 'name'] },
+    ]) {
+      expect(validateName('same', context)).toBe('Question names must be unique.')
+      expect(validateName('unique', context)).toBe(true)
+    }
+  },
+)
+
 it('fills empty names from labels, reserving explicit names before generating suffixes', () => {
   const data = {
     pages: [
@@ -118,6 +135,34 @@ it('keeps option uniqueness errors scoped to the current question without a path
   options[0].label = 'Green'
   expect(validateOptionLabel('red', { data, siblingData })).toBe(true)
 })
+
+it.each([null, undefined, 42, 'row', false, []])(
+  'ignores malformed option rows (%j) when checking labels',
+  (row) => {
+    const siblingData = { id: 'o2', label: 'red' }
+    const data = {
+      pages: [
+        {
+          questions: [
+            { answer: [{ options: [row, { id: 'o1', label: ' Red ' }, siblingData] }] },
+          ],
+        },
+      ],
+    }
+    for (const context of [
+      { data, siblingData },
+      {
+        data,
+        path: ['pages', '0', 'questions', '0', 'answer', '0', 'options', '2', 'label'],
+      },
+    ]) {
+      expect(validateOptionLabel('red', context)).toBe(
+        'Option labels must be unique within a question.',
+      )
+      expect(validateOptionLabel('Blue', context)).toBe(true)
+    }
+  },
+)
 
 it('reports malformed text inline while checking uniqueness and filling names', () => {
   const data = {
