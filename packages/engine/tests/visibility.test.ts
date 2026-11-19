@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import { applyAnswer, resolveVisibility } from '../src/index.js'
-import { booleanQuestion, condition, page, questionnaire } from './fixtures.js'
+import { yesNoQuestion, condition, page, questionnaire } from './fixtures.js'
 
 const chain = () =>
   questionnaire(
-    page('A', [booleanQuestion('a')]),
-    page('B', [booleanQuestion('b')], [condition('a')]),
-    page('C', [booleanQuestion('c')], [condition('b')]),
+    page('A', [yesNoQuestion('a')]),
+    page('B', [yesNoQuestion('b')], [condition('a')]),
+    page('C', [yesNoQuestion('c')], [condition('b')]),
   )
 
 describe('forward visibility', () => {
@@ -34,10 +34,10 @@ describe('forward visibility', () => {
   })
 
   it('keeps negative dependents hidden after clearing their source answer', () => {
-    for (const operator of ['isNot', 'excludes'] as const) {
+    for (const operator of ['not_equals', 'not_in'] as const) {
       const q = questionnaire(
-        page('A', [booleanQuestion('a')]),
-        page('B', [booleanQuestion('b')], [condition('a')]),
+        page('A', [yesNoQuestion('a')]),
+        page('B', [yesNoQuestion('b')], [condition('a')]),
         page('C', [], [{ ...condition('b', 'no'), operator }]),
       )
       const answers = new Map([
@@ -46,6 +46,27 @@ describe('forward visibility', () => {
       ])
       expect([...resolveVisibility(q, answers).visiblePageIds]).toEqual(['A'])
     }
+  })
+
+  it('keeps the first question answer when a hidden page repeats its id', () => {
+    const q = questionnaire(
+      page('A', [yesNoQuestion('a')]),
+      page('B', [yesNoQuestion('a')], [condition('a', 'no')]),
+      page('C', [], [condition('a')]),
+    )
+    const answers = new Map([['a', ['yes']]])
+    const resolved = resolveVisibility(q, answers)
+    expect([...resolved.visiblePageIds]).toEqual(['A', 'C'])
+    expect(resolved.answers).toBe(answers)
+  })
+
+  it('uses only the first occurrence of a page id', () => {
+    const q = questionnaire(
+      page('A', [yesNoQuestion('a')], [condition('missing')]),
+      page('A', [yesNoQuestion('b')]),
+      page('C', [], [condition('b')]),
+    )
+    expect([...resolveVisibility(q, new Map([['b', ['yes']]])).visiblePageIds]).toEqual([])
   })
 
   it('preserves the answers reference when no entries need clearing', () => {

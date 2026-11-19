@@ -8,10 +8,8 @@ import {
   type Match,
   type Operator,
 } from '../src/index.js'
-import { booleanQuestion, condition, page, questionnaire } from './fixtures.js'
+import { yesNoQuestion, condition, page, questionnaire } from './fixtures.js'
 
-// Ported from ohme prerequisite-evalulator.test.ts: QuestionOperator.Equals
-// becomes is. This API names its selection operators is/isNot and includes/excludes.
 describe('two-level prerequisites', () => {
   it.each<[Match, Match, boolean, boolean]>([
     ['all', 'all', true, true],
@@ -29,25 +27,46 @@ describe('two-level prerequisites', () => {
       { match: groupMatch, conditions: [condition('a'), condition('b')] },
       { match: groupMatch, conditions: [condition('c')] },
     ]
-    const q = questionnaire(page('source', ['a', 'b', 'c'].map(booleanQuestion)), target)
+    const q = questionnaire(page('source', ['a', 'b', 'c'].map(yesNoQuestion)), target)
     const answers = new Map(['a', 'b', 'c'].map((id) => [id, [matching ? 'yes' : 'no']]))
     expect(evaluatePage(q, 'target', answers)).toBe(expected)
   })
 
   it.each<[Operator, string[], boolean]>([
-    ['is', ['yes'], true],
-    ['is', ['no'], false],
-    ['isNot', ['no'], true],
-    ['isNot', ['yes'], false],
-    ['isNot', [], false],
-    ['includes', ['no', 'yes'], true],
-    ['includes', ['no'], false],
-    ['excludes', ['no'], true],
-    ['excludes', ['yes'], false],
-    ['excludes', [], false],
+    ['equals', [], false],
+    ['equals', [''], false],
+    ['equals', ['yes'], true],
+    ['equals', ['no'], false],
+    ['not_equals', ['no'], true],
+    ['not_equals', ['yes'], false],
+    ['not_equals', [], false],
+    ['not_equals', [''], false],
+    ['in', [], false],
+    ['in', [''], false],
+    ['in', ['no', 'yes'], true],
+    ['in', ['no'], false],
+    ['not_in', ['no'], true],
+    ['not_in', ['yes'], false],
+    ['not_in', [], false],
+    ['not_in', [''], false],
   ])('%s with %j is %s', (operator, values, expected) => {
     const q = questionnaire(
-      page('source', [booleanQuestion('a')]),
+      page('source', [
+        {
+          ...yesNoQuestion('a'),
+          answer:
+            operator === 'in' || operator === 'not_in'
+              ? {
+                  type: 'choice',
+                  hasMany: true,
+                  options: [
+                    { id: 'yes', label: 'Yes' },
+                    { id: 'no', label: 'No' },
+                  ],
+                }
+              : yesNoQuestion('a').answer,
+        },
+      ]),
       page('target', [], [{ ...condition('a'), operator }]),
     )
     expect(evaluatePage(q, 'target', new Map([['a', values]]))).toBe(expected)
@@ -55,9 +74,9 @@ describe('two-level prerequisites', () => {
 
   it('uses the first question in document order when question ids repeat', () => {
     const q = questionnaire(
-      page('source', [booleanQuestion('a')]),
+      page('source', [yesNoQuestion('a')]),
       page('target', [], [condition('a')]),
-      page('end', [booleanQuestion('a')]),
+      page('end', [yesNoQuestion('a')]),
     )
     expect(evaluatePage(q, 'target', new Map([['a', ['yes']]]))).toBe(true)
   })
@@ -67,9 +86,9 @@ describe('two-level prerequisites', () => {
     // The engine deliberately allows earlier pages only.
     for (const questionId of ['unknown', 'earlier', 'same', 'later']) {
       const q = questionnaire(
-        page('source', [booleanQuestion('earlier')]),
-        page('target', [booleanQuestion('same')], [condition(questionId)]),
-        page('end', [booleanQuestion('later')]),
+        page('source', [yesNoQuestion('earlier')]),
+        page('target', [yesNoQuestion('same')], [condition(questionId)]),
+        page('end', [yesNoQuestion('later')]),
       )
       expect(
         evaluatePage(
@@ -86,7 +105,7 @@ describe('two-level prerequisites', () => {
   })
 
   it('returns false for an unknown page match mode', () => {
-    const source = page('source', [booleanQuestion('a')])
+    const source = page('source', [yesNoQuestion('a')])
     const target = page('target', [], [condition('a')])
     const answers = new Map([['a', ['yes']]])
     expect(evaluatePage(questionnaire(source, target), 'target', answers)).toBe(true)
@@ -100,7 +119,7 @@ describe('two-level prerequisites', () => {
   })
 
   it.each(matchModes)('returns false for an unknown group match mode on an %s page', (match) => {
-    const source = page('source', [booleanQuestion('a')])
+    const source = page('source', [yesNoQuestion('a')])
     const target = { ...page('target', [], [condition('a')]), match }
     const answers = new Map([['a', ['yes']]])
     expect(evaluatePage(questionnaire(source, target), 'target', answers)).toBe(true)
@@ -114,15 +133,15 @@ describe('two-level prerequisites', () => {
   it('rejects text prerequisites and unknown answer types and operators', () => {
     // ohme treated unsupported answer types (including input text) as true.
     // The engine treats them as false. Unknown operators also fail closed.
-    for (const answer of [{ type: 'inputText', prompt: '' }, { type: 'future' }] as Answer[]) {
+    for (const answer of [{ type: 'text', maxLength: 2000 }, { type: 'future' }] as Answer[]) {
       const q = questionnaire(
-        page('source', [{ ...booleanQuestion('a'), answer }]),
+        page('source', [{ ...yesNoQuestion('a'), answer }]),
         page('target', [], [condition('a')]),
       )
       expect(evaluatePage(q, 'target', new Map([['a', ['yes']]]))).toBe(false)
     }
     const q = questionnaire(
-      page('source', [booleanQuestion('a')]),
+      page('source', [yesNoQuestion('a')]),
       page('target', [], [{ ...condition('a'), operator: 'future' as Operator }]),
     )
     expect(evaluatePage(q, 'target', new Map([['a', ['yes']]]))).toBe(false)
@@ -140,51 +159,42 @@ describe('two-level prerequisites', () => {
     }
   })
 
-  it('exposes operators for boolean, single choice, multiple choice and text', () => {
-    expect(operators).toEqual(['is', 'isNot', 'includes', 'excludes'])
+  it('exposes operators for yes/no, single choice, many choices and text', () => {
+    expect(operators).toEqual(['equals', 'not_equals', 'in', 'not_in'])
     expect(matchModes).toEqual(['all', 'any'])
-    expect(operatorsFor(booleanQuestion('a').answer)).toEqual(['is', 'isNot'])
-    expect(
-      operatorsFor({ type: 'multipleChoice', allowMultipleSelection: false, options: [] }),
-    ).toEqual(['is', 'isNot'])
-    expect(
-      operatorsFor({ type: 'multipleChoice', allowMultipleSelection: true, options: [] }),
-    ).toEqual(['includes', 'excludes'])
-    expect(operatorsFor({ type: 'inputText', prompt: '' })).toEqual([])
+    expect(operatorsFor(yesNoQuestion('a').answer)).toEqual(['equals', 'not_equals'])
+    expect(operatorsFor({ type: 'choice', hasMany: false, options: [] })).toEqual([
+      'equals',
+      'not_equals',
+    ])
+    expect(operatorsFor({ type: 'choice', hasMany: true, options: [] })).toEqual(['in', 'not_in'])
+    expect(operatorsFor({ type: 'text', maxLength: 2000 })).toEqual([])
   })
 
   it('evaluates single and multiple choice sources with short and long selections', () => {
-    for (const allowMultipleSelection of [false, true]) {
+    for (const hasMany of [false, true]) {
       const source = {
-        ...booleanQuestion('a'),
+        ...yesNoQuestion('a'),
         answer: {
-          type: 'multipleChoice' as const,
-          allowMultipleSelection,
+          type: 'choice' as const,
+          hasMany,
           options: [{ id: 'yes', label: 'Yes' }],
         },
       }
       const q = questionnaire(
         page('source', [source]),
-        page(
-          'target',
-          [],
-          [{ ...condition('a'), operator: allowMultipleSelection ? 'includes' : 'is' }],
-        ),
+        page('target', [], [{ ...condition('a'), operator: hasMany ? 'in' : 'equals' }]),
       )
       expect(evaluatePage(q, 'target', new Map([['a', ['yes']]]))).toBe(true)
       expect(evaluatePage(q, 'target', new Map([['a', ['no']]]))).toBe(false)
       const values = Array.from({ length: 30 }, (_, i) => String(i))
-      expect(evaluatePage(q, 'target', new Map([['a', [...values, 'yes']]]))).toBe(true)
+      expect(evaluatePage(q, 'target', new Map([['a', [...values, 'yes']]]))).toBe(hasMany)
       expect(evaluatePage(q, 'target', new Map([['a', values]]))).toBe(false)
       const negative = questionnaire(
         q.pages[0],
-        page(
-          'target',
-          [],
-          [{ ...condition('a'), operator: allowMultipleSelection ? 'excludes' : 'isNot' }],
-        ),
+        page('target', [], [{ ...condition('a'), operator: hasMany ? 'not_in' : 'not_equals' }]),
       )
-      expect(evaluatePage(negative, 'target', new Map([['a', values]]))).toBe(true)
+      expect(evaluatePage(negative, 'target', new Map([['a', values]]))).toBe(hasMany)
       expect(evaluatePage(negative, 'target', new Map([['a', [...values, 'yes']]]))).toBe(false)
     }
   })
@@ -205,7 +215,7 @@ describe('two-level prerequisites', () => {
 
   it('combines partially matching groups and conditions', () => {
     const target = page('target')
-    const q = questionnaire(page('source', ['a', 'b', 'c'].map(booleanQuestion)), target)
+    const q = questionnaire(page('source', ['a', 'b', 'c'].map(yesNoQuestion)), target)
     const answers = new Map([
       ['a', ['yes']],
       ['b', ['no']],
