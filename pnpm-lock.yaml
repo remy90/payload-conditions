@@ -13,6 +13,9 @@ importers:
       '@payloadcms/db-sqlite':
         specifier: 3.94.0
         version: 3.94.0(payload@3.94.0(graphql@16.15.0)(typescript@5.9.3))
+      '@payloadcms/live-preview-react':
+        specifier: 3.94.0
+        version: 3.94.0(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       '@payloadcms/next':
         specifier: 3.94.0
         version: 3.94.0(@types/react@19.3.0)(graphql@16.15.0)(monaco-editor@0.57.0)(next@16.4.6(@types/node@22.20.5)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(sass@1.108.2))(payload@3.94.0(graphql@16.15.0)(typescript@5.9.3))(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(typescript@5.9.3)
@@ -1333,6 +1336,15 @@ packages:
     peerDependencies:
       graphql: ^16.8.1
       payload: 3.94.0
+
+  '@payloadcms/live-preview-react@3.94.0':
+    resolution: {integrity: sha512-USOe8l09Hsg/VfhTv624q7dgxxvdmplzut5kG+pwlKIlQ0OsVFN3CSjklaXw1/2Cf+vz0sGvD+NPZJW8/LbcYQ==}
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ~19.0.9 || ~19.1.10 || ~19.2.9 || ^19.3.1
+      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || ~19.0.9 || ~19.1.10 || ~19.2.9 || ^19.3.1
+
+  '@payloadcms/live-preview@3.94.0':
+    resolution: {integrity: sha512-3BLusNlvVgq2+H2xzJmkhWWYKRy61ucvbwpkNPhisTVQxz2Twl8X0iwVV4Dz0oeqMcycfAgGj/lVbgH2Y6qi0g==}
 
   '@payloadcms/next@3.94.0':
     resolution: {integrity: sha512-2A2Mw2cLYoI6KbjgxdID4DrgcDvBCbnZQXJxsEwYFiorX63ofe5YBuoryTO6H/K6vZQryvuOinLsLmDygLaMAw==}
@@ -4316,6 +4328,14 @@ snapshots:
       tsx: 4.23.15
     transitivePeerDependencies:
       - typescript
+
+  '@payloadcms/live-preview-react@3.94.0(react-dom@19.3.1(react@19.3.1))(react@19.3.1)':
+    dependencies:
+      '@payloadcms/live-preview': 3.94.0
+      react: 19.3.1
+      react-dom: 19.3.1(react@19.3.1)
+
+  '@payloadcms/live-preview@3.94.0': {}
 
   '@payloadcms/next@3.94.0(@types/react@19.3.0)(graphql@16.15.0)(monaco-editor@0.57.0)(next@16.4.6(@types/node@22.20.5)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(sass@1.108.2))(payload@3.94.0(graphql@16.15.0)(typescript@5.9.3))(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(typescript@5.9.3)':
     dependencies:

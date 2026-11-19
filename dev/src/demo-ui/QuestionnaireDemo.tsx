@@ -114,6 +114,7 @@ export function QuestionnaireDemo({ document, logicOpen }: Props) {
     : receiver.visiblePages.findIndex((page) => page.id === receiver.currentPage?.id)
   const headingRef = useRef<HTMLHeadingElement>(null)
   const firstRender = useRef(true)
+  const previousQuestionnaire = useRef(questionnaire)
 
   useEffect(() => {
     if (!embla) return
@@ -122,15 +123,17 @@ export function QuestionnaireDemo({ document, logicOpen }: Props) {
     // Visibility changes require Embla to measure the new slide set.
     // Selection-only changes use the smooth scroll effect below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [embla, visibleKey])
+  }, [embla, visibleKey, questionnaire])
 
   useEffect(() => {
     // Re-measure destination content, including the summary built while its slide was hidden.
     embla?.reInit()
     embla?.scrollTo(selectedIndex, window.matchMedia('(prefers-reduced-motion: reduce)').matches)
     if (firstRender.current) firstRender.current = false
-    else headingRef.current?.focus({ preventScroll: true })
-  }, [embla, selectedIndex])
+    else if (previousQuestionnaire.current === questionnaire)
+      headingRef.current?.focus({ preventScroll: true })
+    previousQuestionnaire.current = questionnaire
+  }, [embla, selectedIndex, questionnaire])
 
   return (
     <main className={styles.app}>

@@ -129,6 +129,8 @@ export const trip: Pick<Questionnaire, 'title' | 'pages'> = {
       [group('access-group', [['travel', 'isNot', 'car']])],
       true,
     ),
-    page('anything', 'Anything else?', [text('notes', 'Anything else we should know?')]),
+    page('anything', 'Anything else?', [
+      text('notes', 'Is there anything else we should know about your travel plans, preferred activities, dietary needs or special requests for this trip?'),
+    ]),
   ],
 }

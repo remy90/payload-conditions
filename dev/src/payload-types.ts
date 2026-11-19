@@ -198,8 +198,8 @@ export interface StandardPage {
 export interface BooleanOptions {
   booleanOptions: {
     trueOption: string;
-    trueId: string;
     falseOption: string;
+    trueId: string;
     falseId: string;
   };
   id?: string | null;
@@ -389,8 +389,8 @@ export interface BooleanOptionsSelect<T extends boolean = true> {
     | T
     | {
         trueOption?: T;
-        trueId?: T;
         falseOption?: T;
+        trueId?: T;
         falseId?: T;
       };
   id?: T;
