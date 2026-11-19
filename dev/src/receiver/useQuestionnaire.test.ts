@@ -7,6 +7,56 @@ import { useQuestionnaire } from './useQuestionnaire'
 afterEach(cleanup)
 const questionnaire = fromPayloadQuestionnaire(trip)
 
+test('a questionnaire swap removing the current page selects its nearest visible predecessor and keeps answers', () => {
+  const { result, rerender } = renderHook((document) => useQuestionnaire(document), {
+    initialProps: questionnaire,
+  })
+  act(() => {
+    result.current.setAnswer('children', ['children-yes'])
+    result.current.setAnswer('travel', ['plane'])
+    result.current.setAnswer('ages', ['under2'])
+  })
+  act(() => result.current.next())
+  act(() => result.current.next())
+  expect(result.current.currentPage?.id).toBe('flight')
+  rerender({ ...questionnaire, pages: questionnaire.pages.filter((page) => page.id !== 'flight') })
+  expect(result.current.currentPage?.id).toBe('children-page')
+  expect(result.current.answers.get('travel')).toEqual(['plane'])
+  expect(result.current.answers.get('ages')).toEqual(['under2'])
+})
+
+test('an added condition hiding the current page selects a visible predecessor and preserves earlier answers', () => {
+  const { result, rerender } = renderHook((document) => useQuestionnaire(document), {
+    initialProps: questionnaire,
+  })
+  act(() => {
+    result.current.setAnswer('children', ['children-no'])
+    result.current.setAnswer('travel', ['plane'])
+  })
+  act(() => result.current.next())
+  expect(result.current.currentPage?.id).toBe('flight')
+  rerender({
+    ...questionnaire,
+    pages: questionnaire.pages.map((page) => page.id === 'flight' ? {
+      ...page,
+      conditionGroups: [{ match: 'all', conditions: [
+        { questionId: 'travel', operator: 'is', answerId: 'train' },
+      ] }],
+    } : page),
+  })
+  expect(result.current.currentPage?.id).toBe('about')
+  expect(result.current.visiblePages.map((page) => page.id)).not.toContain('flight')
+  expect(result.current.answers.get('travel')).toEqual(['plane'])
+})
+
+test('removing the first page selects the first visible page', () => {
+  const { result, rerender } = renderHook((document) => useQuestionnaire(document), {
+    initialProps: questionnaire,
+  })
+  rerender({ ...questionnaire, pages: questionnaire.pages.filter((page) => page.id !== 'about') })
+  expect(result.current.currentPage?.id).toBe('anything')
+})
+
 test('required answers block Next until the current page is complete', () => {
   const { result } = renderHook(() => useQuestionnaire(questionnaire))
   expect(result.current.canContinue).toBe(false)

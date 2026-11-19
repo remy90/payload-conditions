@@ -13,19 +13,35 @@ import {
 
 export function useQuestionnaire(questionnaire: Questionnaire) {
   const initialState = () => ({
+    questionnaire,
     answers: new Map() as Answers,
     pageId: nextPageId(questionnaire, resolveVisibility(questionnaire, new Map()).visiblePageIds),
     finished: false,
   })
   const [state, setState] = useState(initialState)
-  const { visiblePageIds } = resolveVisibility(questionnaire, state.answers)
+  const { visiblePageIds, answers } = resolveVisibility(questionnaire, state.answers)
+  if (state.questionnaire !== questionnaire) {
+    const oldIndex = state.questionnaire.pages.findIndex((page) => page.id === state.pageId)
+    const previous = state.questionnaire.pages
+      .slice(0, Math.max(0, oldIndex))
+      .reverse()
+      .find((page) => visiblePageIds.has(page.id))
+    setState({
+      ...state,
+      questionnaire,
+      pageId:
+        state.pageId && visiblePageIds.has(state.pageId)
+          ? state.pageId
+          : (previous?.id ?? nextPageId(questionnaire, visiblePageIds)),
+    })
+  }
   const visiblePages = questionnaire.pages.filter((page) => visiblePageIds.has(page.id))
   const currentPage = visiblePages.find((page) => page.id === state.pageId)
   const pageIssues = currentPage
-    ? validatePageAnswers(questionnaire, currentPage.id, state.answers)
+    ? validatePageAnswers(questionnaire, currentPage.id, answers)
     : []
   return {
-    answers: state.answers,
+    answers,
     visiblePages,
     currentPage,
     pageIssues,
