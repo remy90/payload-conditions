@@ -23,7 +23,8 @@ plugins: [questionnairePlugin()]
 import { fromPayloadQuestionnaire } from '@remy90/payload-conditions-engine/payload'
 import { applyAnswer, resolveVisibility, validateAnswers } from '@remy90/payload-conditions-engine'
 
-const questionnaire = fromPayloadQuestionnaire(document)
+// doc is a questionnaire document loaded through Payload's Local API.
+const questionnaire = fromPayloadQuestionnaire(doc)
 const initial = resolveVisibility(questionnaire, new Map())
 const next = applyAnswer(questionnaire, initial.answers, 'travel', ['plane'])
 const issues = validateAnswers(questionnaire, next.answers)

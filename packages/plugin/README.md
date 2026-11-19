@@ -134,7 +134,8 @@ Version 0.3 ships English only. Supply overrides under each language key you use
 import { fromPayloadQuestionnaire } from '@remy90/payload-conditions-engine/payload'
 import { resolveVisibility, validateAnswers } from '@remy90/payload-conditions-engine'
 
-const questionnaire = fromPayloadQuestionnaire(document)
+// doc is a questionnaire document loaded through Payload's Local API.
+const questionnaire = fromPayloadQuestionnaire(doc)
 const { visiblePageIds, answers } = resolveVisibility(questionnaire, new Map())
 const issues = validateAnswers(questionnaire, answers)
 ```
