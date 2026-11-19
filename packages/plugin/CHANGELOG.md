@@ -19,10 +19,11 @@ The schema changes without a data migration.
 ### Validation and saves
 
 - Trim authored text before validation. Apply length limits to titles, question labels, names, option labels and placeholders. Require a page, a question per page, a condition per group and two options per choice answer.
-- Generate missing question names from their labels in snake_case. Add numeric suffixes for uniqueness, validate the name format and enforce uniqueness across the questionnaire.
-- Require distinct option labels after trimming and ignoring case. Yes and No labels must differ. Limit Free text `maxLength` to a number from 1 to 10000.
+- Generate missing question names from nonblank labels in snake_case, including in host-composed collections. Add numeric suffixes for uniqueness, validate the name format and enforce uniqueness across the questionnaire.
+- Require distinct option labels after trimming and ignoring case. Yes and No labels must differ. Limit Free text `maxLength` to an integer from 1 to 10000.
 - Normalize missing and duplicate Yes / No answer ids while preserving stored ownership across reordered copies. Update condition references throughout the document. Restored versions use their own id ownership.
 - Run the engine's structural checks when publishing, saving a collection without drafts or enabling `drafts.validate`. Report issues through Payload's inline field errors. Field validation remains skipped for ordinary drafts.
+- Localised publication status (`versions.drafts.localizeStatus`) is unsupported in 0.3.
 - Validate selected operators and current answer options on the server. Offer earlier Yes / No and choice questions as condition sources. Changing the source clears its selected answer and keeps compatible operators.
 - Share a form-state index between condition selects and cache source questions per request for server field validation. Unchanged normalization preserves object references.
 
