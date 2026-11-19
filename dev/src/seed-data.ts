@@ -1,4 +1,7 @@
-import type { StoredQuestionnaire, StoredStandardPage, StoredQuestionAnswerPair, StoredConditionGroup } from '@remy90/payload-conditions-engine/payload'
+import type { Questionnaire, StandardPage } from './payload-types'
+
+type StoredQuestionAnswerPair = NonNullable<StandardPage['questionAnswerPair']>[number]
+type StoredConditionGroup = NonNullable<StandardPage['conditionGroups']>[number]
 
 const bool = (id: string, question: string): StoredQuestionAnswerPair => ({
   id, question, answer: [{ id: `${id}-answer`, blockType: 'booleanOptions', booleanOptions: {
@@ -15,11 +18,11 @@ const text = (id: string, question: string): StoredQuestionAnswerPair => ({
 const group = (id: string, conditions: [string, 'is' | 'isNot' | 'includes', string][], match: 'all' | 'any' = 'all'): StoredConditionGroup => ({
   id, match, conditions: conditions.map(([questionId, operator, answerId], index) => ({ id: `${id}-${index}`, questionId, operator, answerId })),
 })
-const page = (id: string, blockName: string, questionAnswerPair: StoredQuestionAnswerPair[], conditionGroups: StoredConditionGroup[] = [], skippable = false): StoredStandardPage => ({
+const page = (id: string, blockName: string, questionAnswerPair: StoredQuestionAnswerPair[], conditionGroups: StoredConditionGroup[] = [], skippable = false): StandardPage => ({
   id, blockName, blockType: 'standardPage', questionAnswerPair, conditionGroups, match: 'all', skippable,
 })
 
-export const trip: StoredQuestionnaire = {
+export const trip: Pick<Questionnaire, 'title' | 'pages'> = {
   title: 'Plan a trip',
   pages: [
     page('about', 'About you', [
