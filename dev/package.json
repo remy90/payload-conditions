@@ -1,0 +1,38 @@
+{
+  "name": "dev",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build --webpack",
+    "start": "next start",
+    "seed": "payload run src/seed.ts",
+    "payload": "payload",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@payloadcms/db-sqlite": "3.94.0",
+    "@payloadcms/next": "3.94.0",
+    "@payloadcms/ui": "3.94.0",
+    "@remy90/payload-conditions-engine": "workspace:^",
+    "@remy90/payload-conditions-plugin": "workspace:^",
+    "embla-carousel-react": "8.6.0",
+    "embla-carousel-auto-height": "8.6.0",
+    "graphql": "16.15.0",
+    "next": "16.4.6",
+    "payload": "3.94.0",
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
+  },
+  "devDependencies": {
+    "@testing-library/react": "^16.3.0",
+    "@types/node": "^22.0.0",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "^19.2.0",
+    "jsdom": "^28.0.0",
+    "sass": "^1.97.0",
+    "typescript": "5.9.3",
+    "vitest": "^3.2.4"
+  }
+}

@@ -3,9 +3,12 @@
   "private": true,
   "packageManager": "pnpm@10.34.9",
   "scripts": {
-    "build": "pnpm -r build",
-    "typecheck": "pnpm -r typecheck",
-    "test": "pnpm -r test",
-    "release": "pnpm -r build && pnpm -r test && pnpm -r publish --access public"
+    "build": "pnpm --filter './packages/*' -r build",
+    "typecheck": "pnpm --filter './packages/*' -r typecheck",
+    "test": "pnpm --filter './packages/*' -r test",
+    "dev": "pnpm build && pnpm --filter dev dev",
+    "seed": "pnpm build && pnpm --filter dev seed",
+    "dev:seed": "pnpm seed",
+    "release": "pnpm build && pnpm test && pnpm -r publish --access public"
   }
 }
