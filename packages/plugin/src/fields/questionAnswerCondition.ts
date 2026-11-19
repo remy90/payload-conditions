@@ -2,7 +2,10 @@ import { matchModes, type Match } from '@remy90/payload-conditions-engine'
 import type { Field } from 'payload'
 import { label, type TranslationKey } from '../translations/index.js'
 
-export const matchField = (key: TranslationKey, optionLabels: Record<Match, TranslationKey>): Field => ({
+export const matchField = (
+  key: TranslationKey,
+  optionLabels: Record<Match, TranslationKey>,
+): Field => ({
   name: 'match',
   enumName: ({ tableName }) => `e_${tableName}_match`,
   type: 'select',

@@ -9,7 +9,11 @@ import { translate } from '../translations/index.js'
 
 type BlockRowLabelClientProps = ComponentProps<BlockRowLabelClientComponent>
 
-export const QuestionnairePageRowLabel = ({ field, blockType, readOnly = false }: BlockRowLabelClientProps) => {
+export const QuestionnairePageRowLabel = ({
+  field,
+  blockType,
+  readOnly = false,
+}: BlockRowLabelClientProps) => {
   const { path, rowNumber, data } = useRowLabel<{ blockType?: string }>()
   const { config } = useConfig()
   const { t } = useTranslation()
@@ -32,8 +36,11 @@ export const QuestionnairePageRowLabel = ({ field, blockType, readOnly = false }
           color: 'var(--theme-elevation-500)',
         }}
       >
-        {translate({ t }, questions === 1 ? 'questionCountSingle' : 'questionCount', { count: questions })}
-        {groups > 0 && ` · ${translate({ t }, groups === 1 ? 'groupCountSingle' : 'groupCount', { count: groups })}`}
+        {translate({ t }, questions === 1 ? 'questionCountSingle' : 'questionCount', {
+          count: questions,
+        })}
+        {groups > 0 &&
+          ` · ${translate({ t }, groups === 1 ? 'groupCountSingle' : 'groupCount', { count: groups })}`}
       </span>
     </>
   )

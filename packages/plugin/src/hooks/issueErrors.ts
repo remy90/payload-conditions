@@ -1,13 +1,31 @@
 import type { QuestionnaireIssue, QuestionnaireIssueCode } from '@remy90/payload-conditions-engine'
-import { fromPayloadQuestionnaire, type StoredQuestionnaire } from '@remy90/payload-conditions-engine/payload'
+import {
+  fromPayloadQuestionnaire,
+  type StoredQuestionnaire,
+} from '@remy90/payload-conditions-engine/payload'
 import type { ValidationFieldError } from 'payload'
 import { translate, type TranslationContext } from '../translations/index.js'
 
 const fieldCodes = new Set<QuestionnaireIssueCode>([
-  'noPages', 'emptyPage', 'emptyGroup', 'blankText', 'duplicateOptionLabel', 'invalidName', 'duplicateName',
+  'noPages',
+  'emptyPage',
+  'emptyGroup',
+  'blankText',
+  'duplicateOptionLabel',
+  'invalidName',
+  'duplicateName',
 ])
-type Location = { pageId?: string; questionId?: string; optionId?: string; groupId?: string; conditionId?: string; path: string; complete?: boolean }
-const id = (value: unknown): string | undefined => value == null || value === '' ? undefined : String(value)
+type Location = {
+  pageId?: string
+  questionId?: string
+  optionId?: string
+  groupId?: string
+  conditionId?: string
+  path: string
+  complete?: boolean
+}
+const id = (value: unknown): string | undefined =>
+  value == null || value === '' ? undefined : String(value)
 
 export const issueErrors = (
   document: StoredQuestionnaire,
@@ -26,15 +44,21 @@ export const issueErrors = (
     addId(pageId, `${path}.id`)
     for (const [q, question] of (page.questions ?? []).entries()) {
       // Use the adapter's row eligibility so discarded draft rows cannot shift duplicate paths.
-      const adapted = fromPayloadQuestionnaire({ pages: [{ id: '_', blockType: 'page', questions: [question] }] })
+      const adapted = fromPayloadQuestionnaire({
+        pages: [{ id: '_', blockType: 'page', questions: [question] }],
+      })
       if (!adapted.pages[0]?.questions.length) continue
       const questionId = String(question.id)
       const questionPath = `${path}.questions.${q}`
       locations.push({ pageId, questionId, path: questionPath })
       addId(questionId, `${questionPath}.id`)
-      const a = question.answer.findIndex((answer: any) =>
-        answer.blockType === 'choice' || answer.blockType === 'text' ||
-        (answer.blockType === 'yesNo' && id(answer.yesId) !== undefined && id(answer.noId) !== undefined),
+      const a = question.answer.findIndex(
+        (answer: any) =>
+          answer.blockType === 'choice' ||
+          answer.blockType === 'text' ||
+          (answer.blockType === 'yesNo' &&
+            id(answer.yesId) !== undefined &&
+            id(answer.noId) !== undefined),
       )
       const answer = question.answer[a]
       const answerPath = `${questionPath}.answer.${a}`
@@ -62,7 +86,10 @@ export const issueErrors = (
         const conditionId = id(condition.id)
         if (conditionId === undefined) continue
         locations.push({
-          pageId, groupId, conditionId, path: `${groupPath}.conditions.${c}`,
+          pageId,
+          groupId,
+          conditionId,
+          path: `${groupPath}.conditions.${c}`,
           complete: !!(condition.questionId && condition.operator && condition.answerId),
         })
       }
@@ -77,23 +104,43 @@ export const issueErrors = (
       const target = issue.optionId ?? issue.questionId ?? issue.pageId
       path = target === undefined ? undefined : duplicates.get(target)?.shift()
     } else if (issue.conditionId !== undefined || issue.groupId !== undefined) {
-      const location = locations.find((location) =>
-        location.pageId === issue.pageId && location.groupId === issue.groupId &&
-        location.conditionId === issue.conditionId,
+      const location = locations.find(
+        (location) =>
+          location.pageId === issue.pageId &&
+          location.groupId === issue.groupId &&
+          location.conditionId === issue.conditionId,
       )
       if (location?.complete === false) continue
-      const field = issue.code === 'unknownAnswer' ? 'answerId'
-        : issue.code === 'operatorMismatch' ? 'operator'
-          : issue.code === 'contradiction' ? 'operator' : 'questionId'
+      const field =
+        issue.code === 'unknownAnswer'
+          ? 'answerId'
+          : issue.code === 'operatorMismatch'
+            ? 'operator'
+            : issue.code === 'contradiction'
+              ? 'operator'
+              : 'questionId'
       path = location && `${location.path}.${field}`
     } else {
-      const location = locations.find((location) =>
-        location.pageId === issue.pageId && location.questionId === issue.questionId &&
-        location.optionId === issue.optionId && location.groupId === undefined,
+      const location = locations.find(
+        (location) =>
+          location.pageId === issue.pageId &&
+          location.questionId === issue.questionId &&
+          location.optionId === issue.optionId &&
+          location.groupId === undefined,
       )
       path = location && `${location.path}.conditionGroups`
     }
-    if (path) errors.push({ path, message: translate(context, issue.code as Exclude<QuestionnaireIssueCode, 'noPages' | 'emptyPage' | 'emptyGroup' | 'blankText'>) })
+    if (path)
+      errors.push({
+        path,
+        message: translate(
+          context,
+          issue.code as Exclude<
+            QuestionnaireIssueCode,
+            'noPages' | 'emptyPage' | 'emptyGroup' | 'blankText'
+          >,
+        ),
+      })
   }
   return errors
 }

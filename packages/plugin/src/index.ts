@@ -13,20 +13,24 @@ const defineQuestionnairePlugin = definePlugin<QuestionnairePluginOptions>({
   slug: 'questionnaire',
   plugin: ({ config, enabled = true, preview, livePreview }) => {
     if (!enabled) return config
-    const languages = config.i18n?.supportedLanguages ? Object.keys(config.i18n.supportedLanguages) : ['en']
+    const languages = config.i18n?.supportedLanguages
+      ? Object.keys(config.i18n.supportedLanguages)
+      : ['en']
     const translations = Object.fromEntries(languages.map((language) => [language, en]))
     return {
       ...config,
       collections: [
         ...(config.collections ?? []),
-        preview === undefined && livePreview === undefined ? Questionnaires : {
-          ...Questionnaires,
-          admin: {
-            ...Questionnaires.admin,
-            ...(preview !== undefined ? { preview } : {}),
-            ...(livePreview !== undefined ? { livePreview } : {}),
-          },
-        },
+        preview === undefined && livePreview === undefined
+          ? Questionnaires
+          : {
+              ...Questionnaires,
+              admin: {
+                ...Questionnaires.admin,
+                ...(preview !== undefined ? { preview } : {}),
+                ...(livePreview !== undefined ? { livePreview } : {}),
+              },
+            },
       ],
       i18n: {
         ...config.i18n,

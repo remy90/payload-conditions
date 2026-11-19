@@ -50,10 +50,7 @@ const readAnswer = (
     }
     return {
       answer: { type: 'yesNo', yes: yesLabel, no: noLabel },
-      options: [
-        ...option(yesLabel.id, yesLabel.label),
-        ...option(noLabel.id, noLabel.label),
-      ],
+      options: [...option(yesLabel.id, yesLabel.label), ...option(noLabel.id, noLabel.label)],
     }
   }
   if (type === 'choice') {
@@ -102,7 +99,9 @@ const buildPages = (fields: FormState, root: string): PagesIndex => {
       })
       pages.eligible.push({
         value: id,
-        label: stringValue(fields, `${path}.label`) ?? translate({}, 'questionNumber', { number: pages.eligible.length + 1 }),
+        label:
+          stringValue(fields, `${path}.label`) ??
+          translate({}, 'questionNumber', { number: pages.eligible.length + 1 }),
       })
     }
     pages.ends.push(pages.eligible.length)

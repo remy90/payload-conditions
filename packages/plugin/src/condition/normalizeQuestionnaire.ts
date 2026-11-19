@@ -1,5 +1,8 @@
-import { operatorsFor } from '@remy90/payload-conditions-engine'
-import { fromPayloadQuestionnaire, type StoredQuestionnaire } from '@remy90/payload-conditions-engine/payload'
+import { operatorsFor, type Operator } from '@remy90/payload-conditions-engine'
+import {
+  fromPayloadQuestionnaire,
+  type StoredQuestionnaire,
+} from '@remy90/payload-conditions-engine/payload'
 import { normalizeYesNoIds } from '../blocks/Answers/normalizeYesNoIds.js'
 import { normalizeOperator } from './normalizeOperator.js'
 
@@ -12,26 +15,39 @@ export const normalizeQuestionnaire = (
   const normalized = normalizeYesNoIds(document, createId, options)
   const data = normalized as Record<string, unknown>
   const source = options.blocksField ? data?.[options.blocksField] : data?.pages
-  const questions = fromPayloadQuestionnaire({ pages: source } as StoredQuestionnaire).pages
-    .flatMap((page) => page.questions)
-  const allowed = new Map()
+  const questions = fromPayloadQuestionnaire({
+    pages: source,
+  } as StoredQuestionnaire).pages.flatMap((page) => page.questions)
+  const allowed = new Map<string, readonly Operator[]>()
   for (const question of questions)
     if (!allowed.has(question.id)) allowed.set(question.id, operatorsFor(question.answer))
-  const visit = (value: any, condition = false): any => {
+  const visit = (
+    value: unknown,
+    mode: 'document' | 'group' | 'condition' = 'document',
+  ): unknown => {
     if (Array.isArray(value)) {
-      const result = value.map((child) => visit(child, condition))
+      const result = value.map((child) => visit(child, mode))
       return result.some((child, i) => child !== value[i]) ? result : value
     }
     if (!value || typeof value !== 'object') return value
-    let result = value
-    if (condition && allowed.has(value.questionId)) {
-      const operator = normalizeOperator(value.operator, allowed.get(value.questionId))
-      if (operator !== value.operator) result = { ...value, operator }
+    const record = value as Record<string, unknown>
+    let result = record
+    const operators =
+      typeof record.questionId === 'string' ? allowed.get(record.questionId) : undefined
+    if (mode === 'condition' && operators) {
+      const operator = normalizeOperator(record.operator, operators)
+      if (operator !== record.operator) result = { ...record, operator }
     }
-    for (const [key, child] of Object.entries(value)) {
-      const next = visit(child, key === 'conditions' && Array.isArray(child))
+    for (const [key, child] of Object.entries(record)) {
+      const nextMode =
+        key === 'conditionGroups'
+          ? 'group'
+          : mode === 'group' && key === 'conditions'
+            ? 'condition'
+            : 'document'
+      const next = visit(child, nextMode)
       if (next !== child) {
-        if (result === value) result = { ...value }
+        if (result === record) result = { ...record }
         result[key] = next
       }
     }

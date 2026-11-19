@@ -4,7 +4,12 @@ import { questionnairePlugin, Questionnaires } from '../src/index.js'
 
 const baseConfig: Config = {
   secret: 'test',
-  db: { defaultIDType: 'text', init: () => { throw new Error('Unexpected database initialization') } },
+  db: {
+    defaultIDType: 'text',
+    init: () => {
+      throw new Error('Unexpected database initialization')
+    },
+  },
 }
 
 describe('questionnairePlugin', () => {
@@ -25,21 +30,29 @@ describe('questionnairePlugin', () => {
     expect(config.i18n).toBeUndefined()
   })
 
-  it.each(['preview', 'livePreview', 'both'])('accepts %s options without mutating defaults', async (mode) => {
-    const options = {
-      ...(mode !== 'livePreview' ? { preview: () => '/preview' } : {}),
-      ...(mode !== 'preview' ? { livePreview: { url: '/live' } } : {}),
-    }
-    const result = await questionnairePlugin(options)(baseConfig)
-    expect(result.collections?.[0]?.admin).toEqual({ ...Questionnaires.admin, ...options })
-    expect(Questionnaires.admin?.preview).toBeUndefined()
-    expect(Questionnaires.admin?.livePreview).toBeUndefined()
-  })
+  it.each(['preview', 'livePreview', 'both'])(
+    'accepts %s options without mutating defaults',
+    async (mode) => {
+      const options = {
+        ...(mode !== 'livePreview' ? { preview: () => '/preview' } : {}),
+        ...(mode !== 'preview' ? { livePreview: { url: '/live' } } : {}),
+      }
+      const result = await questionnairePlugin(options)(baseConfig)
+      expect(result.collections?.[0]?.admin).toEqual({ ...Questionnaires.admin, ...options })
+      expect(Questionnaires.admin?.preview).toBeUndefined()
+      expect(Questionnaires.admin?.livePreview).toBeUndefined()
+    },
+  )
 
   it('merges English defaults with host translation overrides', async () => {
-    const result = await questionnairePlugin()({ ...baseConfig, i18n: {
-      translations: { en: { 'plugin-questionnaire': { title: 'Survey title' } } },
-    } })
-    expect(result.i18n?.translations?.en).toMatchObject({ 'plugin-questionnaire': { title: 'Survey title', pages: 'Pages' } })
+    const result = await questionnairePlugin()({
+      ...baseConfig,
+      i18n: {
+        translations: { en: { 'plugin-questionnaire': { title: 'Survey title' } } },
+      },
+    })
+    expect(result.i18n?.translations?.en).toMatchObject({
+      'plugin-questionnaire': { title: 'Survey title', pages: 'Pages' },
+    })
   })
 })

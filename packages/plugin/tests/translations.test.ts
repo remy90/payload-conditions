@@ -7,9 +7,14 @@ import { en } from '../src/translations/languages/en.js'
 import { translate } from '../src/translations/index.js'
 
 const root = fileURLToPath(new URL('../src/', import.meta.url))
-const sourceFiles = (path: string): string[] => readdirSync(path, { withFileTypes: true }).flatMap((entry) =>
-  entry.isDirectory() ? sourceFiles(`${path}/${entry.name}`) : /\.tsx?$/.test(entry.name) ? [`${path}/${entry.name}`] : [],
-)
+const sourceFiles = (path: string): string[] =>
+  readdirSync(path, { withFileTypes: true }).flatMap((entry) =>
+    entry.isDirectory()
+      ? sourceFiles(`${path}/${entry.name}`)
+      : /\.tsx?$/.test(entry.name)
+        ? [`${path}/${entry.name}`]
+        : [],
+  )
 
 it('resolves every translation key used by schema callbacks and source code', () => {
   const keys = new Set<string>()
@@ -21,7 +26,10 @@ it('resolves every translation key used by schema callbacks and source code', ()
     return key
   }
   const walk = (value: unknown, name = '') => {
-    if (typeof value === 'function' && ['label', 'description', 'singular', 'plural'].includes(name)) {
+    if (
+      typeof value === 'function' &&
+      ['label', 'description', 'singular', 'plural'].includes(name)
+    ) {
       value({ t: check })
     } else if (value && typeof value === 'object') {
       for (const [key, child] of Object.entries(value)) walk(child, key)
@@ -31,17 +39,24 @@ it('resolves every translation key used by schema callbacks and source code', ()
   for (const file of sourceFiles(root)) {
     const source = readFileSync(file, 'utf8')
     expect(source, file).not.toMatch(/placeholder="[^"]+"/)
-    for (const match of source.matchAll(/(?:label\(|translate\([^,]+,\s*)'([^']+)'/g)) check(`plugin-questionnaire:${match[1]}`)
+    for (const match of source.matchAll(/(?:label\(|translate\([^,]+,\s*)'([^']+)'/g))
+      check(`plugin-questionnaire:${match[1]}`)
     for (const match of source.matchAll(/plugin-questionnaire:([a-zA-Z_]+)/g)) check(match[0])
   }
   for (const key of operators) check(`plugin-questionnaire:${key}`)
-  for (const key of questionnaireIssueCodes.filter((key) => !['noPages', 'emptyPage', 'emptyGroup', 'blankText'].includes(key))) check(`plugin-questionnaire:${key}`)
+  for (const key of questionnaireIssueCodes.filter(
+    (key) => !['noPages', 'emptyPage', 'emptyGroup', 'blankText'].includes(key),
+  ))
+    check(`plugin-questionnaire:${key}`)
   expect(keys.size).toBeGreaterThan(50)
 })
 
 it('uses the host translator for validation messages and interpolation', () => {
   const calls: unknown[] = []
-  const t = (key: string, options?: Record<string, unknown>) => { calls.push([key, options]); return 'Translated' }
+  const t = (key: string, options?: Record<string, unknown>) => {
+    calls.push([key, options])
+    return 'Translated'
+  }
   expect(translate({ req: { t } }, 'tooLong', { max: 64 })).toBe('Translated')
   expect(calls).toEqual([['plugin-questionnaire:tooLong', { max: 64 }]])
 })

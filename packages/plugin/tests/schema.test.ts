@@ -12,7 +12,8 @@ const named = (fields: Field[], name: string): any => {
   if (!field) throw new Error(`Missing field ${name}`)
   return field
 }
-const flattened = (fields: Field[]): Field[] => fields.flatMap((field) => field.type === 'row' ? field.fields : [field])
+const flattened = (fields: Field[]): Field[] =>
+  fields.flatMap((field) => (field.type === 'row' ? field.fields : [field]))
 
 describe('stored schema', () => {
   it('uses the contracted collection, block slugs and generated interface names', () => {
@@ -20,8 +21,15 @@ describe('stored schema', () => {
     expect(Questionnaires.versions).toEqual({ drafts: true })
     expect(QuestionnairePage.slug).toBe('page')
     expect(QuestionnairePage.interfaceName).toBe('QuestionnairePage')
-    expect([yesNoAnswerBlock, choiceAnswerBlock, textAnswerBlock].map(({ slug, interfaceName }) => [slug, interfaceName])).toEqual([
-      ['yesNo', 'YesNoAnswer'], ['choice', 'ChoiceAnswer'], ['text', 'TextAnswer'],
+    expect(
+      [yesNoAnswerBlock, choiceAnswerBlock, textAnswerBlock].map(({ slug, interfaceName }) => [
+        slug,
+        interfaceName,
+      ]),
+    ).toEqual([
+      ['yesNo', 'YesNoAnswer'],
+      ['choice', 'ChoiceAnswer'],
+      ['text', 'TextAnswer'],
     ])
     const answer = named(named(QuestionnairePage.fields, 'questions').fields, 'answer')
     expect(answer.minRows).toBe(1)
@@ -37,7 +45,12 @@ describe('stored schema', () => {
     expect(named(QuestionnairePage.fields, 'skippable').defaultValue).toBe(false)
     expect(named(choiceAnswerBlock.fields, 'hasMany').defaultValue).toBe(false)
     expect(named(choiceAnswerBlock.fields, 'options')).toMatchObject({ minRows: 2, required: true })
-    expect(named(textAnswerBlock.fields, 'maxLength')).toMatchObject({ min: 1, max: 10000, defaultValue: 2000, required: true })
+    expect(named(textAnswerBlock.fields, 'maxLength')).toMatchObject({
+      min: 1,
+      max: 10000,
+      defaultValue: 2000,
+      required: true,
+    })
     expect(named(textAnswerBlock.fields, 'placeholder').required).toBe(false)
     const groups = named(QuestionnairePage.fields, 'conditionGroups')
     expect(named(groups.fields, 'conditions')).toMatchObject({ minRows: 1, required: true })

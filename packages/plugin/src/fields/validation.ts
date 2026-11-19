@@ -1,13 +1,22 @@
 import type { FieldHook, TextField } from 'payload'
-import { label, translate, type TranslationContext } from '../translations/index.js'
+import {
+  label,
+  translate,
+  type TranslationContext,
+  type TranslationKey,
+} from '../translations/index.js'
 
 type Context = TranslationContext & {
   data?: unknown
   path?: (string | number)[]
   siblingData?: Record<string, unknown>
 }
-const at = (data: unknown, path: (string | number)[]): any =>
-  path.reduce<any>((value, key) => value?.[key], data)
+const at = (data: unknown, path: (string | number)[]): unknown =>
+  path.reduce<unknown>(
+    (value, key) =>
+      value && typeof value === 'object' ? (value as Record<string, unknown>)[key] : undefined,
+    data,
+  )
 
 export const validateName = (value: unknown, context: Context): true | string => {
   const valid = textValidator({ required: true, maxLength: 64 })(value, context)
@@ -20,7 +29,8 @@ export const validateName = (value: unknown, context: Context): true | string =>
     for (const [p, page] of pages.entries()) {
       for (const [q, question] of (page?.questions ?? []).entries()) {
         if (String(p) === String(path.at(-4)) && String(q) === String(path.at(-2))) continue
-        if (question.name?.trim() === name) return translate(context, 'duplicateName')
+        if (typeof question.name === 'string' && question.name.trim() === name)
+          return translate(context, 'duplicateName')
       }
     }
   }
@@ -33,27 +43,37 @@ export const validateOptionLabel = (value: unknown, context: Context): true | st
   const path = context.path ?? []
   const options = at(context.data, path.slice(0, -2))
   const label = String(value).trim().toLowerCase()
-  return Array.isArray(options) && options.some((option, index) =>
-    String(index) !== String(path.at(-2)) && option.label?.trim().toLowerCase() === label,
-  ) ? translate(context, 'duplicateOptionLabel') : true
+  return Array.isArray(options) &&
+    options.some(
+      (option, index) =>
+        String(index) !== String(path.at(-2)) &&
+        typeof option.label === 'string' &&
+        option.label.trim().toLowerCase() === label,
+    )
+    ? translate(context, 'duplicateOptionLabel')
+    : true
 }
 
-export const validateYesNoLabel = (key: 'yesLabel' | 'noLabel') =>
+export const validateYesNoLabel =
+  (key: 'yesLabel' | 'noLabel') =>
   (value: unknown, context: Context): true | string => {
     const valid = textValidator({ required: true, maxLength: 200 })(value, context)
     if (valid !== true) return valid
     const other = context.siblingData?.[key === 'yesLabel' ? 'noLabel' : 'yesLabel']
-    return typeof other === 'string' && other.trim().toLowerCase() === String(value).trim().toLowerCase()
-      ? translate(context, 'duplicateOptionLabel') : true
+    return typeof other === 'string' &&
+      other.trim().toLowerCase() === String(value).trim().toLowerCase()
+      ? translate(context, 'duplicateOptionLabel')
+      : true
   }
 
 export const validateMaxLength = (value: unknown, context: TranslationContext): true | string =>
   typeof value === 'number' && Number.isFinite(value) && value >= 1 && value <= 10000
-    ? true : translate(context, 'invalidMaxLength')
+    ? true
+    : translate(context, 'invalidMaxLength')
 
 export const textField = (
   name: string,
-  key: Parameters<typeof import('../translations/index.js').label>[0],
+  key: TranslationKey,
   maxLength: number,
   required = false,
 ): TextField => ({
@@ -66,8 +86,7 @@ export const textField = (
   validate: textValidator({ required, maxLength }),
 })
 
-export const trimText: FieldHook = ({ value }) =>
-  typeof value === 'string' ? value.trim() : value
+export const trimText: FieldHook = ({ value }) => (typeof value === 'string' ? value.trim() : value)
 
 export const textValidator =
   ({ required = false, maxLength }: { required?: boolean; maxLength: number }) =>

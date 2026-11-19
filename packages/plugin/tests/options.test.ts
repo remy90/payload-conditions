@@ -41,9 +41,9 @@ describe('answer options', () => {
       buildAnswerOptions(
         answerState({
           blockType: 'yesNo',
-          'yesLabel': 'Yes',
-          'noId': 'no-id',
-          'noLabel': {},
+          yesLabel: 'Yes',
+          noId: 'no-id',
+          noLabel: {},
         }),
         answerPath,
       ),
@@ -55,8 +55,8 @@ describe('answer options', () => {
     (blockType) => {
       const fields = answerState({
         blockType,
-        'yesLabel': 'First answer',
-        'yesId': 'first-answer',
+        yesLabel: 'First answer',
+        yesId: 'first-answer',
       })
       Object.assign(
         fields,
@@ -87,8 +87,8 @@ describe('answer options', () => {
   it('limits answers to the selected earlier question', () => {
     const fields = answerState({
       blockType: 'yesNo',
-      'yesLabel': 'First answer',
-      'yesId': 'first-answer',
+      yesLabel: 'First answer',
+      yesId: 'first-answer',
     })
     Object.assign(
       fields,
@@ -125,8 +125,8 @@ describe('answer options', () => {
         blockType,
         placeholder: 'Text',
         id: 'text-id',
-        'yesLabel': 'Yes',
-        'yesId': 'yes-id',
+        yesLabel: 'Yes',
+        yesId: 'yes-id',
       })
       const nested = Object.fromEntries(
         Object.entries(fields).map(([path, value]) => [
@@ -185,10 +185,7 @@ describe('answer options', () => {
     'ignores malformed multiple choice counts: %s',
     (count) => {
       expect(
-        buildAnswerOptions(
-          answerState({ blockType: 'choice', options: count }),
-          answerPath,
-        ),
+        buildAnswerOptions(answerState({ blockType: 'choice', options: count }), answerPath),
       ).toEqual([])
     },
   )
@@ -204,12 +201,14 @@ describe('answer options', () => {
 
   it('offers fresh boolean ids created by the field defaults before any validation hook', () => {
     const values: Record<string, unknown> = { blockType: 'yesNo' }
-    for (const field of yesNoAnswerBlock.fields.flatMap((field) => field.type === 'row' ? field.fields : [field])) {
-        if (!('name' in field) || !('defaultValue' in field)) continue
-        values[`${field.name}`] =
-          typeof field.defaultValue === 'function'
-            ? Reflect.apply(field.defaultValue, undefined, [])
-            : field.defaultValue
+    for (const field of yesNoAnswerBlock.fields.flatMap((field) =>
+      field.type === 'row' ? field.fields : [field],
+    )) {
+      if (!('name' in field) || !('defaultValue' in field)) continue
+      values[`${field.name}`] =
+        typeof field.defaultValue === 'function'
+          ? Reflect.apply(field.defaultValue, undefined, [])
+          : field.defaultValue
     }
     const options = buildAnswerOptions(answerState(values), answerPath)
     expect(options).toEqual([
@@ -222,10 +221,10 @@ describe('answer options', () => {
   it('offers both boolean answers from the selected question before saving', () => {
     const fields = answerState({
       blockType: 'yesNo',
-      'yesLabel': 'Yes',
-      'yesId': 'unsaved-yes',
-      'noLabel': 'No',
-      'noId': 'unsaved-no',
+      yesLabel: 'Yes',
+      yesId: 'unsaved-yes',
+      noLabel: 'No',
+      noId: 'unsaved-no',
     })
     expect(buildAnswerOptions(fields, answerPath)).toEqual([
       { label: 'Yes', value: 'unsaved-yes' },
@@ -311,8 +310,8 @@ describe('shared form index', () => {
 
   it('supports Payload row metadata for question ids and block types', () => {
     const fields = answerState({
-      'yesId': 'yes',
-      'yesLabel': 'Yes',
+      yesId: 'yes',
+      yesLabel: 'Yes',
     })
     delete fields['pages.0.questions.0.id']
     fields['pages.0.questions'] = { rows: [{ id: 'question-id' }] }

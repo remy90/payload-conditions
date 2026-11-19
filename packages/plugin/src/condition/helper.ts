@@ -12,7 +12,11 @@ export const selectedOptionValue = (option: unknown): string | null =>
     ? option.value
     : null
 
-export const questionRowLabel = (question: unknown, rowNumber?: number, context: TranslationContext = {}): string =>
+export const questionRowLabel = (
+  question: unknown,
+  rowNumber?: number,
+  context: TranslationContext = {},
+): string =>
   typeof question === 'string' && question
     ? question
     : translate(context, 'questionNumber', { number: (rowNumber ?? 0) + 1 })

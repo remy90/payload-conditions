@@ -12,7 +12,10 @@ export const questions: Field = {
   minRows: 1,
   required: true,
   fields: [
-    { ...textField('label', 'question', 500, true), admin: { description: label('questionDescription') } },
+    {
+      ...textField('label', 'question', 500, true),
+      admin: { description: label('questionDescription') },
+    },
     { ...textField('name', 'name', 64, true), validate: validateName },
     {
       name: 'required',

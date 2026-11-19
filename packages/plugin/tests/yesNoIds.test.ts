@@ -5,7 +5,10 @@ import { questionnaireBeforeChange, Questionnaires, QuestionnairePage } from '..
 
 const boolean = (yesId?: unknown, noId?: unknown) => ({
   blockType: 'yesNo',
-   yesLabel: 'Yes', noLabel: 'No', yesId, noId ,
+  yesLabel: 'Yes',
+  noLabel: 'No',
+  yesId,
+  noId,
 })
 const page = (...answers: ReturnType<typeof boolean>[]) => ({
   blockType: 'page',
@@ -194,7 +197,8 @@ describe('collection boolean id hook', () => {
                 {
                   id: 'answer',
                   blockType: 'yesNo',
-                   yesId: expect.any(String), noId: expect.any(String) ,
+                  yesId: expect.any(String),
+                  noId: expect.any(String),
                 },
               ],
             },
@@ -343,21 +347,20 @@ describe('boolean answer ids', () => {
   })
 
   it('treats true and false ids as one namespace and fills a missing group', () => {
-    expect(
-      normalizeYesNoIds([boolean('shared', 'shared'), { blockType: 'yesNo' }], ids()),
-    ).toEqual([
-      boolean('shared', 'generated-1'),
-      {
-        blockType: 'yesNo',
-         yesId: 'generated-2', noId: 'generated-3' ,
-      },
-    ])
+    expect(normalizeYesNoIds([boolean('shared', 'shared'), { blockType: 'yesNo' }], ids())).toEqual(
+      [
+        boolean('shared', 'generated-1'),
+        {
+          blockType: 'yesNo',
+          yesId: 'generated-2',
+          noId: 'generated-3',
+        },
+      ],
+    )
   })
 
   it('does not generate an id that belongs to a later answer', () => {
-    expect(
-      normalizeYesNoIds({ pages: [page(boolean(undefined, 'generated-1'))] }, ids()),
-    ).toEqual({
+    expect(normalizeYesNoIds({ pages: [page(boolean(undefined, 'generated-1'))] }, ids())).toEqual({
       pages: [page(boolean('generated-2', 'generated-1'))],
     })
   })

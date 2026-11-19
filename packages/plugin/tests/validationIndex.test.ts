@@ -16,9 +16,7 @@ describe('request validation index', () => {
         return [
           {
             id: 'q',
-            answer: [
-              { blockType: 'yesNo',  yesId: 'yes', noId: 'no'  },
-            ],
+            answer: [{ blockType: 'yesNo', yesId: 'yes', noId: 'no' }],
           },
         ]
       },
@@ -69,7 +67,8 @@ describe('request validation index', () => {
               answer: [
                 {
                   blockType: 'yesNo',
-                   yesId: 'yes', noId: 'no' ,
+                  yesId: 'yes',
+                  noId: 'no',
                 },
               ],
             },

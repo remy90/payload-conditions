@@ -16,9 +16,7 @@ const context = (questionId = 'choice', pageIndex = '1') => ({
           },
           {
             id: 'bool',
-            answer: [
-              { blockType: 'yesNo',  yesId: 'yes', noId: 'no'  },
-            ],
+            answer: [{ blockType: 'yesNo', yesId: 'yes', noId: 'no' }],
           },
         ],
       },

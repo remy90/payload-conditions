@@ -54,7 +54,8 @@ export const en = {
     requiredText: 'Enter a value.',
     invalidText: 'Enter text.',
     tooLong: 'Use at most {{max}} characters.',
-    invalidName: 'Use a lowercase name starting with a letter, followed by letters, digits or underscores.',
+    invalidName:
+      'Use a lowercase name starting with a letter, followed by letters, digits or underscores.',
     duplicateName: 'Question names must be unique.',
     duplicateOptionLabel: 'Option labels must be unique within a question.',
     invalidMaxLength: 'Enter a number from 1 to 10000.',

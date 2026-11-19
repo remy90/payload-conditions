@@ -3,7 +3,7 @@ import { validateConditionOperator } from '../src/condition/validateOperator.js'
 
 const bool = {
   id: 'boolean',
-  answer: [{ blockType: 'yesNo',  yesId: 'yes', noId: 'no'  }],
+  answer: [{ blockType: 'yesNo', yesId: 'yes', noId: 'no' }],
 }
 const choice = (hasMany: boolean) => ({
   id: 'choice',
@@ -38,7 +38,9 @@ const validate = (
 
 describe('operator field validation', () => {
   it('supports Payload field-state builds that omit the path', () => {
-    expect(validateConditionOperator('equals', { siblingData: { questionId: 'boolean' } })).toBe(true)
+    expect(validateConditionOperator('equals', { siblingData: { questionId: 'boolean' } })).toBe(
+      true,
+    )
     expect(validateConditionOperator(null, {})).toEqual(expect.any(String))
     expect(validateConditionOperator('1', {})).toEqual(expect.any(String))
   })
@@ -61,19 +63,25 @@ describe('operator field validation', () => {
     expect(validateConditionOperator('in', context)).toBe(true)
   })
 
-  it.each(['equals', 'not_equals'])('accepts %s for single selection and boolean questions', (operator) => {
-    expect(validate(operator)).toBe(true)
-    expect(validate(operator, 'boolean')).toBe(true)
-  })
+  it.each(['equals', 'not_equals'])(
+    'accepts %s for single selection and boolean questions',
+    (operator) => {
+      expect(validate(operator)).toBe(true)
+      expect(validate(operator, 'boolean')).toBe(true)
+    },
+  )
 
   it.each(['in', 'not_in'])('accepts %s after enabling multiple selection', (operator) => {
     expect(validate(operator, 'choice', true)).toBe(true)
     expect(validate(operator)).toEqual(expect.any(String))
   })
 
-  it.each(['equals', 'not_equals'])('rejects stale %s after enabling multiple selection', (operator) => {
-    expect(validate(operator, 'choice', true)).toEqual(expect.any(String))
-  })
+  it.each(['equals', 'not_equals'])(
+    'rejects stale %s after enabling multiple selection',
+    (operator) => {
+      expect(validate(operator, 'choice', true)).toEqual(expect.any(String))
+    },
+  )
 
   it.each([undefined, null, '', '1', 'unknown', ['equals']])(
     'rejects missing or invalid operators: %s',

@@ -7,8 +7,10 @@ export const validateConditionOperator = (
   value: unknown,
   context: ConditionValidationContext,
 ): true | string => {
-  if (value === undefined || value === null || value === '') return translate(context, 'missingOperator')
-  if (!operators.some((operator) => operator === value)) return translate(context, 'invalidOperator')
+  if (value === undefined || value === null || value === '')
+    return translate(context, 'missingOperator')
+  if (!operators.some((operator) => operator === value))
+    return translate(context, 'invalidOperator')
   // Payload omits the path while rebuilding field state. beforeChange supplies it on save.
   if (!context.path?.length) return true
   const question = conditionQuestion(context)

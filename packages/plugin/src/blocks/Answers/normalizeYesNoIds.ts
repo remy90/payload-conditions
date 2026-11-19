@@ -13,10 +13,7 @@ type YesNoSite = {
   questionId?: string
 }
 
-const yesNoSites = (
-  document: unknown,
-  blocksField?: string,
-): YesNoSite[] => {
+const yesNoSites = (document: unknown, blocksField?: string): YesNoSite[] => {
   const sites: YesNoSite[] = []
   const visit = (
     value: unknown,
@@ -144,4 +141,3 @@ export const normalizeYesNoIds = (
   }
   return visit(document)
 }
-

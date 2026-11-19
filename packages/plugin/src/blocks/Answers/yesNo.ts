@@ -22,8 +22,16 @@ export const yesNoAnswerBlock: Block = {
     {
       type: 'row',
       fields: [
-        { ...textField('yesLabel', 'yesLabel', 200, true), defaultValue: 'Yes', validate: validateYesNoLabel('yesLabel') },
-        { ...textField('noLabel', 'noLabel', 200, true), defaultValue: 'No', validate: validateYesNoLabel('noLabel') },
+        {
+          ...textField('yesLabel', 'yesLabel', 200, true),
+          defaultValue: 'Yes',
+          validate: validateYesNoLabel('yesLabel'),
+        },
+        {
+          ...textField('noLabel', 'noLabel', 200, true),
+          defaultValue: 'No',
+          validate: validateYesNoLabel('noLabel'),
+        },
       ],
     },
     idField('yesId'),

@@ -17,4 +17,7 @@ export const translate = (
   )
 }
 
-export const label = (key: TranslationKey): LabelFunction => ({ t }) => translate({ t }, key)
+export const label =
+  (key: TranslationKey): LabelFunction =>
+  ({ t }) =>
+    translate({ t }, key)

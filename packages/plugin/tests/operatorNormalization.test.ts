@@ -8,12 +8,10 @@ const choices = (multiple: boolean) => ({
   blockType: 'choice',
   hasMany: multiple,
 })
-const bool = { blockType: 'yesNo',  yesId: 'yes', noId: 'no'  }
+const bool = { blockType: 'yesNo', yesId: 'yes', noId: 'no' }
 const document = (answer: object, operator: string) => ({
   before: { conditionGroups: [{ conditions: [{ questionId: 'q', answerId: 'yes', operator }] }] },
-  pages: [
-    { id: 'page', blockType: 'page', questions: [{ id: 'q', answer: [answer] }] },
-  ],
+  pages: [{ id: 'page', blockType: 'page', questions: [{ id: 'q', answer: [answer] }] }],
 })
 
 describe('equivalent condition operators', () => {
@@ -53,6 +51,14 @@ describe('equivalent condition operators', () => {
     },
   )
 
+  it('leaves unrelated arrays named conditions unchanged', () => {
+    const source = document(choices(true), 'equals')
+    const data = { ...source, unrelated: { conditions: [{ questionId: 'q', operator: 'equals' }] } }
+    const result = normalizeQuestionnaire(data, () => 'unused') as typeof data
+    expect(result.unrelated).toBe(data.unrelated)
+    expect(result.before.conditionGroups[0].conditions[0].operator).toBe('in')
+  })
+
   it('uses the first question when malformed data repeats an id', () => {
     const data = document(choices(false), 'equals')
     data.pages[0].questions.push({ id: 'q', answer: [choices(true)] })
@@ -60,19 +66,14 @@ describe('equivalent condition operators', () => {
   })
 
   it('combines operator mapping and boolean id rewrites in one save', () => {
-    const data = document(
-      { ...bool,  yesId: 'yes', noId: 'yes'  },
-      'not_in',
-    )
+    const data = document({ ...bool, yesId: 'yes', noId: 'yes' }, 'not_in')
     const result = normalizeQuestionnaire(data, () => 'fresh') as typeof data
     expect(result.before.conditionGroups[0].conditions[0]).toEqual({
       questionId: 'q',
       answerId: 'yes',
       operator: 'not_equals',
     })
-    expect(
-      (result.pages[0].questions[0].answer[0] as typeof bool).noId,
-    ).toBe('fresh')
+    expect((result.pages[0].questions[0].answer[0] as typeof bool).noId).toBe('fresh')
   })
 
   it('derives the displayed value and pending dispatch for the selected question', () => {
