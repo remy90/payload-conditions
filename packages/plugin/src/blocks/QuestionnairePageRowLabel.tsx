@@ -21,13 +21,23 @@ export const QuestionnairePageRowLabel = ({
   const nameEnabled = showBlockName(field, blockType ?? data?.blockType, config.blocksMap)
   const questions = useFormFields(([fields]) => rowCount(fields, `${path}.questions`))
   const groups = useFormFields(([fields]) => rowCount(fields, `${path}.conditionGroups`))
+  const titleError = useFormFields(([fields]) => fields[`${path}.blockName`]?.errorMessage)
 
   return (
     <>
       <span className="blocks-field__block-number">
         {String((rowNumber ?? 0) + 1).padStart(2, '0')}
       </span>
-      {nameEnabled && <SectionTitle path={`${path}.blockName`} readOnly={readOnly} />}
+      {nameEnabled && (
+        <>
+          <SectionTitle path={`${path}.blockName`} readOnly={readOnly} />
+          {titleError && (
+            <span role="alert" style={{ color: 'var(--theme-error-500)' }}>
+              {titleError}
+            </span>
+          )}
+        </>
+      )}
       <span
         style={{
           marginInlineStart: 'auto',
