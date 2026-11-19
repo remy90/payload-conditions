@@ -47,6 +47,16 @@ const generatedNames = (versions: boolean): string[] => {
 }
 
 describe('SQL schema identifiers', () => {
+  it('preserves the page and condition enum names', () => {
+    expect(generatedNames(false)).toEqual(
+      expect.arrayContaining([
+        'e_questionnaire_page_match',
+        'e_questionnaire_page_cg_match',
+        'e_questionnaire_page_cg_cond_op',
+      ]),
+    )
+  })
+
   it.each([false, true])(
     'fits tables and enums within Postgres limits (versions: %s)',
     (versions) => {

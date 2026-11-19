@@ -2,7 +2,7 @@
 
 import type { ComponentProps } from 'react'
 import type { BlockRowLabelClientComponent } from 'payload'
-import { Pill, SectionTitle, useFormFields, useRowLabel } from '@payloadcms/ui'
+import { SectionTitle, useFormFields, useRowLabel } from '@payloadcms/ui'
 import { rowCount } from '../condition/formState.js'
 
 type BlockRowLabelClientProps = ComponentProps<BlockRowLabelClientComponent>
@@ -17,13 +17,6 @@ export const StandardPageRowLabel = ({ readOnly = false }: BlockRowLabelClientPr
       <span className="blocks-field__block-number">
         {String((rowNumber ?? 0) + 1).padStart(2, '0')}
       </span>
-      <Pill
-        className="blocks-field__block-pill blocks-field__block-pill-standardPage"
-        pillStyle="white"
-        size="small"
-      >
-        Standard page
-      </Pill>
       <SectionTitle path={`${path}.blockName`} readOnly={readOnly} />
       <span
         style={{

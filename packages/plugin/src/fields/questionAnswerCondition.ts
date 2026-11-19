@@ -1,12 +1,12 @@
-import { matchModes } from '@remy90/payload-conditions-engine'
+import { matchModes, type Match } from '@remy90/payload-conditions-engine'
 import type { Field } from 'payload'
 
-export const match: Field = {
+export const matchField = (label: string, optionLabels: Record<Match, string>): Field => ({
   name: 'match',
   enumName: ({ tableName }) => `e_${tableName}_match`,
   type: 'select',
   defaultValue: 'all',
-  label: false,
-  options: matchModes.map((value) => ({ label: value === 'all' ? 'All' : 'Any', value })),
+  label,
+  options: matchModes.map((value) => ({ label: optionLabels[value], value })),
   required: true,
-}
+})
