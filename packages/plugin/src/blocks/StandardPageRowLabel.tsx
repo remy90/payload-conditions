@@ -2,13 +2,17 @@
 
 import type { ComponentProps } from 'react'
 import type { BlockRowLabelClientComponent } from 'payload'
-import { SectionTitle, useFormFields, useRowLabel } from '@payloadcms/ui'
+import { SectionTitle, useConfig, useFormFields, useRowLabel } from '@payloadcms/ui'
 import { rowCount } from '../condition/formState.js'
+import { showBlockName } from './blockName.js'
 
 type BlockRowLabelClientProps = ComponentProps<BlockRowLabelClientComponent>
 
-export const StandardPageRowLabel = ({ readOnly = false }: BlockRowLabelClientProps) => {
-  const { path, rowNumber } = useRowLabel()
+export const StandardPageRowLabel = ({ field, blockType, readOnly = false }: BlockRowLabelClientProps) => {
+  const { path, rowNumber, data } = useRowLabel<{ blockType?: string }>()
+  const { config } = useConfig()
+  // Payload 3.94 supplies blockType only to server labels; client labels also read row data.
+  const nameEnabled = showBlockName(field, blockType ?? data?.blockType, config.blocksMap)
   const questions = useFormFields(([fields]) => rowCount(fields, `${path}.questionAnswerPair`))
   const groups = useFormFields(([fields]) => rowCount(fields, `${path}.conditionGroups`))
 
@@ -17,7 +21,7 @@ export const StandardPageRowLabel = ({ readOnly = false }: BlockRowLabelClientPr
       <span className="blocks-field__block-number">
         {String((rowNumber ?? 0) + 1).padStart(2, '0')}
       </span>
-      <SectionTitle path={`${path}.blockName`} readOnly={readOnly} />
+      {nameEnabled && <SectionTitle path={`${path}.blockName`} readOnly={readOnly} />}
       <span
         style={{
           marginInlineStart: 'auto',
