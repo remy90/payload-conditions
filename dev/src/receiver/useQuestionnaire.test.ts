@@ -10,13 +10,21 @@ const questionnaire = fromPayloadQuestionnaire(trip)
 test('excludes requires a multi-select answer and hides dependent pages when the option is selected', () => {
   const document = {
     ...questionnaire,
-    pages: questionnaire.pages.map((page) => page.id === 'anything' ? {
-      ...page,
-      conditionGroups: [{
-        match: 'all' as const,
-        conditions: [{ questionId: 'ages', operator: 'not_in' as const, answerId: 'under2' }],
-      }],
-    } : page),
+    pages: questionnaire.pages.map((page) =>
+      page.id === 'anything'
+        ? {
+            ...page,
+            conditionGroups: [
+              {
+                match: 'all' as const,
+                conditions: [
+                  { questionId: 'ages', operator: 'not_in' as const, answerId: 'under2' },
+                ],
+              },
+            ],
+          }
+        : page,
+    ),
   }
   const { result } = renderHook(() => useQuestionnaire(document))
   const visible = () => result.current.visiblePages.map((page) => page.id)

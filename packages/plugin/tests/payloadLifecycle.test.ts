@@ -48,7 +48,10 @@ const fieldBeforeChange = async (args: FieldChangeArgs) => {
     siblingDocWithLocales: args.docWithLocales,
   })
   if (errors.length)
-    throw new ValidationError({ collection: args.collection!.slug, errors, req: args.req }, args.req.t)
+    throw new ValidationError(
+      { collection: args.collection!.slug, errors, req: args.req },
+      args.req.t,
+    )
   return data
 }
 
@@ -159,42 +162,61 @@ it('reports field validation inline after the sanitized Payload traversal and sk
   await expect(fieldBeforeChange({ ...fields, skipValidation: true })).resolves.toBeDefined()
 })
 
-it.each([false, true])('uses English in a host-composed collection with the plugin disabled: %s', async (disabled) => {
-  const config = await buildConfig({
-    secret: 'test',
-    db: { defaultIDType: 'text', init: () => { throw new Error('Unexpected database initialization') } },
-    plugins: disabled ? [questionnairePlugin({ enabled: false })] : [],
-    collections: [{
-      slug: 'host',
-      hooks: { beforeChange: [questionnaireBeforeChange()] },
-      fields: [{ name: 'pages', type: 'blocks', blocks: [QuestionnairePage] }],
-    }],
-  })
-  const translations = config.i18n.supportedLanguages.en!.translations
-  expect(translations).not.toHaveProperty('plugin-questionnaire')
-  const t = (key: string, vars?: Record<string, unknown>) =>
-    payloadTranslate({ key, vars, translations })
-  const req = { t } as unknown as PayloadRequest
-  const pluralLabel = QuestionnairePage.labels?.plural
-  if (typeof pluralLabel !== 'function') throw new Error('Expected a page label callback')
-  expect(pluralLabel({ t } as never)).toBe('Pages')
-  const title = QuestionnairePage.fields.find((field) => 'name' in field && field.name === 'blockName')!
-  if (title.type !== 'text' || title.hasMany || typeof title.validate !== 'function')
-    throw new Error('Expected a title validator')
-  expect(await title.validate('x'.repeat(121), { req } as never)).toBe('Use at most 120 characters.')
-  expect(translate({ t }, 'questionCount', { count: 1 })).toBe('1 question')
-  expect(translate({ t }, 'questionCount', { count: 2 })).toBe('2 questions')
-  const custom = (key: string, vars?: Record<string, unknown>) => payloadTranslate({
-    key, vars,
-    translations: { ...translations, 'plugin-questionnaire': {
-      ...en['plugin-questionnaire'],
-      questionCount_one: '{{count}} custom question',
-      questionCount_other: '{{count}} custom questions',
-    } },
-  })
-  expect(translate({ t: custom }, 'questionCount', { count: 1 })).toBe('1 custom question')
-  expect(translate({ t: custom }, 'questionCount', { count: 5 })).toBe('5 custom questions')
-})
+it.each([false, true])(
+  'uses English in a host-composed collection with the plugin disabled: %s',
+  async (disabled) => {
+    const config = await buildConfig({
+      secret: 'test',
+      db: {
+        defaultIDType: 'text',
+        init: () => {
+          throw new Error('Unexpected database initialization')
+        },
+      },
+      plugins: disabled ? [questionnairePlugin({ enabled: false })] : [],
+      collections: [
+        {
+          slug: 'host',
+          hooks: { beforeChange: [questionnaireBeforeChange()] },
+          fields: [{ name: 'pages', type: 'blocks', blocks: [QuestionnairePage] }],
+        },
+      ],
+    })
+    const translations = config.i18n.supportedLanguages.en!.translations
+    expect(translations).not.toHaveProperty('plugin-questionnaire')
+    const t = (key: string, vars?: Record<string, unknown>) =>
+      payloadTranslate({ key, vars, translations })
+    const req = { t } as unknown as PayloadRequest
+    const pluralLabel = QuestionnairePage.labels?.plural
+    if (typeof pluralLabel !== 'function') throw new Error('Expected a page label callback')
+    expect(pluralLabel({ t } as never)).toBe('Pages')
+    const title = QuestionnairePage.fields.find(
+      (field) => 'name' in field && field.name === 'blockName',
+    )!
+    if (title.type !== 'text' || title.hasMany || typeof title.validate !== 'function')
+      throw new Error('Expected a title validator')
+    expect(await title.validate('x'.repeat(121), { req } as never)).toBe(
+      'Use at most 120 characters.',
+    )
+    expect(translate({ t }, 'questionCount', { count: 1 })).toBe('1 question')
+    expect(translate({ t }, 'questionCount', { count: 2 })).toBe('2 questions')
+    const custom = (key: string, vars?: Record<string, unknown>) =>
+      payloadTranslate({
+        key,
+        vars,
+        translations: {
+          ...translations,
+          'plugin-questionnaire': {
+            ...en['plugin-questionnaire'],
+            questionCount_one: '{{count}} custom question',
+            questionCount_other: '{{count}} custom questions',
+          },
+        },
+      })
+    expect(translate({ t: custom }, 'questionCount', { count: 1 })).toBe('1 custom question')
+    expect(translate({ t: custom }, 'questionCount', { count: 5 })).toBe('5 custom questions')
+  },
+)
 
 it('fills names deterministically in a host-composed collection with a custom blocks field', async () => {
   const config = await buildConfig({
@@ -276,53 +298,98 @@ it.each([
   ['trash', { deletedAt: '2026-11-17T00:00:00.000Z' }, 'published', false],
   ['status-only publish', { _status: 'published' }, 'draft', true],
   ['pages edit', { editPages: true }, 'published', true],
-] as const)('handles a %s update after Payload fills missing fields', async (_, update, status, fails) => {
-  const config = await buildConfig({
-    secret: 'test',
-    db: { defaultIDType: 'text', init: () => { throw new Error('Unexpected database initialization') } },
-    plugins: [questionnairePlugin()],
-  })
-  const collection = config.collections.find(({ slug }) => slug === 'questionnaires')!
-  const req = { context: {}, payload: { config, collections: {} } } as unknown as PayloadRequest
-  const originalDoc = {
-    title: 'Survey',
-    _status: status,
-    pages: [{
-      id: 'p1', blockType: 'page', skippable: false, match: 'all',
-      questions: [{
-        id: 'q1', name: 'ready', label: 'Ready?', required: true,
-        answer: [{ id: 'a1', blockType: 'yesNo', yesLabel: 'Yes', noLabel: 'No', yesId: 'same', noId: 'same' }],
-      }],
-      conditionGroups: [{
-        id: 'g1', match: 'all',
-        conditions: [{ id: 'c1', questionId: 'q1', operator: 'in', answerId: 'gone' }],
-      }],
-    }],
-  }
-  const data: Record<string, any> = { ...update }
-  if ('editPages' in update) {
-    delete data.editPages
-    data.pages = structuredClone(originalDoc.pages)
-    data.pages[0].questions[0].label = 'Changed question'
-  }
-  await beforeValidateTraverseFields({
-    collection, context: {}, data, doc: originalDoc, fields: collection.fields,
-    global: null, operation: 'update', overrideAccess: true,
-    parentIndexPath: '', parentPath: '', parentSchemaPath: '', req,
-    siblingData: data, siblingDoc: originalDoc,
-  })
-  expect(data.pages).toBeDefined()
-  expect(data._status).toBe('_status' in update ? update._status : status)
-  const result = collection.hooks.beforeChange[0]({
-    collection, context: {}, data, originalDoc, operation: 'update', req,
-  })
-  if (fails) await expect(result).rejects.toBeInstanceOf(ValidationError)
-  else {
-    const saved = await result
-    expect(saved.pages[0].questions[0].answer[0].yesId).toEqual(expect.any(String))
-    expect(saved.pages[0].conditionGroups[0].conditions[0].operator).toBe('equals')
-  }
-})
+] as const)(
+  'handles a %s update after Payload fills missing fields',
+  async (_, update, status, fails) => {
+    const config = await buildConfig({
+      secret: 'test',
+      db: {
+        defaultIDType: 'text',
+        init: () => {
+          throw new Error('Unexpected database initialization')
+        },
+      },
+      plugins: [questionnairePlugin()],
+    })
+    const collection = config.collections.find(({ slug }) => slug === 'questionnaires')!
+    const req = { context: {}, payload: { config, collections: {} } } as unknown as PayloadRequest
+    const originalDoc = {
+      title: 'Survey',
+      _status: status,
+      pages: [
+        {
+          id: 'p1',
+          blockType: 'page',
+          skippable: false,
+          match: 'all',
+          questions: [
+            {
+              id: 'q1',
+              name: 'ready',
+              label: 'Ready?',
+              required: true,
+              answer: [
+                {
+                  id: 'a1',
+                  blockType: 'yesNo',
+                  yesLabel: 'Yes',
+                  noLabel: 'No',
+                  yesId: 'same',
+                  noId: 'same',
+                },
+              ],
+            },
+          ],
+          conditionGroups: [
+            {
+              id: 'g1',
+              match: 'all',
+              conditions: [{ id: 'c1', questionId: 'q1', operator: 'in', answerId: 'gone' }],
+            },
+          ],
+        },
+      ],
+    }
+    const data: Record<string, any> = { ...update }
+    if ('editPages' in update) {
+      delete data.editPages
+      data.pages = structuredClone(originalDoc.pages)
+      data.pages[0].questions[0].label = 'Changed question'
+    }
+    await beforeValidateTraverseFields({
+      collection,
+      context: {},
+      data,
+      doc: originalDoc,
+      fields: collection.fields,
+      global: null,
+      operation: 'update',
+      overrideAccess: true,
+      parentIndexPath: '',
+      parentPath: '',
+      parentSchemaPath: '',
+      req,
+      siblingData: data,
+      siblingDoc: originalDoc,
+    })
+    expect(data.pages).toBeDefined()
+    expect(data._status).toBe('_status' in update ? update._status : status)
+    const result = collection.hooks.beforeChange[0]({
+      collection,
+      context: {},
+      data,
+      originalDoc,
+      operation: 'update',
+      req,
+    })
+    if (fails) await expect(result).rejects.toBeInstanceOf(ValidationError)
+    else {
+      const saved = await result
+      expect(saved.pages[0].questions[0].answer[0].yesId).toEqual(expect.any(String))
+      expect(saved.pages[0].conditionGroups[0].conditions[0].operator).toBe('equals')
+    }
+  },
+)
 
 it.each(
   ['draft', 'published'].flatMap((status) =>
@@ -335,60 +402,107 @@ it.each(
       ['pages', 0, 'conditionGroups', 0, 'conditions'],
     ].map((path) => ({ status, path })),
   ),
-)('passes malformed $path to Payload shape validation on $status saves', async ({ status, path }) => {
-  const config = await buildConfig({
-    secret: 'test',
-    db: { defaultIDType: 'text', init: () => { throw new Error('Unexpected database initialization') } },
-    plugins: [questionnairePlugin()],
-  })
-  const collection = config.collections.find(({ slug }) => slug === 'questionnaires')!
-  const t = (key: string) => key
-  const req = {
-    context: {}, t, i18n: { t, language: 'en' }, payload: { config, collections: {} },
-  } as unknown as PayloadRequest
-  const data: Record<string, any> = {
-    title: 'Survey', _status: status,
-    pages: [{
-      blockType: 'page',
-      questions: [{
-        label: 'Colour', name: 'colour',
-        answer: [{ blockType: 'choice', options: [{ label: 'Red' }, { label: 'Blue' }] }],
-      }],
-      conditionGroups: [{ conditions: [] }],
-    }, {
-      blockType: 'page',
-      questions: [{ label: 'Comment', name: 'comment', answer: [{ blockType: 'text' }] }],
-      conditionGroups: [{ conditions: [{ questionId: 'source', operator: 'equals', answerId: 'red' }] }],
-    }],
-  }
-  let parent: any = data
-  for (const part of path.slice(0, -1)) parent = parent[part]
-  parent[path.at(-1)!] = 'x'
-  await beforeValidateTraverseFields({
-    collection, context: {}, data, doc: {}, fields: collection.fields,
-    global: null, operation: 'create', overrideAccess: true,
-    parentIndexPath: '', parentPath: '', parentSchemaPath: '', req,
-    siblingData: data, siblingDoc: {},
-  })
-  const result = await collection.hooks.beforeChange[0]({
-    collection, context: {}, data, originalDoc: undefined as never, operation: 'create', req,
-  })
-  expect(path.reduce<any>((value, part) => value[part], result), path.join('.')).toBe('x')
-  try {
-    await fieldBeforeChange({
-      collection, context: {}, data: result, doc: {}, docWithLocales: {},
-      global: null, operation: 'create', overrideAccess: true, req,
-      skipValidation: status === 'draft',
+)(
+  'passes malformed $path to Payload shape validation on $status saves',
+  async ({ status, path }) => {
+    const config = await buildConfig({
+      secret: 'test',
+      db: {
+        defaultIDType: 'text',
+        init: () => {
+          throw new Error('Unexpected database initialization')
+        },
+      },
+      plugins: [questionnairePlugin()],
     })
-    expect.fail(`Expected shape validation for ${path.join('.')}`)
-  } catch (error) {
-    expect(error, path.join('.')).toBeInstanceOf(ValidationError)
-    expect((error as ValidationError).status).toBe(400)
-    expect((error as ValidationError).data?.errors).toEqual(expect.arrayContaining([
-      expect.objectContaining({ path: path.join('.'), message: 'validation:invalidInput' }),
-    ]))
-  }
-})
+    const collection = config.collections.find(({ slug }) => slug === 'questionnaires')!
+    const t = (key: string) => key
+    const req = {
+      context: {},
+      t,
+      i18n: { t, language: 'en' },
+      payload: { config, collections: {} },
+    } as unknown as PayloadRequest
+    const data: Record<string, any> = {
+      title: 'Survey',
+      _status: status,
+      pages: [
+        {
+          blockType: 'page',
+          questions: [
+            {
+              label: 'Colour',
+              name: 'colour',
+              answer: [{ blockType: 'choice', options: [{ label: 'Red' }, { label: 'Blue' }] }],
+            },
+          ],
+          conditionGroups: [{ conditions: [] }],
+        },
+        {
+          blockType: 'page',
+          questions: [{ label: 'Comment', name: 'comment', answer: [{ blockType: 'text' }] }],
+          conditionGroups: [
+            { conditions: [{ questionId: 'source', operator: 'equals', answerId: 'red' }] },
+          ],
+        },
+      ],
+    }
+    let parent: any = data
+    for (const part of path.slice(0, -1)) parent = parent[part]
+    parent[path.at(-1)!] = 'x'
+    await beforeValidateTraverseFields({
+      collection,
+      context: {},
+      data,
+      doc: {},
+      fields: collection.fields,
+      global: null,
+      operation: 'create',
+      overrideAccess: true,
+      parentIndexPath: '',
+      parentPath: '',
+      parentSchemaPath: '',
+      req,
+      siblingData: data,
+      siblingDoc: {},
+    })
+    const result = await collection.hooks.beforeChange[0]({
+      collection,
+      context: {},
+      data,
+      originalDoc: undefined as never,
+      operation: 'create',
+      req,
+    })
+    expect(
+      path.reduce<any>((value, part) => value[part], result),
+      path.join('.'),
+    ).toBe('x')
+    try {
+      await fieldBeforeChange({
+        collection,
+        context: {},
+        data: result,
+        doc: {},
+        docWithLocales: {},
+        global: null,
+        operation: 'create',
+        overrideAccess: true,
+        req,
+        skipValidation: status === 'draft',
+      })
+      expect.fail(`Expected shape validation for ${path.join('.')}`)
+    } catch (error) {
+      expect(error, path.join('.')).toBeInstanceOf(ValidationError)
+      expect((error as ValidationError).status).toBe(400)
+      expect((error as ValidationError).data?.errors).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ path: path.join('.'), message: 'validation:invalidInput' }),
+        ]),
+      )
+    }
+  },
+)
 
 it('fills row ids and trims text before collection hooks on create', async () => {
   const config = await buildConfig({

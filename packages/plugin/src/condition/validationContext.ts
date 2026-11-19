@@ -21,7 +21,7 @@ const cacheKey = '__questionnairePluginValidationIndexes'
 
 const buildIndex = (pages: unknown[]): Index => {
   // Read each page once for the shape check and adapter.
-  pages = pages.map((page) => record(page) ? { ...page } : page)
+  pages = pages.map((page) => (record(page) ? { ...page } : page))
   if (hasInvalidQuestionnaireArrays({ pages })) return new Map()
   const positions: number[] = []
   pages.forEach((page, index) => {

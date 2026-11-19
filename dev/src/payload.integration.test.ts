@@ -91,10 +91,13 @@ test('publish-on-create has row ids before the collection hook and blocks a cont
 
 test('a title-only update keeps a published questionnaire published', async () => {
   const saved = await payload.create({
-    collection: 'questionnaires', data: { ...structuredClone(trip), _status: 'published' },
+    collection: 'questionnaires',
+    data: { ...structuredClone(trip), _status: 'published' },
   })
   const updated = await payload.update({
-    collection: 'questionnaires', id: saved.id, data: { title: 'Updated trip' },
+    collection: 'questionnaires',
+    id: saved.id,
+    data: { title: 'Updated trip' },
   })
   expect(updated.title).toBe('Updated trip')
   expect(updated._status).toBe('published')

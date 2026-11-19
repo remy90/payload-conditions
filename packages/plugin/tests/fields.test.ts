@@ -26,10 +26,7 @@ it('checks question names across pages using row paths, including duplicate ids'
 it('keeps name uniqueness errors during form-state validation without a path', () => {
   const siblingData = { id: 'q2', name: 'same' }
   const data = {
-    pages: [
-      { questions: [{ id: 'q1', name: 'same' }] },
-      { questions: [siblingData] },
-    ],
+    pages: [{ questions: [{ id: 'q1', name: 'same' }] }, { questions: [siblingData] }],
   }
   expect(validateName('same', { data, siblingData })).toBe('Question names must be unique.')
   expect(validateName('unique', { data, siblingData })).toBe(true)
@@ -87,7 +84,14 @@ it('fills empty names from labels, reserving explicit names before generating su
 
 it('leaves blank draft labels unnamed until they have text', () => {
   const data = {
-    pages: [{ questions: [{ label: '   ', name: '' }, { label: '!!!', name: '' }] }],
+    pages: [
+      {
+        questions: [
+          { label: '   ', name: '' },
+          { label: '!!!', name: '' },
+        ],
+      },
+    ],
   }
   fillQuestionNames(data)
   expect(data.pages[0].questions.map((question) => question.name)).toEqual(['', 'question'])
@@ -143,9 +147,7 @@ it.each([null, undefined, 42, 'row', false, []])(
     const data = {
       pages: [
         {
-          questions: [
-            { answer: [{ options: [row, { id: 'o1', label: ' Red ' }, siblingData] }] },
-          ],
+          questions: [{ answer: [{ options: [row, { id: 'o1', label: ' Red ' }, siblingData] }] }],
         },
       ],
     }

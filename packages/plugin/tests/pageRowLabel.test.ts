@@ -75,7 +75,10 @@ it('omits the title error when the field is valid or block names are disabled', 
   state.fields['survey.1.blockName'] = { value: 'Long title', errorMessage: 'Title is too long.' }
   const disabled: typeof props = {
     ...props,
-    field: { name: 'survey', blocks: [{ slug: 'page', fields: [], admin: { disableBlockName: true } }] },
+    field: {
+      name: 'survey',
+      blocks: [{ slug: 'page', fields: [], admin: { disableBlockName: true } }],
+    },
   }
   expect(
     elements(QuestionnairePageRowLabel(disabled)).some((element) => element.props.role === 'alert'),

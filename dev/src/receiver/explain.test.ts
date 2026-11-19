@@ -15,10 +15,16 @@ test.each<[Operator, string, string, string[], string, boolean]>([
 ])('explains %s with the engine result', (operator, questionId, answerId, values, text, pass) => {
   const document = {
     ...questionnaire,
-    pages: questionnaire.pages.map((page) => page.id === 'anything' ? {
-      ...page,
-      conditionGroups: [{ match: 'all' as const, conditions: [{ questionId, operator, answerId }] }],
-    } : page),
+    pages: questionnaire.pages.map((page) =>
+      page.id === 'anything'
+        ? {
+            ...page,
+            conditionGroups: [
+              { match: 'all' as const, conditions: [{ questionId, operator, answerId }] },
+            ],
+          }
+        : page,
+    ),
   }
   const explanation = explainPages(document)(new Map([[questionId, values]])).at(-1)
   expect(explanation?.pass).toBe(pass)
@@ -26,11 +32,16 @@ test.each<[Operator, string, string, string[], string, boolean]>([
 })
 
 test('summarizes Yes / No, choice and Free text using question labels', () => {
-  expect(answerLabels(questionnaire, new Map([
-    ['children', ['children-yes']],
-    ['travel', ['plane']],
-    ['seat', ['Window, please']],
-  ]))).toEqual([
+  expect(
+    answerLabels(
+      questionnaire,
+      new Map([
+        ['children', ['children-yes']],
+        ['travel', ['plane']],
+        ['seat', ['Window, please']],
+      ]),
+    ),
+  ).toEqual([
     { id: 'children', question: 'Are you travelling with children?', value: 'Yes' },
     { id: 'travel', question: 'How are you travelling?', value: 'Plane' },
     { id: 'seat', question: 'Seat preference', value: 'Window, please' },

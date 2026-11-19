@@ -49,8 +49,7 @@ export const QuestionnairePageRowLabel = ({
         {translate({ t }, 'questionCount', {
           count: questions,
         })}
-        {groups > 0 &&
-          ` · ${translate({ t }, 'groupCount', { count: groups })}`}
+        {groups > 0 && ` · ${translate({ t }, 'groupCount', { count: groups })}`}
       </span>
     </>
   )

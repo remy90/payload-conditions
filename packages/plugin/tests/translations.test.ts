@@ -53,7 +53,9 @@ it('resolves every translation key used by schema callbacks and source code', ()
   }
   walk(Questionnaires)
   const sourceKeys = new Set<string>()
-  for (const file of sourceFiles(root).filter((file) => !file.includes('/translations/languages/'))) {
+  for (const file of sourceFiles(root).filter(
+    (file) => !file.includes('/translations/languages/'),
+  )) {
     const source = readFileSync(file, 'utf8')
     for (const match of source.matchAll(/\b([a-zA-Z_]+)\b/g)) sourceKeys.add(match[1])
     expect(source, file).not.toMatch(/placeholder="[^"]+"/)
@@ -73,7 +75,8 @@ it('resolves every translation key used by schema callbacks and source code', ()
       'groupCount_other',
     ]),
   )
-  for (const key of Object.keys(en['plugin-questionnaire'])) expect(sourceKeys.has(key), key).toBe(true)
+  for (const key of Object.keys(en['plugin-questionnaire']))
+    expect(sourceKeys.has(key), key).toBe(true)
   expect(keys.size).toBeGreaterThan(50)
 })
 

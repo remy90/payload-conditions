@@ -61,6 +61,7 @@ export const questionnaireBeforeChange =
     if (hasInvalidQuestionnaireArrays(stored)) return normalized
     const issues = checkQuestionnaire(fromPayloadQuestionnaire(stored))
     const errors = issueErrors(stored, issues, { req }, blocksField)
-    if (errors.length) throw new ValidationError({ collection: collection.slug, errors, req }, req.t)
+    if (errors.length)
+      throw new ValidationError({ collection: collection.slug, errors, req }, req.t)
     return normalized
   }

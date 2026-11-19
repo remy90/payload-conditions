@@ -10,14 +10,16 @@ const bool = (id: string, label: string): StoredQuestion => ({
   name: name(id),
   label,
   required: true,
-  answer: [{
-    id: `${id}-answer`,
-    blockType: 'yesNo',
-    yesId: `${id}-yes`,
-    yesLabel: 'Yes',
-    noId: `${id}-no`,
-    noLabel: 'No',
-  }],
+  answer: [
+    {
+      id: `${id}-answer`,
+      blockType: 'yesNo',
+      yesId: `${id}-yes`,
+      yesLabel: 'Yes',
+      noId: `${id}-no`,
+      noLabel: 'No',
+    },
+  ],
 })
 const choice = (
   id: string,
@@ -29,24 +31,28 @@ const choice = (
   name: name(id),
   label,
   required: true,
-  answer: [{
-    id: `${id}-answer`,
-    blockType: 'choice',
-    hasMany,
-    options: options.map(([id, label]) => ({ id, label })),
-  }],
+  answer: [
+    {
+      id: `${id}-answer`,
+      blockType: 'choice',
+      hasMany,
+      options: options.map(([id, label]) => ({ id, label })),
+    },
+  ],
 })
 const text = (id: string, label: string): StoredQuestion => ({
   id,
   name: name(id),
   label,
   required: false,
-  answer: [{
-    id: `${id}-answer`,
-    blockType: 'text',
-    placeholder: 'Type your answer…',
-    maxLength: 500,
-  }],
+  answer: [
+    {
+      id: `${id}-answer`,
+      blockType: 'text',
+      placeholder: 'Type your answer…',
+      maxLength: 500,
+    },
+  ],
 })
 const group = (
   id: string,
@@ -92,11 +98,18 @@ export const trip: Pick<Questionnaire, 'title' | 'pages'> = {
     page(
       'children-page',
       'Children',
-      [choice('ages', 'Which age groups?', [
-        ['under2', 'Under 2'],
-        ['2to11', '2 to 11'],
-        ['12to17', '12 to 17'],
-      ], true)],
+      [
+        choice(
+          'ages',
+          'Which age groups?',
+          [
+            ['under2', 'Under 2'],
+            ['2to11', '2 to 11'],
+            ['12to17', '12 to 17'],
+          ],
+          true,
+        ),
+      ],
       [group('children-group', [['children', 'equals', 'children-yes']])],
     ),
     page(
@@ -111,10 +124,14 @@ export const trip: Pick<Questionnaire, 'title' | 'pages'> = {
       [bool('seat-help', 'Would you like help arranging a car seat?')],
       [
         group('seats-children', [['children', 'equals', 'children-yes']]),
-        group('seats-route', [
-          ['travel', 'equals', 'car'],
-          ['ages', 'in', 'under2'],
-        ], 'any'),
+        group(
+          'seats-route',
+          [
+            ['travel', 'equals', 'car'],
+            ['ages', 'in', 'under2'],
+          ],
+          'any',
+        ),
       ],
     ),
     page(

@@ -85,9 +85,11 @@ describe('questionnaire checks', () => {
     unreachablePage: (q) => {
       q.pages[1].conditionGroups[0].conditions.push(condition('a', 'no'))
       q.pages.push(
-        page('C', [{ ...yesNoQuestion('c'), answer: { type: 'text', maxLength: 20 } }], [
-          condition('b', 'b_yes'),
-        ]),
+        page(
+          'C',
+          [{ ...yesNoQuestion('c'), answer: { type: 'text', maxLength: 20 } }],
+          [condition('b', 'b_yes')],
+        ),
       )
     },
   }
