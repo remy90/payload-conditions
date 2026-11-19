@@ -79,7 +79,7 @@ function conditionMatches(
     case 'in':
       return contains(values, condition.answerId)
     case 'not_in':
-      return !contains(values, condition.answerId)
+      return values.some((value) => value !== '') && !contains(values, condition.answerId)
     default:
       return false
   }

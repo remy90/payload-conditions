@@ -34,17 +34,21 @@ describe('two-level prerequisites', () => {
 
   it.each<[Operator, string[], boolean]>([
     ['equals', [], false],
+    ['equals', [''], false],
     ['equals', ['yes'], true],
     ['equals', ['no'], false],
     ['not_equals', ['no'], true],
     ['not_equals', ['yes'], false],
     ['not_equals', [], false],
+    ['not_equals', [''], false],
     ['in', [], false],
+    ['in', [''], false],
     ['in', ['no', 'yes'], true],
     ['in', ['no'], false],
     ['not_in', ['no'], true],
     ['not_in', ['yes'], false],
     ['not_in', [], false],
+    ['not_in', [''], false],
   ])('%s with %j is %s', (operator, values, expected) => {
     const q = questionnaire(
       page('source', [
