@@ -86,7 +86,7 @@ Choice option labels must be unique within a question, and Yes and No labels mus
 
 `questionnaireBeforeChange()` fills names and normalizes ids and operators before running the engine's `checkQuestionnaire` on publish. It throws Payload `ValidationError` with field paths, so structural errors appear beside their fields. Draft saves skip validation. A collection without drafts validates every save; `versions.drafts.validate: true` also validates drafts. An update to a published questionnaire with unchanged pages and status skips the structural check, so title-only updates succeed.
 
-Structural issue codes are `noPages`, `emptyPage`, `emptyGroup`, `duplicateId`, `duplicateName`, `invalidName`, `blankText`, `duplicateOptionLabel`, `unknownQuestion`, `samePageQuestion`, `laterQuestion`, `unsupportedSource`, `unknownAnswer`, `operatorMismatch`, `contradiction` and `unreachablePage`. Field validators handle missing rows, text and names. Structural errors cover references, incompatible operators and impossible page logic.
+Structural issue codes are `noPages`, `emptyPage`, `emptyGroup`, `duplicateId`, `duplicateName`, `invalidName`, `blankText`, `duplicateOptionLabel`, `unknownQuestion`, `samePageQuestion`, `laterQuestion`, `unsupportedSource`, `unknownAnswer`, `operatorMismatch`, `contradiction` and `unreachablePage`. Field validators handle missing rows, text and names. Structural errors cover references, incompatible operators and impossible page logic. The `unreachablePage` check reports only certain cases in one forward pass and does not combine constraints across groups, so an unflagged page can still be unreachable.
 
 `versions.drafts.localizeStatus` is unsupported in 0.3. The publish gate skips collections using it.
 

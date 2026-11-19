@@ -91,6 +91,8 @@ The `/payload` entry exports `fromPayloadQuestionnaire` and `StoredQuestionnaire
 | `unknownAnswer`, `operatorMismatch` | Invalid answer reference or operator |
 | `contradiction`, `unreachablePage` | Conditions cannot match, or a page cannot become visible |
 
+The `unreachablePage` check reports only certain cases in one forward pass and does not combine constraints across groups, so an unflagged page can still be unreachable.
+
 Names match `^[a-z][a-z0-9_]*$` and must be unique across the questionnaire. Option labels must be unique within a question; Yes and No labels must differ. The plugin also enforces field limits: title 200, question label 500, option labels 200, placeholder 200, name 64 and page title 120 characters. Free text `maxLength` must be an integer from 1 to 10000. Collections require pages and questions; groups require conditions, and choices require at least two options. See the plugin README for Payload's draft and publish gates.
 
 ## Upgrading to 0.3

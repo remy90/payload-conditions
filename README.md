@@ -9,7 +9,7 @@ A workspace for authoring conditional questionnaires in Payload CMS and evaluati
 
 ## Releasing
 
-Publish the engine first, then the plugin. Always use `pnpm publish` or `pnpm -r publish`: pnpm rewrites the plugin's `workspace:^` engine dependency to `^1.0.1` in the published package.
+Publish the engine first, then the plugin. Always use `pnpm publish` or `pnpm -r publish`: pnpm rewrites the plugin's `workspace:^` engine dependency to `^0.3.0` in the published package.
 
 From the workspace root, run:
 
