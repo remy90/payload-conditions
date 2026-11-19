@@ -181,6 +181,43 @@ test('Back and Next skip hidden pages and finish can return to the last page', (
   expect(result.current.finished).toBe(false)
 })
 
+test('a finished questionnaire stays finished when a swap adds a required page', () => {
+  const { result, rerender } = renderHook((document) => useQuestionnaire(document), {
+    initialProps: questionnaire,
+  })
+  act(() => {
+    result.current.setAnswer('children', ['children-no'])
+    result.current.setAnswer('travel', ['car'])
+  })
+  act(() => result.current.next())
+  act(() => result.current.next())
+  expect(result.current.finished).toBe(true)
+  rerender({
+    ...questionnaire,
+    pages: [
+      ...questionnaire.pages.filter((page) => page.id !== 'anything'),
+      {
+        id: 'new-page',
+        skippable: false,
+        match: 'all',
+        conditionGroups: [],
+        questions: [{
+          id: 'new-question',
+          text: 'A new required question',
+          optional: false,
+          answer: { type: 'inputText', prompt: '' },
+        }],
+      },
+    ],
+  })
+  expect(result.current.finished).toBe(true)
+  expect(result.current.visiblePages.map((page) => page.id)).toContain('new-page')
+  expect(result.current.answers.get('travel')).toEqual(['car'])
+  act(() => result.current.back())
+  expect(result.current.finished).toBe(false)
+  expect(result.current.currentPage?.id).toBe('about')
+})
+
 test('Restart clears answers and resets navigation; hiding the current page selects a visible neighbour', () => {
   const { result } = renderHook(() => useQuestionnaire(questionnaire))
   act(() => {

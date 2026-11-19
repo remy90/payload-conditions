@@ -54,6 +54,7 @@ export function useQuestionnaire(questionnaire: Questionnaire) {
       .slice(0, Math.max(0, oldIndex))
       .reverse()
       .find((page) => visiblePageIds.has(page.id))
+    // Preview swaps keep a completed session finished; Back or Restart resumes answering.
     setState({
       ...state,
       questionnaire,
