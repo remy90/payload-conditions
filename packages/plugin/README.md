@@ -1,6 +1,6 @@
 # Payload conditions
 
-A Payload CMS plugin for authoring page conditions based on answers to earlier questions. Answer types include boolean options, multiple choice and input text. Your frontend uses the saved conditions to decide which pages to show.
+A Payload CMS plugin for authoring page conditions based on answers to earlier questions. Answer types include Yes / No, multiple choice and Free text. Your frontend uses the saved conditions to decide which pages to show.
 
 ## Install
 
@@ -56,11 +56,11 @@ Both options use Payload's `CollectionAdminOptions` types and merge into the `qu
 
 ## Author conditions
 
-Create a questionnaire and add standard pages. Each page contains question-and-answer pairs, with an `optional` checkbox for each question. Multiple-choice answers have an `allowMultipleSelection` checkbox. Both default to false.
+Create a questionnaire and add pages. Each page contains questions with an **Optional** checkbox (`optional`, default false). **Page is skippable** (`skippable`) lets respondents skip every question on the page. Multiple-choice answers have an `allowMultipleSelection` checkbox, also false by default. Choose **Yes / No** for two labelled options or **Free text** for a written answer. Its **Placeholder** appears in the empty answer box.
 
-A page matches `all` or `any` of its condition groups. Each group matches `all` or `any` of its conditions. Only boolean and multiple-choice questions on earlier pages appear as sources. Boolean and single-select questions offer `is` and `isNot` (labelled “is not”). Multi-select questions offer `includes` and `excludes`.
+**Show this page when** offers **All groups match** (`all`) or **Any group matches** (`any`). Each group's **This group matches when** offers **All conditions are true** (`all`) or **Any condition is true** (`any`). Only Yes / No and multiple-choice questions on earlier pages appear as sources. Yes / No and single-select questions offer `is` and `isNot` (labelled “is not”). Multi-select questions offer `includes` and `excludes`.
 
-Changing a condition's question clears its answer and clears an incompatible operator. Toggling multiple selection or changing an answer type maps equivalent operators: `is` ↔ `includes` and `isNot` ↔ `excludes`. The admin displays and saves that equivalent; the collection hook also maps operators on save. Boolean answers receive ids when their fields initialize, so you can select them before saving.
+Changing a condition's question clears its answer and clears an incompatible operator. Toggling multiple selection or changing an answer type maps equivalent operators: `is` ↔ `includes` and `isNot` ↔ `excludes`. The admin displays and saves that equivalent; the collection hook also maps operators on save. Yes / No answers receive ids when their fields initialize, so you can select them before saving.
 
 Publishing validates condition operators and requires an answer id from the selected question's current options. The collection allows drafts to skip field validation. A host collection with `drafts.validate: true` validates drafts too. After deleting an option, select another answer or remove its condition. The engine can treat a stale answer id under `isNot` or `excludes` as true, so data written outside the plugin needs the same validation.
 
@@ -83,7 +83,7 @@ The `questionnaire` collection stores `title` and `pages`, a blocks field with `
 - `skippable`, default false, and `questionAnswerPair` rows with `id`, `question`, `optional` and exactly one block in `answer`.
 - `match`, default `all`, and `conditionGroups` rows with `id`, their own `match` and `conditions`.
 
-Each condition stores `{ id, questionId, operator, answerId }`; its references and operator are required. `questionId` is the question row id. `answerId` is a boolean `trueId`/`falseId` or a multiple-choice option row id. Boolean answers keep their `booleanOptions` group. Multiple-choice blocks store `multipleChoice: [{ id, option }]` (at least two rows) and `allowMultipleSelection`. Input-text blocks store `inputText` and remain available as questions.
+Each condition stores `{ id, questionId, operator, answerId }`; its references and operator are required. `questionId` is the question row id. `answerId` is a Yes / No `trueId`/`falseId` or a multiple-choice option row id. Yes / No answers keep their `booleanOptions` group. Multiple-choice blocks store `multipleChoice: [{ id, option }]` (at least two rows) and `allowMultipleSelection`. Free text blocks store their placeholder in `inputText` and remain available as questions.
 
 ## Exports and upgrading
 

@@ -4,9 +4,16 @@
 
 - Accept collection `preview` and `livePreview` settings through plugin options.
 - Show full question labels with responsive ellipsis and lay out boolean labels in a responsive row.
-- Add reactive question and condition-group counts to standard page headers. Regenerate the admin import map after upgrading.
+- Add reactive question and condition-group counts to page headers. Regenerate the admin import map after upgrading.
 
 Stored fields and data stay unchanged.
+
+### Admin terminology
+
+- Label the editor's pages and questions as Pages and Questions. Page headers keep their number, editable title and counts; remove the Standard page pill.
+- Rename the answer labels to Yes / No and Free text. Describe the Placeholder, Optional and Page is skippable fields.
+- Label page matching as Show this page when, with All groups match and Any group matches. Groups use This group matches when, with All conditions are true and Any condition is true. Condition selects use Question and Answer.
+- Keep stored names, generated type shapes and database identifiers unchanged.
 
 ### Dependencies and packaging
 
