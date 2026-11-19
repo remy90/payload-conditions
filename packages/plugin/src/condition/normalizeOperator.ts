@@ -1,13 +1,13 @@
 import type { Operator } from '@remy90/payload-conditions-engine'
 
 const equivalents: Record<Operator, Operator> = {
-  is: 'includes',
-  isNot: 'excludes',
-  includes: 'is',
-  excludes: 'isNot',
+  equals: 'in',
+  not_equals: 'not_in',
+  in: 'equals',
+  not_in: 'not_equals',
 }
 
-/** Both spellings have identical membership semantics in the engine. */
+/** Equivalent operators preserve membership semantics when selection settings change. */
 export const normalizeOperator = <T>(value: T, allowed: readonly Operator[]): T | Operator => {
   if (allowed.some((operator) => operator === value)) return value
   const equivalent =

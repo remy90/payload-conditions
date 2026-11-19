@@ -24,12 +24,12 @@ const row = 'content.pages.2.conditionGroups.0.conditions.0'
 const path = `${row}.questionId`
 const state = (operator: string): FormState => ({
   'content.pages': { value: 3 },
-  'content.pages.0.questionAnswerPair': { value: 2 },
-  'content.pages.0.questionAnswerPair.0.id': { value: 'single' },
-  'content.pages.0.questionAnswerPair.0.answer.0.blockType': { value: 'booleanOptions' },
-  'content.pages.0.questionAnswerPair.1.id': { value: 'multi' },
-  'content.pages.0.questionAnswerPair.1.answer.0.blockType': { value: 'multipleChoice' },
-  'content.pages.0.questionAnswerPair.1.answer.0.allowMultipleSelection': { value: true },
+  'content.pages.0.questions': { value: 2 },
+  'content.pages.0.questions.0.id': { value: 'single' },
+  'content.pages.0.questions.0.answer.0.blockType': { value: 'yesNo' },
+  'content.pages.0.questions.1.id': { value: 'multi' },
+  'content.pages.0.questions.1.answer.0.blockType': { value: 'choice' },
+  'content.pages.0.questions.1.answer.0.hasMany': { value: true },
   [path]: { value: 'old', valid: true },
   [`${row}.operator`]: { value: operator, valid: true },
   [`${row}.answerId`]: { value: 'answer', valid: true },
@@ -37,7 +37,7 @@ const state = (operator: string): FormState => ({
 
 describe('changing a condition question', () => {
   it('clears the answer and preserves a compatible operator in one modified patch', () => {
-    expect(questionChangeFields(state('isNot'), path, 'old', 'single')).toEqual({
+    expect(questionChangeFields(state('not_equals'), path, 'old', 'single')).toEqual({
       [path]: { value: 'single', valid: true, isModified: true },
       [`${row}.answerId`]: { value: null, valid: true, isModified: true },
     })
@@ -46,7 +46,7 @@ describe('changing a condition question', () => {
   it.each(['multi', null, 'missing'])(
     'clears an incompatible operator when selecting %s',
     (next) => {
-      expect(questionChangeFields(state('is'), path, 'old', next)).toEqual({
+      expect(questionChangeFields(state('equals'), path, 'old', next)).toEqual({
         [path]: { value: next, valid: true, isModified: true },
         [`${row}.answerId`]: { value: null, valid: true, isModified: true },
         [`${row}.operator`]: { value: null, valid: true, isModified: true },
@@ -56,7 +56,7 @@ describe('changing a condition question', () => {
 
   it('preserves multi-select operators for another multi-select question', () => {
     expect(
-      questionChangeFields(state('excludes'), path, 'old', 'multi')[`${row}.operator`],
+      questionChangeFields(state('not_in'), path, 'old', 'multi')[`${row}.operator`],
     ).toBeUndefined()
   })
 
@@ -65,6 +65,6 @@ describe('changing a condition question', () => {
     [null, null],
     [undefined, null],
   ])('keeps fields when the question is unchanged: %s', (current, next) => {
-    expect(questionChangeFields(state('is'), path, current, next ?? null)).toEqual({})
+    expect(questionChangeFields(state('equals'), path, current, next ?? null)).toEqual({})
   })
 })

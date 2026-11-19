@@ -1,6 +1,6 @@
 import type { Block } from 'payload'
-import { booleanOptionsBlock } from './boolean.js'
-import { inputTextBlock } from './inputText.js'
-import { multipleChoiceBlock } from './multipleChoice.js'
+import { yesNoAnswerBlock } from './yesNo.js'
+import { textAnswerBlock } from './text.js'
+import { choiceAnswerBlock } from './choice.js'
 
-export default [booleanOptionsBlock, multipleChoiceBlock, inputTextBlock] satisfies Block[]
+export default [yesNoAnswerBlock, choiceAnswerBlock, textAnswerBlock] satisfies Block[]

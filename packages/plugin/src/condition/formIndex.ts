@@ -1,6 +1,7 @@
 import { operatorsFor, type Answer } from '@remy90/payload-conditions-engine'
 import type { FormState, OptionObject } from 'payload'
 import { rowCount, stringValue } from './formState.js'
+import { translate } from '../translations/index.js'
 
 export type IndexedQuestion = {
   path: string
@@ -38,38 +39,38 @@ const readAnswer = (
 ): { answer: Answer; options: OptionObject[] } | undefined => {
   const block = `${path}.answer.0`
   const type = rowString(fields, `${path}.answer`, 0, 'blockType')
-  if (type === 'booleanOptions') {
-    const trueOption = {
-      id: stringValue(fields, `${block}.booleanOptions.trueId`) ?? '',
-      label: stringValue(fields, `${block}.booleanOptions.trueOption`) ?? '',
+  if (type === 'yesNo') {
+    const yesLabel = {
+      id: stringValue(fields, `${block}.yesId`) ?? '',
+      label: stringValue(fields, `${block}.yesLabel`) ?? '',
     }
-    const falseOption = {
-      id: stringValue(fields, `${block}.booleanOptions.falseId`) ?? '',
-      label: stringValue(fields, `${block}.booleanOptions.falseOption`) ?? '',
+    const noLabel = {
+      id: stringValue(fields, `${block}.noId`) ?? '',
+      label: stringValue(fields, `${block}.noLabel`) ?? '',
     }
     return {
-      answer: { type: 'boolean', trueOption, falseOption },
+      answer: { type: 'yesNo', yes: yesLabel, no: noLabel },
       options: [
-        ...option(trueOption.id, trueOption.label),
-        ...option(falseOption.id, falseOption.label),
+        ...option(yesLabel.id, yesLabel.label),
+        ...option(noLabel.id, noLabel.label),
       ],
     }
   }
-  if (type === 'multipleChoice') {
-    const parent = `${block}.multipleChoice`
+  if (type === 'choice') {
+    const parent = `${block}.options`
     const options: OptionObject[] = []
     for (let row = 0; row < rowCount(fields, parent); row++) {
       options.push(
         ...option(
           rowString(fields, parent, row, 'id'),
-          stringValue(fields, `${parent}.${row}.option`),
+          stringValue(fields, `${parent}.${row}.label`),
         ),
       )
     }
     return {
       answer: {
         type,
-        allowMultipleSelection: fields[`${block}.allowMultipleSelection`]?.value === true,
+        hasMany: fields[`${block}.hasMany`]?.value === true,
         options: options.map(({ value, label }) => ({ id: String(value), label: String(label) })),
       },
       options,
@@ -82,7 +83,7 @@ const buildPages = (fields: FormState, root: string): PagesIndex => {
   const pages: PagesIndex = { questions: new Map(), eligible: [], ends: [], before: new Map() }
   const seen = new Set<string>()
   for (let pageIndex = 0; pageIndex < rowCount(fields, root); pageIndex++) {
-    const parent = `${root}.${pageIndex}.questionAnswerPair`
+    const parent = `${root}.${pageIndex}.questions`
     for (let row = 0; row < rowCount(fields, parent); row++) {
       const path = `${parent}.${row}`
       const id = rowString(fields, parent, row, 'id')
@@ -96,12 +97,12 @@ const buildPages = (fields: FormState, root: string): PagesIndex => {
         ...source,
         operators: operatorsFor(source.answer).map((value) => ({
           value,
-          label: value === 'isNot' ? 'is not' : value,
+          label: translate({}, value),
         })),
       })
       pages.eligible.push({
         value: id,
-        label: stringValue(fields, `${path}.question`) ?? `Question ${pages.eligible.length + 1}`,
+        label: stringValue(fields, `${path}.label`) ?? translate({}, 'questionNumber', { number: pages.eligible.length + 1 }),
       })
     }
     pages.ends.push(pages.eligible.length)

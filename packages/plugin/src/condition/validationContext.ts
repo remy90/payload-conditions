@@ -4,7 +4,9 @@ import {
 } from '@remy90/payload-conditions-engine/payload'
 import type { Question } from '@remy90/payload-conditions-engine'
 
-export type ConditionValidationContext = {
+import type { TranslationContext } from '../translations/index.js'
+
+export type ConditionValidationContext = TranslationContext & {
   data?: unknown
   path?: (number | string)[]
   siblingData?: { questionId?: unknown }
@@ -14,14 +16,14 @@ const record = (value: unknown): value is Record<string, unknown> =>
   value !== null && typeof value === 'object'
 
 type Index = Map<string, { question: Question; pageIndex: number }>
-const cacheKey = '__payloadConditionsValidationIndexes'
+const cacheKey = '__questionnairePluginValidationIndexes'
 
 const buildIndex = (pages: unknown[]): Index => {
   const positions: number[] = []
   pages.forEach((page, index) => {
     if (
       record(page) &&
-      page.blockType === 'standardPage' &&
+      page.blockType === 'page' &&
       page.id !== undefined &&
       page.id !== null &&
       page.id !== ''

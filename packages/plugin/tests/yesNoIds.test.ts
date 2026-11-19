@@ -1,28 +1,28 @@
 import { describe, expect, it } from 'vitest'
 import type { CollectionBeforeChangeHook } from 'payload'
-import { normalizeBooleanIds } from '../src/blocks/Answers/normalizeBooleanIds.js'
-import { normalizeBooleanIdsHook, Questionnaire, StandardPage } from '../src/index.js'
+import { normalizeYesNoIds } from '../src/blocks/Answers/normalizeYesNoIds.js'
+import { questionnaireBeforeChange, Questionnaires, QuestionnairePage } from '../src/index.js'
 
-const boolean = (trueId?: unknown, falseId?: unknown) => ({
-  blockType: 'booleanOptions',
-  booleanOptions: { trueOption: 'Yes', falseOption: 'No', trueId, falseId },
+const boolean = (yesId?: unknown, noId?: unknown) => ({
+  blockType: 'yesNo',
+   yesLabel: 'Yes', noLabel: 'No', yesId, noId ,
 })
 const page = (...answers: ReturnType<typeof boolean>[]) => ({
-  blockType: 'standardPage',
-  questionAnswerPair: answers.map((answer) => ({ answer: [answer] })),
+  blockType: 'page',
+  questions: answers.map((answer) => ({ answer: [answer] })),
 })
-const question = (id: string, trueId = 'yes', falseId = 'no') => ({
+const question = (id: string, yesId = 'yes', noId = 'no') => ({
   id,
-  answer: [boolean(trueId, falseId)],
+  answer: [boolean(yesId, noId)],
 })
 const questionPage = (id: string, ...rows: ReturnType<typeof question>[]) => ({
   id,
-  blockType: 'standardPage',
-  questionAnswerPair: rows,
+  blockType: 'page',
+  questions: rows,
 })
 const condition = (questionId: string, answerId: string) => ({
   questionId,
-  operator: 'is',
+  operator: 'equals',
   answerId,
 })
 const groups = (...conditions: ReturnType<typeof condition>[]) => [{ match: 'all', conditions }]
@@ -42,23 +42,23 @@ const runHook = (
   originalDoc?: Record<string, unknown>,
   blocksField = 'pages',
   restoring = false,
-  hook: CollectionBeforeChangeHook = normalizeBooleanIdsHook(blocksField),
+  hook: CollectionBeforeChangeHook = questionnaireBeforeChange(blocksField),
 ) =>
   hook({
     data,
     originalDoc,
     operation: 'update',
-    collection: Questionnaire,
+    collection: Questionnaires,
     context: {},
     req: { context: { isRestoringVersion: restoring } },
   } as unknown as Parameters<CollectionBeforeChangeHook>[0])
 
 describe('collection boolean id hook', () => {
-  it('ships once on Questionnaire and leaves StandardPage opt-in', async () => {
-    const hooks = Questionnaire.hooks?.beforeChange ?? []
+  it('ships once on Questionnaires and leaves QuestionnairePage opt-in', async () => {
+    const hooks = Questionnaires.hooks?.beforeChange ?? []
     expect(hooks).toHaveLength(1)
-    const field = StandardPage.fields.find(
-      (field) => 'name' in field && field.name === 'questionAnswerPair',
+    const field = QuestionnairePage.fields.find(
+      (field) => 'name' in field && field.name === 'questions',
     )
     expect(field && 'hooks' in field ? field.hooks : undefined).toBeUndefined()
     const data = { pages: [page(boolean(null, ''))] }
@@ -84,24 +84,24 @@ describe('collection boolean id hook', () => {
       freeze(data)
       freeze(originalDoc)
       const result = await runHook(data, originalDoc, blocksField)
-      const replacement = result[blocksField][0].questionAnswerPair[0].answer[0].booleanOptions
-      expect(replacement.trueId).not.toBe('yes')
-      expect(replacement.falseId).not.toBe('no')
+      const replacement = result[blocksField][0].questions[0].answer[0]
+      expect(replacement.yesId).not.toBe('yes')
+      expect(replacement.noId).not.toBe('no')
       expect(result).toEqual({
         before: {
           conditionGroups: groups(
-            condition('copy', replacement.trueId),
-            condition('copy', replacement.falseId),
+            condition('copy', replacement.yesId),
+            condition('copy', replacement.noId),
           ),
         },
         [blocksField]: [
-          questionPage('copy-page', question('copy', replacement.trueId, replacement.falseId)),
+          questionPage('copy-page', question('copy', replacement.yesId, replacement.noId)),
           original,
         ],
         elsewhere: data.elsewhere,
         after: {
           conditionGroups: groups(
-            condition('copy', replacement.trueId),
+            condition('copy', replacement.yesId),
             condition('original', 'yes'),
           ),
         },
@@ -133,10 +133,10 @@ describe('collection boolean id hook', () => {
           ? [copy, questionPage('original-page', regenerated), other]
           : [questionPage('copy-page', regenerated), original, other],
       })
-      const copyIds = result.pages[0].questionAnswerPair[0].answer[0].booleanOptions
-      const originalIds = result.pages[1].questionAnswerPair[0].answer[0].booleanOptions
-      expect(copyIds.trueId).not.toBe(originalIds.trueId)
-      expect(copyIds.falseId).not.toBe(originalIds.falseId)
+      const copyIds = result.pages[0].questions[0].answer[0]
+      const originalIds = result.pages[1].questions[0].answer[0]
+      expect(copyIds.yesId).not.toBe(originalIds.yesId)
+      expect(copyIds.noId).not.toBe(originalIds.noId)
       expect(data).toEqual({ pages: [copy, original, other] })
     },
   )
@@ -149,12 +149,12 @@ describe('collection boolean id hook', () => {
       conditionGroups: groups(condition('first', 'yes'), condition('second', 'no')),
     }
     const result = await runHook(data, { pages: [second] }, 'pages', true)
-    const replacement = result.pages[1].questionAnswerPair[0].answer[0].booleanOptions
+    const replacement = result.pages[1].questions[0].answer[0]
     expect(result.pages[0]).toEqual(first)
-    expect(replacement.falseId).not.toBe('no')
+    expect(replacement.noId).not.toBe('no')
     expect(result.conditionGroups[0].conditions).toEqual([
       condition('first', 'yes'),
-      condition('second', replacement.falseId),
+      condition('second', replacement.noId),
     ])
     expect(data.conditionGroups[0].conditions).toEqual([
       condition('first', 'yes'),
@@ -167,8 +167,8 @@ describe('collection boolean id hook', () => {
       pages: [
         {
           id: 'page',
-          blockType: 'standardPage',
-          questionAnswerPair: [
+          blockType: 'page',
+          questions: [
             {
               id: 'question',
               answer: [{ ...boolean('current-yes', 'current-no'), id: 'answer' }],
@@ -177,8 +177,8 @@ describe('collection boolean id hook', () => {
         },
       ],
     }
-    const value = [{ id: 'question', answer: [{ id: 'answer', blockType: 'booleanOptions' }] }]
-    const data = { pages: [{ id: 'page', blockType: 'standardPage', questionAnswerPair: value }] }
+    const value = [{ id: 'question', answer: [{ id: 'answer', blockType: 'yesNo' }] }]
+    const data = { pages: [{ id: 'page', blockType: 'page', questions: value }] }
     const result = await runHook(data, originalDoc, 'pages', true)
     expect(JSON.stringify(result)).not.toContain('current-yes')
     expect(JSON.stringify(result)).not.toContain('current-no')
@@ -186,15 +186,15 @@ describe('collection boolean id hook', () => {
       pages: [
         {
           id: 'page',
-          blockType: 'standardPage',
-          questionAnswerPair: [
+          blockType: 'page',
+          questions: [
             {
               id: 'question',
               answer: [
                 {
                   id: 'answer',
-                  blockType: 'booleanOptions',
-                  booleanOptions: { trueId: expect.any(String), falseId: expect.any(String) },
+                  blockType: 'yesNo',
+                   yesId: expect.any(String), noId: expect.any(String) ,
                 },
               ],
             },
@@ -215,7 +215,7 @@ describe('boolean answer ids', () => {
     }
     freeze(data)
     expect(
-      normalizeBooleanIds(
+      normalizeYesNoIds(
         data,
         () => {
           throw new Error('Unexpected id generation')
@@ -228,7 +228,7 @@ describe('boolean answer ids', () => {
   it('keeps untouched page references when another page needs replacement', () => {
     const untouched = questionPage('first', question('first'))
     const data = { pages: [untouched, questionPage('copy', question('copy'))] }
-    const result = normalizeBooleanIds(data, ids()) as typeof data
+    const result = normalizeYesNoIds(data, ids()) as typeof data
     expect(result.pages[0]).toBe(untouched)
     expect(result.pages[1]).not.toBe(data.pages[1])
   })
@@ -236,12 +236,12 @@ describe('boolean answer ids', () => {
   it('keeps stored ids on their question row when a copy is dragged above it', () => {
     const originalDoc = { pages: [questionPage('page', question('original'))] }
     const document = { pages: [questionPage('page', question('copy'), question('original'))] }
-    expect(normalizeBooleanIds(document, ids(), { originalDoc })).toEqual({
+    expect(normalizeYesNoIds(document, ids(), { originalDoc })).toEqual({
       pages: [
         questionPage('page', question('copy', 'generated-1', 'generated-2'), question('original')),
       ],
     })
-    expect(document.pages[0].questionAnswerPair[0]).toEqual(question('copy'))
+    expect(document.pages[0].questions[0]).toEqual(question('copy'))
   })
 
   it('purely rewrites matching conditions throughout the document when a copy gets new ids', () => {
@@ -273,7 +273,7 @@ describe('boolean answer ids', () => {
     const snapshot = structuredClone(document)
     freeze(document)
     freeze(originalDoc)
-    const result = normalizeBooleanIds(document, ids(), { originalDoc })
+    const result = normalizeYesNoIds(document, ids(), { originalDoc })
     expect(result).toEqual({
       before: {
         conditionGroups: groups(
@@ -299,7 +299,7 @@ describe('boolean answer ids', () => {
       unrelated: condition('copy', 'yes'),
     })
     expect(document).toEqual(snapshot)
-    expect(normalizeBooleanIds(result, ids(), { originalDoc })).toEqual(result)
+    expect(normalizeYesNoIds(result, ids(), { originalDoc })).toEqual(result)
   })
 
   it('keeps conditions on an id retained by the same question when both choices shared it', () => {
@@ -308,7 +308,7 @@ describe('boolean answer ids', () => {
       pages: [questionPage('copy-page', question('copy', 'shared', 'shared')), original],
       conditionGroups: groups(condition('original', 'shared'), condition('copy', 'shared')),
     }
-    expect(normalizeBooleanIds(document, ids(), { originalDoc: { pages: [original] } })).toEqual({
+    expect(normalizeYesNoIds(document, ids(), { originalDoc: { pages: [original] } })).toEqual({
       pages: [
         questionPage('copy-page', question('copy', 'generated-1', 'generated-2')),
         questionPage('original-page', question('original', 'shared', 'generated-3')),
@@ -320,7 +320,7 @@ describe('boolean answer ids', () => {
   it('falls back to document order when the stored holder is absent', () => {
     const originalDoc = { pages: [questionPage('page', question('removed'))] }
     const document = { pages: [questionPage('page', question('first'), question('second'))] }
-    expect(normalizeBooleanIds(document, ids(), { originalDoc })).toEqual({
+    expect(normalizeYesNoIds(document, ids(), { originalDoc })).toEqual({
       pages: [
         questionPage('page', question('first'), question('second', 'generated-1', 'generated-2')),
       ],
@@ -330,33 +330,33 @@ describe('boolean answer ids', () => {
   it('fills missing or invalid ids without touching other answer types', () => {
     const document = Object.freeze({
       pages: Object.freeze([page(boolean(null, ''), boolean(7, '   '))]),
-      other: { blockType: 'multipleChoice', trueId: 'untouched', falseId: null },
+      other: { blockType: 'choice', yesId: 'untouched', noId: null },
     })
     const expected = {
       pages: [page(boolean('generated-1', 'generated-2'), boolean('generated-3', 'generated-4'))],
       other: document.other,
     }
-    const result = normalizeBooleanIds(document, ids())
+    const result = normalizeYesNoIds(document, ids())
     expect(result).toEqual(expected)
-    expect(normalizeBooleanIds(result, ids())).toEqual(expected)
+    expect(normalizeYesNoIds(result, ids())).toEqual(expected)
     expect(document.pages[0]).toEqual(page(boolean(null, ''), boolean(7, '   ')))
   })
 
   it('treats true and false ids as one namespace and fills a missing group', () => {
     expect(
-      normalizeBooleanIds([boolean('shared', 'shared'), { blockType: 'booleanOptions' }], ids()),
+      normalizeYesNoIds([boolean('shared', 'shared'), { blockType: 'yesNo' }], ids()),
     ).toEqual([
       boolean('shared', 'generated-1'),
       {
-        blockType: 'booleanOptions',
-        booleanOptions: { trueId: 'generated-2', falseId: 'generated-3' },
+        blockType: 'yesNo',
+         yesId: 'generated-2', noId: 'generated-3' ,
       },
     ])
   })
 
   it('does not generate an id that belongs to a later answer', () => {
     expect(
-      normalizeBooleanIds({ pages: [page(boolean(undefined, 'generated-1'))] }, ids()),
+      normalizeYesNoIds({ pages: [page(boolean(undefined, 'generated-1'))] }, ids()),
     ).toEqual({
       pages: [page(boolean('generated-2', 'generated-1'))],
     })
@@ -366,7 +366,7 @@ describe('boolean answer ids', () => {
     const document = {
       pages: [page(boolean('yes', 'no')), page(boolean('yes', 'no'), boolean('no', undefined))],
     }
-    expect(normalizeBooleanIds(document, ids())).toEqual({
+    expect(normalizeYesNoIds(document, ids())).toEqual({
       pages: [
         page(boolean('yes', 'no')),
         page(boolean('generated-1', 'generated-2'), boolean('generated-3', 'generated-4')),

@@ -10,14 +10,14 @@ describe('request validation index', () => {
     let builds = 0
     const firstPage = {
       id: 'first',
-      blockType: 'standardPage',
-      get questionAnswerPair() {
+      blockType: 'page',
+      get questions() {
         builds++
         return [
           {
             id: 'q',
             answer: [
-              { blockType: 'booleanOptions', booleanOptions: { trueId: 'yes', falseId: 'no' } },
+              { blockType: 'yesNo',  yesId: 'yes', noId: 'no'  },
             ],
           },
         ]
@@ -26,18 +26,18 @@ describe('request validation index', () => {
     const pages = [
       firstPage,
       { id: 'unknown', blockType: 'anotherBlock' },
-      { id: 'second', blockType: 'standardPage' },
+      { id: 'second', blockType: 'page' },
     ]
     const req = { context: {} }
     for (let row = 0; row < 100; row++) {
       // Payload deep-merges a new data wrapper per field and preserves the pages array.
       const context = { data: { pages }, siblingData: { questionId: 'q' }, req }
-      expect(validateConditionOperator('is', { ...context, path: operatorPath })).toBe(true)
+      expect(validateConditionOperator('equals', { ...context, path: operatorPath })).toBe(true)
       expect(validateConditionAnswer('yes', { ...context, path: answerPath })).toBe(true)
     }
     expect(builds).toBe(1)
     expect(
-      validateConditionOperator('is', {
+      validateConditionOperator('equals', {
         data: { pages },
         siblingData: { questionId: 'q' },
         path: operatorPath,
@@ -46,7 +46,7 @@ describe('request validation index', () => {
     ).toBe(true)
     expect(builds).toBe(2)
     expect(
-      validateConditionOperator('is', {
+      validateConditionOperator('equals', {
         data: { pages: [...pages] },
         siblingData: { questionId: 'q' },
         path: operatorPath,
@@ -62,24 +62,24 @@ describe('request validation index', () => {
         { id: 'unknown', blockType: 'anotherBlock' },
         {
           id: 'source',
-          blockType: 'standardPage',
-          questionAnswerPair: [
+          blockType: 'page',
+          questions: [
             {
               id: 'q',
               answer: [
                 {
-                  blockType: 'booleanOptions',
-                  booleanOptions: { trueId: 'yes', falseId: 'no' },
+                  blockType: 'yesNo',
+                   yesId: 'yes', noId: 'no' ,
                 },
               ],
             },
           ],
         },
-        { id: 'later', blockType: 'standardPage' },
+        { id: 'later', blockType: 'page' },
       ],
     }
     expect(
-      validateConditionOperator('is', {
+      validateConditionOperator('equals', {
         data,
         siblingData: { questionId: 'q' },
         req: {},
@@ -87,15 +87,15 @@ describe('request validation index', () => {
       }),
     ).toBe(true)
     const context = { data, siblingData: { questionId: 'q' }, req: { context: {} } }
-    expect(validateConditionOperator('is', { ...context, path: operatorPath })).toBe(true)
+    expect(validateConditionOperator('equals', { ...context, path: operatorPath })).toBe(true)
     expect(
-      validateConditionOperator('is', {
+      validateConditionOperator('equals', {
         ...context,
         path: ['pages', '1', ...operatorPath.slice(2)],
       }),
     ).toEqual(expect.any(String))
     expect(
-      validateConditionOperator('is', {
+      validateConditionOperator('equals', {
         ...context,
         path: ['pages', '0', ...operatorPath.slice(2)],
       }),

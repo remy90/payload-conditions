@@ -1,6 +1,6 @@
 import type { FormState } from 'payload'
 import { describe, expect, it } from 'vitest'
-import { booleanOptionsBlock } from '../src/blocks/Answers/boolean.js'
+import { yesNoAnswerBlock } from '../src/blocks/Answers/yesNo.js'
 import {
   buildAnswerOptions,
   buildOperatorOptions,
@@ -15,13 +15,13 @@ const state = (values: Record<string, unknown>): FormState =>
 const answerState = (blockValues: Record<string, unknown>): FormState =>
   state({
     pages: 2,
-    'pages.0.questionAnswerPair': 1,
-    'pages.0.questionAnswerPair.0.id': 'question-id',
-    'pages.0.questionAnswerPair.0.answer': 1,
+    'pages.0.questions': 1,
+    'pages.0.questions.0.id': 'question-id',
+    'pages.0.questions.0.answer': 1,
     'pages.1.conditionGroups.0.conditions.0.questionId': 'question-id',
     ...Object.fromEntries(
       Object.entries(blockValues).map(([key, value]) => [
-        `pages.0.questionAnswerPair.0.answer.0.${key}`,
+        `pages.0.questions.0.answer.0.${key}`,
         value,
       ]),
     ),
@@ -40,45 +40,45 @@ describe('answer options', () => {
     expect(
       buildAnswerOptions(
         answerState({
-          blockType: 'booleanOptions',
-          'booleanOptions.trueOption': 'Yes',
-          'booleanOptions.falseId': 'no-id',
-          'booleanOptions.falseOption': {},
+          blockType: 'yesNo',
+          'yesLabel': 'Yes',
+          'noId': 'no-id',
+          'noLabel': {},
         }),
         answerPath,
       ),
     ).toEqual([])
   })
 
-  it.each(['booleanOptions', 'inputText'])(
+  it.each(['yesNo', 'text'])(
     'uses the first duplicate question id when its answer is %s',
     (blockType) => {
       const fields = answerState({
         blockType,
-        'booleanOptions.trueOption': 'First answer',
-        'booleanOptions.trueId': 'first-answer',
+        'yesLabel': 'First answer',
+        'yesId': 'first-answer',
       })
       Object.assign(
         fields,
         state({
           pages: 4,
-          'pages.0.questionAnswerPair.0.question': 'First question',
-          'pages.2.questionAnswerPair': 1,
-          'pages.2.questionAnswerPair.0.id': 'question-id',
-          'pages.2.questionAnswerPair.0.question': 'Duplicate question',
-          'pages.2.questionAnswerPair.0.answer.0.blockType': 'booleanOptions',
-          'pages.2.questionAnswerPair.0.answer.0.booleanOptions.trueOption': 'Later answer',
-          'pages.2.questionAnswerPair.0.answer.0.booleanOptions.trueId': 'later-answer',
+          'pages.0.questions.0.label': 'First question',
+          'pages.2.questions': 1,
+          'pages.2.questions.0.id': 'question-id',
+          'pages.2.questions.0.label': 'Duplicate question',
+          'pages.2.questions.0.answer.0.blockType': 'yesNo',
+          'pages.2.questions.0.answer.0.yesLabel': 'Later answer',
+          'pages.2.questions.0.answer.0.yesId': 'later-answer',
           'pages.3.conditionGroups.0.conditions.0.questionId': 'question-id',
         }),
       )
       for (const page of [1, 3]) {
         const path = `pages.${page}.conditionGroups.0.conditions.0`
         expect(buildAnswerOptions(fields, `${path}.answerId`)).toEqual(
-          blockType === 'inputText' ? [] : [{ label: 'First answer', value: 'first-answer' }],
+          blockType === 'text' ? [] : [{ label: 'First answer', value: 'first-answer' }],
         )
         expect(buildQuestionOptions(fields, `${path}.questionId`)).toEqual(
-          blockType === 'inputText' ? [] : [{ label: 'First question', value: 'question-id' }],
+          blockType === 'text' ? [] : [{ label: 'First question', value: 'question-id' }],
         )
       }
     },
@@ -86,18 +86,18 @@ describe('answer options', () => {
 
   it('limits answers to the selected earlier question', () => {
     const fields = answerState({
-      blockType: 'booleanOptions',
-      'booleanOptions.trueOption': 'First answer',
-      'booleanOptions.trueId': 'first-answer',
+      blockType: 'yesNo',
+      'yesLabel': 'First answer',
+      'yesId': 'first-answer',
     })
     Object.assign(
       fields,
       state({
-        'pages.0.questionAnswerPair': 2,
-        'pages.0.questionAnswerPair.1.id': 'second-question',
-        'pages.0.questionAnswerPair.1.answer.0.blockType': 'booleanOptions',
-        'pages.0.questionAnswerPair.1.answer.0.booleanOptions.trueOption': 'Second answer',
-        'pages.0.questionAnswerPair.1.answer.0.booleanOptions.trueId': 'second-answer',
+        'pages.0.questions': 2,
+        'pages.0.questions.1.id': 'second-question',
+        'pages.0.questions.1.answer.0.blockType': 'yesNo',
+        'pages.0.questions.1.answer.0.yesLabel': 'Second answer',
+        'pages.0.questions.1.answer.0.yesId': 'second-answer',
         'pages.1.conditionGroups.0.conditions.0.questionId': 'second-question',
       }),
     )
@@ -118,15 +118,15 @@ describe('answer options', () => {
     )
   })
 
-  it.each(['booleanOptions', 'inputText'])(
+  it.each(['yesNo', 'text'])(
     'handles blockType and eOption inside parent field names: %s',
     (blockType) => {
       const fields = answerState({
         blockType,
-        inputText: 'Text',
+        placeholder: 'Text',
         id: 'text-id',
-        'booleanOptions.trueOption': 'Yes',
-        'booleanOptions.trueId': 'yes-id',
+        'yesLabel': 'Yes',
+        'yesId': 'yes-id',
       })
       const nested = Object.fromEntries(
         Object.entries(fields).map(([path, value]) => [
@@ -139,12 +139,12 @@ describe('answer options', () => {
           nested,
           'someOptions.blockTypes.1.conditionGroups.0.conditions.0.answerId',
         ),
-      ).toEqual(blockType === 'inputText' ? [] : [{ label: 'Yes', value: 'yes-id' }])
+      ).toEqual(blockType === 'text' ? [] : [{ label: 'Yes', value: 'yes-id' }])
     },
   )
 
   it('follows nested page paths for answers', () => {
-    const fields = answerState({ blockType: 'inputText', inputText: 'Text', id: 'text-id' })
+    const fields = answerState({ blockType: 'text', placeholder: 'Text', id: 'text-id' })
     const nested = Object.fromEntries(
       Object.entries(fields).map(([path, value]) => [
         path.replace(/^pages/, 'content.survey'),
@@ -158,12 +158,12 @@ describe('answer options', () => {
 
   it('offers multiple choice rows with their generated ids', () => {
     const fields = answerState({
-      blockType: 'multipleChoice',
-      multipleChoice: 2,
-      'multipleChoice.0.option': 'Red',
-      'multipleChoice.0.id': 'red-id',
-      'multipleChoice.1.option': 'Blue',
-      'multipleChoice.1.id': 'blue-id',
+      blockType: 'choice',
+      options: 2,
+      'options.0.label': 'Red',
+      'options.0.id': 'red-id',
+      'options.1.label': 'Blue',
+      'options.1.id': 'blue-id',
     })
     expect(buildAnswerOptions(fields, answerPath)).toEqual([
       { label: 'Red', value: 'red-id' },
@@ -173,11 +173,11 @@ describe('answer options', () => {
 
   it('uses row metadata when a multiple choice count is absent', () => {
     const fields = answerState({
-      blockType: 'multipleChoice',
-      'multipleChoice.0.option': 'Red',
-      'multipleChoice.0.id': 'red-id',
+      blockType: 'choice',
+      'options.0.label': 'Red',
+      'options.0.id': 'red-id',
     })
-    fields['pages.0.questionAnswerPair.0.answer.0.multipleChoice'] = { rows: [{ id: 'red-id' }] }
+    fields['pages.0.questions.0.answer.0.options'] = { rows: [{ id: 'red-id' }] }
     expect(buildAnswerOptions(fields, answerPath)).toEqual([{ label: 'Red', value: 'red-id' }])
   })
 
@@ -186,7 +186,7 @@ describe('answer options', () => {
     (count) => {
       expect(
         buildAnswerOptions(
-          answerState({ blockType: 'multipleChoice', multipleChoice: count }),
+          answerState({ blockType: 'choice', options: count }),
           answerPath,
         ),
       ).toEqual([])
@@ -196,24 +196,20 @@ describe('answer options', () => {
   it('excludes input text answers', () => {
     expect(
       buildAnswerOptions(
-        answerState({ blockType: 'inputText', inputText: 'Expected text', id: 'text-id' }),
+        answerState({ blockType: 'text', placeholder: 'Expected text', id: 'text-id' }),
         answerPath,
       ),
     ).toEqual([])
   })
 
   it('offers fresh boolean ids created by the field defaults before any validation hook', () => {
-    const values: Record<string, unknown> = { blockType: 'booleanOptions' }
-    for (const group of booleanOptionsBlock.fields) {
-      if (group.type !== 'group') continue
-      const fields = group.fields.flatMap((field) => (field.type === 'row' ? field.fields : [field]))
-      for (const field of fields) {
+    const values: Record<string, unknown> = { blockType: 'yesNo' }
+    for (const field of yesNoAnswerBlock.fields.flatMap((field) => field.type === 'row' ? field.fields : [field])) {
         if (!('name' in field) || !('defaultValue' in field)) continue
-        values[`booleanOptions.${field.name}`] =
+        values[`${field.name}`] =
           typeof field.defaultValue === 'function'
             ? Reflect.apply(field.defaultValue, undefined, [])
             : field.defaultValue
-      }
     }
     const options = buildAnswerOptions(answerState(values), answerPath)
     expect(options).toEqual([
@@ -225,11 +221,11 @@ describe('answer options', () => {
 
   it('offers both boolean answers from the selected question before saving', () => {
     const fields = answerState({
-      blockType: 'booleanOptions',
-      'booleanOptions.trueOption': 'Yes',
-      'booleanOptions.trueId': 'unsaved-yes',
-      'booleanOptions.falseOption': 'No',
-      'booleanOptions.falseId': 'unsaved-no',
+      blockType: 'yesNo',
+      'yesLabel': 'Yes',
+      'yesId': 'unsaved-yes',
+      'noLabel': 'No',
+      'noId': 'unsaved-no',
     })
     expect(buildAnswerOptions(fields, answerPath)).toEqual([
       { label: 'Yes', value: 'unsaved-yes' },
@@ -273,7 +269,7 @@ describe('empty and malformed state', () => {
 describe('shared form index', () => {
   it('builds once for N selects on a snapshot and builds again for a new snapshot', () => {
     let builds = 0
-    const fields = new Proxy(answerState({ blockType: 'booleanOptions' }), {
+    const fields = new Proxy(answerState({ blockType: 'yesNo' }), {
       ownKeys: (target) => {
         builds++
         return Reflect.ownKeys(target)
@@ -296,32 +292,32 @@ describe('shared form index', () => {
   })
 
   it('re-derives operators when multiple selection toggles without rewriting the stored operator', () => {
-    const fields = answerState({ blockType: 'multipleChoice', allowMultipleSelection: false })
-    fields['pages.1.conditionGroups.0.conditions.0.operator'] = { value: 'isNot' }
+    const fields = answerState({ blockType: 'choice', hasMany: false })
+    fields['pages.1.conditionGroups.0.conditions.0.operator'] = { value: 'not_equals' }
     expect(buildOperatorOptions(fields, answerPath)).toEqual([
-      { label: 'is', value: 'is' },
-      { label: 'is not', value: 'isNot' },
+      { label: 'is', value: 'equals' },
+      { label: 'is not', value: 'not_equals' },
     ])
     const toggled: FormState = {
       ...fields,
-      'pages.0.questionAnswerPair.0.answer.0.allowMultipleSelection': { value: true },
+      'pages.0.questions.0.answer.0.hasMany': { value: true },
     }
     expect(buildOperatorOptions(toggled, answerPath)).toEqual([
-      { label: 'includes', value: 'includes' },
-      { label: 'excludes', value: 'excludes' },
+      { label: 'includes', value: 'in' },
+      { label: 'excludes', value: 'not_in' },
     ])
-    expect(toggled['pages.1.conditionGroups.0.conditions.0.operator'].value).toBe('isNot')
+    expect(toggled['pages.1.conditionGroups.0.conditions.0.operator'].value).toBe('not_equals')
   })
 
   it('supports Payload row metadata for question ids and block types', () => {
     const fields = answerState({
-      'booleanOptions.trueId': 'yes',
-      'booleanOptions.trueOption': 'Yes',
+      'yesId': 'yes',
+      'yesLabel': 'Yes',
     })
-    delete fields['pages.0.questionAnswerPair.0.id']
-    fields['pages.0.questionAnswerPair'] = { rows: [{ id: 'question-id' }] }
-    fields['pages.0.questionAnswerPair.0.answer'] = {
-      rows: [{ id: 'block', blockType: 'booleanOptions' }],
+    delete fields['pages.0.questions.0.id']
+    fields['pages.0.questions'] = { rows: [{ id: 'question-id' }] }
+    fields['pages.0.questions.0.answer'] = {
+      rows: [{ id: 'block', blockType: 'yesNo' }],
     }
     expect(buildAnswerOptions(fields, answerPath)).toEqual([{ label: 'Yes', value: 'yes' }])
   })
@@ -332,17 +328,17 @@ describe('question options', () => {
     const fields = state({
       'content.survey': 2,
       'content.survey.1.conditionGroups.0.conditions.0.questionId': '',
-      'content.survey.0.questionAnswerPair.0.answer.0.blockType': 'booleanOptions',
-      'content.survey.0.questionAnswerPair': 2,
-      'content.survey.0.questionAnswerPair.0.id': 'unsaved-question',
-      'content.survey.0.questionAnswerPair.1.question': 'Missing id',
+      'content.survey.0.questions.0.answer.0.blockType': 'yesNo',
+      'content.survey.0.questions': 2,
+      'content.survey.0.questions.0.id': 'unsaved-question',
+      'content.survey.0.questions.1.label': 'Missing id',
     })
     expect(
       buildQuestionOptions(fields, 'content.survey.1.conditionGroups.0.conditions.0.questionId'),
     ).toEqual([{ label: 'Question 1', value: 'unsaved-question' }])
     const updated = {
       ...fields,
-      'content.survey.0.questionAnswerPair.0.question': { value: 'Loaded question' },
+      'content.survey.0.questions.0.label': { value: 'Loaded question' },
     }
     expect(
       buildQuestionOptions(updated, 'content.survey.1.conditionGroups.0.conditions.0.questionId'),
@@ -353,23 +349,23 @@ describe('question options', () => {
     const fields = state({
       pages: 3,
       'pages.1.conditionGroups.0.conditions.0.questionId': '',
-      'pages.0.questionAnswerPair.0.answer.0.blockType': 'booleanOptions',
-      'pages.0.questionAnswerPair': 3,
-      'pages.0.questionAnswerPair.1.id': 'text',
-      'pages.0.questionAnswerPair.1.answer.0.blockType': 'inputText',
-      'pages.0.questionAnswerPair.2.id': 'multiple',
-      'pages.0.questionAnswerPair.2.question': 'Pick one',
-      'pages.0.questionAnswerPair.2.answer.0.blockType': 'multipleChoice',
-      'pages.0.questionAnswerPair.0.id': 'first',
-      'pages.0.questionAnswerPair.0.question': 'First question',
-      'pages.1.questionAnswerPair': 1,
-      'pages.1.questionAnswerPair.0.id': 'current',
-      'pages.1.questionAnswerPair.0.answer.0.blockType': 'booleanOptions',
-      'pages.1.questionAnswerPair.0.question': 'Current question',
-      'pages.2.questionAnswerPair': 1,
-      'pages.2.questionAnswerPair.0.id': 'later',
-      'pages.2.questionAnswerPair.0.answer.0.blockType': 'multipleChoice',
-      'pages.2.questionAnswerPair.0.question': 'Later question',
+      'pages.0.questions.0.answer.0.blockType': 'yesNo',
+      'pages.0.questions': 3,
+      'pages.0.questions.1.id': 'text',
+      'pages.0.questions.1.answer.0.blockType': 'text',
+      'pages.0.questions.2.id': 'multiple',
+      'pages.0.questions.2.label': 'Pick one',
+      'pages.0.questions.2.answer.0.blockType': 'choice',
+      'pages.0.questions.0.id': 'first',
+      'pages.0.questions.0.label': 'First question',
+      'pages.1.questions': 1,
+      'pages.1.questions.0.id': 'current',
+      'pages.1.questions.0.answer.0.blockType': 'yesNo',
+      'pages.1.questions.0.label': 'Current question',
+      'pages.2.questions': 1,
+      'pages.2.questions.0.id': 'later',
+      'pages.2.questions.0.answer.0.blockType': 'choice',
+      'pages.2.questions.0.label': 'Later question',
     })
     expect(
       buildQuestionOptions(fields, 'pages.1.conditionGroups.0.conditions.0.questionId'),

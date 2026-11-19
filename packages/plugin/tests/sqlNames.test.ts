@@ -1,6 +1,6 @@
 import type { Block, Field } from 'payload'
 import { describe, expect, it } from 'vitest'
-import { Questionnaire } from '../src/collections/Questionnaire.js'
+import { Questionnaires } from '../src/collections/Questionnaires.js'
 
 const snake = (name: string) => name.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`)
 type Named = { dbName?: Block['dbName']; enumName?: Block['dbName'] }
@@ -9,7 +9,7 @@ type Named = { dbName?: Block['dbName']; enumName?: Block['dbName'] }
 // Blocks use the root table; arrays use their current table. Custom table names
 // get another _..._v wrapper in versions. Enum overrides have no wrapper.
 const generatedNames = (versions: boolean): string[] => {
-  const root = versions ? '_questionnaire_v' : 'questionnaire'
+  const root = versions ? `_${Questionnaires.slug}_v` : Questionnaires.slug
   const names = [root]
   const name = (
     config: Named,
@@ -42,17 +42,24 @@ const generatedNames = (versions: boolean): string[] => {
     }
   }
   // Payload's version fields wrap the collection fields in a version group.
-  walk(Questionnaire.fields, versions ? `${root}_version` : root)
+  walk(Questionnaires.fields, versions ? `${root}_version` : root)
   return names
 }
 
 describe('SQL schema identifiers', () => {
-  it('preserves the page and condition enum names', () => {
+  it('uses short names for the renamed questionnaire tables and enums', () => {
     expect(generatedNames(false)).toEqual(
       expect.arrayContaining([
-        'e_questionnaire_page_match',
-        'e_questionnaire_page_cg_match',
-        'e_questionnaire_page_cg_cond_op',
+        'questionnaires',
+        'questionnaires_page',
+        'questionnaires_page_q',
+        'questionnaires_yn',
+        'questionnaires_choice',
+        'questionnaires_choice_opts',
+        'questionnaires_text',
+        'e_questionnaires_page_match',
+        'e_questionnaires_page_cg_match',
+        'e_questionnaires_page_cg_cond_op',
       ]),
     )
   })

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { Questionnaire } from '../src/collections/Questionnaire.js'
-import { StandardPage } from '../src/blocks/formPage.js'
+import { Questionnaires } from '../src/collections/Questionnaires.js'
+import { QuestionnairePage } from '../src/blocks/questionnairePage.js'
 import { validateConditionAnswer } from '../src/condition/validateAnswer.js'
 
 const context = (questionId = 'choice', pageIndex = '1') => ({
@@ -8,21 +8,21 @@ const context = (questionId = 'choice', pageIndex = '1') => ({
     pages: [
       {
         id: 'first',
-        blockType: 'standardPage',
-        questionAnswerPair: [
+        blockType: 'page',
+        questions: [
           {
             id: 'choice',
-            answer: [{ blockType: 'multipleChoice', multipleChoice: [{ id: 'a' }, { id: 'b' }] }],
+            answer: [{ blockType: 'choice', options: [{ id: 'a' }, { id: 'b' }] }],
           },
           {
             id: 'bool',
             answer: [
-              { blockType: 'booleanOptions', booleanOptions: { trueId: 'yes', falseId: 'no' } },
+              { blockType: 'yesNo',  yesId: 'yes', noId: 'no'  },
             ],
           },
         ],
       },
-      { id: 'second', blockType: 'standardPage' },
+      { id: 'second', blockType: 'page' },
     ],
   },
   path: ['pages', pageIndex, 'conditionGroups', '0', 'conditions', '0', 'answerId'],
@@ -45,8 +45,8 @@ describe('condition answer validation', () => {
   it('rejects an option removed since the last save', () => {
     const options = context()
     expect(validateConditionAnswer('a', options)).toBe(true)
-    const answer = options.data.pages[0].questionAnswerPair![0].answer[0]
-    if ('multipleChoice' in answer) answer.multipleChoice.shift()
+    const answer = options.data.pages[0].questions![0].answer[0]
+    if ('options' in answer) answer.options.shift()
     expect(validateConditionAnswer('a', options)).toEqual(expect.any(String))
   })
   it('lets operator validation report an unavailable question', () => {
@@ -58,7 +58,7 @@ describe('condition answer validation', () => {
     expect(validateConditionAnswer(null, {})).toEqual(expect.any(String))
   })
   it('attaches validation and keeps draft validation disabled', () => {
-    const group = StandardPage.fields.find(
+    const group = QuestionnairePage.fields.find(
       (field) => 'name' in field && field.name === 'conditionGroups',
     )
     const conditions =
@@ -70,6 +70,6 @@ describe('condition answer validation', () => {
         ? conditions.fields.find((field) => 'name' in field && field.name === 'answerId')
         : undefined
     expect(answer && 'validate' in answer && answer.validate).toBe(validateConditionAnswer)
-    expect(typeof Questionnaire.versions === 'object' && Questionnaire.versions.drafts).toBe(true)
+    expect(typeof Questionnaires.versions === 'object' && Questionnaires.versions.drafts).toBe(true)
   })
 })

@@ -1,45 +1,45 @@
 import type { FormState } from 'payload'
 import { describe, expect, it } from 'vitest'
-import { normalizeBooleanIds } from '../src/blocks/Answers/normalizeBooleanIds.js'
+import { normalizeQuestionnaire } from '../src/condition/normalizeQuestionnaire.js'
 import { normalizeOperator } from '../src/condition/normalizeOperator.js'
 import { operatorState } from '../src/condition/options.js'
 
 const choices = (multiple: boolean) => ({
-  blockType: 'multipleChoice',
-  allowMultipleSelection: multiple,
+  blockType: 'choice',
+  hasMany: multiple,
 })
-const bool = { blockType: 'booleanOptions', booleanOptions: { trueId: 'yes', falseId: 'no' } }
+const bool = { blockType: 'yesNo',  yesId: 'yes', noId: 'no'  }
 const document = (answer: object, operator: string) => ({
   before: { conditionGroups: [{ conditions: [{ questionId: 'q', answerId: 'yes', operator }] }] },
   pages: [
-    { id: 'page', blockType: 'standardPage', questionAnswerPair: [{ id: 'q', answer: [answer] }] },
+    { id: 'page', blockType: 'page', questions: [{ id: 'q', answer: [answer] }] },
   ],
 })
 
 describe('equivalent condition operators', () => {
   it.each([
-    ['is', ['includes', 'excludes'], 'includes'],
-    ['isNot', ['includes', 'excludes'], 'excludes'],
-    ['includes', ['is', 'isNot'], 'is'],
-    ['excludes', ['is', 'isNot'], 'isNot'],
-    ['is', ['is', 'isNot'], 'is'],
-    ['unknown', ['is', 'isNot'], 'unknown'],
-    ['is', [], 'is'],
+    ['equals', ['in', 'not_in'], 'in'],
+    ['not_equals', ['in', 'not_in'], 'not_in'],
+    ['in', ['equals', 'not_equals'], 'equals'],
+    ['not_in', ['equals', 'not_equals'], 'not_equals'],
+    ['equals', ['equals', 'not_equals'], 'equals'],
+    ['unknown', ['equals', 'not_equals'], 'unknown'],
+    ['equals', [], 'equals'],
   ] as const)('maps %s to an allowed equivalent', (value, allowed, expected) => {
     expect(normalizeOperator(value, allowed)).toBe(expected)
   })
 
   it.each([
-    [choices(true), 'is', 'includes'],
-    [choices(true), 'isNot', 'excludes'],
-    [choices(false), 'includes', 'is'],
-    [bool, 'excludes', 'isNot'],
+    [choices(true), 'equals', 'in'],
+    [choices(true), 'not_equals', 'not_in'],
+    [choices(false), 'in', 'equals'],
+    [bool, 'not_in', 'not_equals'],
   ])(
     'normalizes the current answer settings in the boolean-id walk',
     (answer, operator, expected) => {
       const data = document(answer as object, String(operator))
       const snapshot = structuredClone(data)
-      const result = normalizeBooleanIds(
+      const result = normalizeQuestionnaire(
         data,
         () => {
           throw new Error('Unexpected id generation')
@@ -49,29 +49,29 @@ describe('equivalent condition operators', () => {
       expect(result.before.conditionGroups[0].conditions[0].operator).toBe(expected)
       expect(data).toEqual(snapshot)
       expect(result.pages).toBe(data.pages)
-      expect(normalizeBooleanIds(result, () => 'unused', { blocksField: 'pages' })).toBe(result)
+      expect(normalizeQuestionnaire(result, () => 'unused', { blocksField: 'pages' })).toBe(result)
     },
   )
 
   it('uses the first question when malformed data repeats an id', () => {
-    const data = document(choices(false), 'is')
-    data.pages[0].questionAnswerPair.push({ id: 'q', answer: [choices(true)] })
-    expect(normalizeBooleanIds(data, () => 'unused')).toBe(data)
+    const data = document(choices(false), 'equals')
+    data.pages[0].questions.push({ id: 'q', answer: [choices(true)] })
+    expect(normalizeQuestionnaire(data, () => 'unused')).toBe(data)
   })
 
   it('combines operator mapping and boolean id rewrites in one save', () => {
     const data = document(
-      { ...bool, booleanOptions: { trueId: 'yes', falseId: 'yes' } },
-      'excludes',
+      { ...bool,  yesId: 'yes', noId: 'yes'  },
+      'not_in',
     )
-    const result = normalizeBooleanIds(data, () => 'fresh') as typeof data
+    const result = normalizeQuestionnaire(data, () => 'fresh') as typeof data
     expect(result.before.conditionGroups[0].conditions[0]).toEqual({
       questionId: 'q',
       answerId: 'yes',
-      operator: 'isNot',
+      operator: 'not_equals',
     })
     expect(
-      (result.pages[0].questionAnswerPair[0].answer[0] as typeof bool).booleanOptions.falseId,
+      (result.pages[0].questions[0].answer[0] as typeof bool).noId,
     ).toBe('fresh')
   })
 
@@ -80,23 +80,23 @@ describe('equivalent condition operators', () => {
     const fields: FormState = {
       pages: {
         rows: [
-          { id: 'p1', blockType: 'standardPage' },
-          { id: 'p2', blockType: 'standardPage' },
+          { id: 'p1', blockType: 'page' },
+          { id: 'p2', blockType: 'page' },
         ],
       },
-      'pages.0.questionAnswerPair': { rows: [{ id: 'q' }] },
-      'pages.0.questionAnswerPair.0.answer': {
-        rows: [{ id: 'answer', blockType: 'multipleChoice' }],
+      'pages.0.questions': { rows: [{ id: 'q' }] },
+      'pages.0.questions.0.answer': {
+        rows: [{ id: 'answer', blockType: 'choice' }],
       },
-      'pages.0.questionAnswerPair.0.answer.0.allowMultipleSelection': { value: true },
+      'pages.0.questions.0.answer.0.hasMany': { value: true },
       'pages.1.conditionGroups.0.conditions.0.questionId': { value: 'q' },
-      [path]: { value: 'isNot' },
+      [path]: { value: 'not_equals' },
     }
-    expect(operatorState(fields, path, 'isNot')).toEqual({ value: 'excludes', update: 'excludes' })
-    expect(operatorState(fields, path, 'includes')).toEqual({
-      value: 'includes',
+    expect(operatorState(fields, path, 'not_equals')).toEqual({ value: 'not_in', update: 'not_in' })
+    expect(operatorState(fields, path, 'in')).toEqual({
+      value: 'in',
       update: undefined,
     })
-    expect(fields[path].value).toBe('isNot')
+    expect(fields[path].value).toBe('not_equals')
   })
 })
