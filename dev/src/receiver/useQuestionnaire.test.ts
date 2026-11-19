@@ -37,12 +37,19 @@ test('an added condition hiding the current page selects a visible predecessor a
   expect(result.current.currentPage?.id).toBe('flight')
   rerender({
     ...questionnaire,
-    pages: questionnaire.pages.map((page) => page.id === 'flight' ? {
-      ...page,
-      conditionGroups: [{ match: 'all', conditions: [
-        { questionId: 'travel', operator: 'is', answerId: 'train' },
-      ] }],
-    } : page),
+    pages: questionnaire.pages.map((page) =>
+      page.id === 'flight'
+        ? {
+            ...page,
+            conditionGroups: [
+              {
+                match: 'all',
+                conditions: [{ questionId: 'travel', operator: 'is', answerId: 'train' }],
+              },
+            ],
+          }
+        : page,
+    ),
   })
   expect(result.current.currentPage?.id).toBe('about')
   expect(result.current.visiblePages.map((page) => page.id)).not.toContain('flight')

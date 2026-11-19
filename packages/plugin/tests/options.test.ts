@@ -206,7 +206,7 @@ describe('answer options', () => {
     const values: Record<string, unknown> = { blockType: 'booleanOptions' }
     for (const group of booleanOptionsBlock.fields) {
       if (group.type !== 'group') continue
-      const fields = group.fields.flatMap((field) => field.type === 'row' ? field.fields : [field])
+      const fields = group.fields.flatMap((field) => (field.type === 'row' ? field.fields : [field]))
       for (const field of fields) {
         if (!('name' in field) || !('defaultValue' in field)) continue
         values[`booleanOptions.${field.name}`] =

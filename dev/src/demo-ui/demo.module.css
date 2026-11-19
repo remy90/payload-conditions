@@ -434,6 +434,11 @@
     row-gap: 8px;
   }
 }
+@media (max-width: 480px) {
+  .options {
+    flex-direction: column;
+  }
+}
 @media (prefers-reduced-motion: reduce) {
   .app *,
   .app *::before,
