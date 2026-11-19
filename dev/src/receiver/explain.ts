@@ -5,7 +5,7 @@ import {
   type Page,
 } from '@remy90/payload-conditions-engine'
 
-const operatorLabels = { is: 'is', isNot: 'is not', includes: 'includes', excludes: 'excludes' }
+const operatorLabels = { equals: 'is', not_equals: 'is not', in: 'includes', not_in: 'excludes' }
 
 // Keep condition semantics in the engine. Each probe retains page order and question ownership.
 export function explainPages(questionnaire: Questionnaire) {
@@ -29,13 +29,13 @@ export function explainPages(questionnaire: Questionnaire) {
         const question = questions.get(condition.questionId)
         const answer = question?.answer
         const options =
-          answer?.type === 'boolean'
-            ? [answer.trueOption, answer.falseOption]
-            : answer?.type === 'multipleChoice'
+          answer?.type === 'yesNo'
+            ? [answer.yes, answer.no]
+            : answer?.type === 'choice'
               ? answer.options
               : []
         return {
-          text: `${question?.text ?? condition.questionId} ${operatorLabels[condition.operator]} ${options.find((option) => option.id === condition.answerId)?.label ?? condition.answerId}`,
+          text: `${question?.label ?? condition.questionId} ${operatorLabels[condition.operator]} ${options.find((option) => option.id === condition.answerId)?.label ?? condition.answerId}`,
           probe: probe(page, [{ match: 'all', conditions: [condition] }]),
         }
       }),
@@ -64,17 +64,17 @@ export function answerLabels(questionnaire: Questionnaire, answers: Answers) {
       if (!values?.length) return []
       const answer = question.answer
       const options =
-        answer.type === 'boolean'
-          ? [answer.trueOption, answer.falseOption]
-          : answer.type === 'multipleChoice'
+        answer.type === 'yesNo'
+          ? [answer.yes, answer.no]
+          : answer.type === 'choice'
             ? answer.options
             : []
       return [
         {
           id: question.id,
-          question: question.text,
+          question: question.label,
           value:
-            answer.type === 'inputText'
+            answer.type === 'text'
               ? values.join(', ')
               : values
                   .map((value) => options.find((option) => option.id === value)?.label ?? value)

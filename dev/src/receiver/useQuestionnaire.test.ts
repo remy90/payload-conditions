@@ -44,7 +44,7 @@ test('an added condition hiding the current page selects a visible predecessor a
             conditionGroups: [
               {
                 match: 'all',
-                conditions: [{ questionId: 'travel', operator: 'is', answerId: 'train' }],
+                conditions: [{ questionId: 'travel', operator: 'equals', answerId: 'train' }],
               },
             ],
           }
@@ -80,7 +80,7 @@ test('a removed multi-select option is pruned so Next can advance', () => {
     pages: questionnaire.pages.map((page) => ({
       ...page,
       questions: page.questions.map((question) =>
-        question.answer.type === 'multipleChoice'
+        question.answer.type === 'choice'
           ? {
               ...question,
               answer: {
@@ -114,7 +114,7 @@ test('a choice to Free text swap drops its answer and requires a new response', 
       ...page,
       questions: page.questions.map((question) =>
         question.id === 'travel'
-          ? { ...question, answer: { type: 'inputText', prompt: '' } }
+          ? { ...question, answer: { type: 'text', placeholder: '', maxLength: 2000 } }
           : question,
       ),
     })),
@@ -135,13 +135,13 @@ test('swapping boolean and multiple choice drops answers even when option ids ma
     pages: questionnaire.pages.map((page) => ({
       ...page,
       questions: page.questions.map((question) =>
-        question.id === 'children' && question.answer.type === 'boolean'
+        question.id === 'children' && question.answer.type === 'yesNo'
           ? {
               ...question,
               answer: {
-                type: 'multipleChoice',
-                allowMultipleSelection: false,
-                options: [question.answer.trueOption, question.answer.falseOption],
+                type: 'choice',
+                hasMany: false,
+                options: [question.answer.yes, question.answer.no],
               },
             }
           : question,
@@ -192,7 +192,7 @@ test('removing every selected option drops its answer before resolving dependent
     pages: questionnaire.pages.map((page) => ({
       ...page,
       questions: page.questions.map((question) =>
-        question.answer.type === 'multipleChoice'
+        question.answer.type === 'choice'
           ? { ...question, answer: { ...question.answer, options: [] } }
           : question,
       ),
@@ -260,9 +260,10 @@ test('a finished questionnaire stays finished when a swap adds a required page',
         conditionGroups: [],
         questions: [{
           id: 'new-question',
-          text: 'A new required question',
-          optional: false,
-          answer: { type: 'inputText', prompt: '' },
+          name: 'new_question',
+          label: 'A new required question',
+          required: true,
+          answer: { type: 'text', placeholder: '', maxLength: 2000 },
         }],
       },
     ],

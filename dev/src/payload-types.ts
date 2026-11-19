@@ -68,7 +68,7 @@ export interface Config {
   blocks: {};
   collections: {
     users: User;
-    questionnaire: Questionnaire;
+    questionnaires: Questionnaire;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -77,7 +77,7 @@ export interface Config {
   collectionsJoins: {};
   collectionsSelect: {
     users: UsersSelect<false> | UsersSelect<true>;
-    questionnaire: QuestionnaireSelect<false> | QuestionnaireSelect<true>;
+    questionnaires: QuestionnairesSelect<false> | QuestionnairesSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -145,99 +145,83 @@ export interface User {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "questionnaire".
+ * via the `definition` "questionnaires".
  */
 export interface Questionnaire {
   id: number;
   title: string;
-  pages?: StandardPage[] | null;
+  pages: QuestionnairePage[];
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "StandardPage".
+ * via the `definition` "QuestionnairePage".
  */
-export interface StandardPage {
-  /**
-   * Respondents can skip every question on this page
-   */
+export interface QuestionnairePage {
+  blockName?: string | null;
   skippable?: boolean | null;
-  questionAnswerPair?:
-    | {
-        /**
-         * This can be a question or input prompt
-         */
-        question: string;
-        /**
-         * Respondents can leave this question unanswered
-         */
-        optional?: boolean | null;
-        answer: (BooleanOptions | MultipleChoice | InputText)[];
-        id?: string | null;
-      }[]
-    | null;
+  questions: {
+    label: string;
+    name: string;
+    required?: boolean | null;
+    answer: (YesNoAnswer | ChoiceAnswer | TextAnswer)[];
+    id?: string | null;
+  }[];
   match: 'all' | 'any';
   conditionGroups?:
     | {
         match: 'all' | 'any';
-        conditions?:
-          | {
-              questionId: string;
-              operator: 'is' | 'isNot' | 'includes' | 'excludes';
-              answerId: string;
-              id?: string | null;
-            }[]
-          | null;
+        conditions: {
+          questionId: string;
+          operator: 'equals' | 'not_equals' | 'in' | 'not_in';
+          answerId: string;
+          id?: string | null;
+        }[];
         id?: string | null;
       }[]
     | null;
   id?: string | null;
-  blockName?: string | null;
-  blockType: 'standardPage';
+  blockType: 'page';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "BooleanOptions".
+ * via the `definition` "YesNoAnswer".
  */
-export interface BooleanOptions {
-  booleanOptions: {
-    trueOption: string;
-    falseOption: string;
-    trueId: string;
-    falseId: string;
-  };
+export interface YesNoAnswer {
+  yesLabel: string;
+  noLabel: string;
+  yesId: string;
+  noId: string;
   id?: string | null;
   blockName?: string | null;
-  blockType: 'booleanOptions';
+  blockType: 'yesNo';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "MultipleChoice".
+ * via the `definition` "ChoiceAnswer".
  */
-export interface MultipleChoice {
-  allowMultipleSelection?: boolean | null;
-  multipleChoice: {
-    option: string;
+export interface ChoiceAnswer {
+  hasMany?: boolean | null;
+  options: {
+    label: string;
     id?: string | null;
   }[];
   id?: string | null;
   blockName?: string | null;
-  blockType: 'multipleChoice';
+  blockType: 'choice';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "InputText".
+ * via the `definition` "TextAnswer".
  */
-export interface InputText {
-  /**
-   * Shown in the empty answer box
-   */
-  inputText: string;
+export interface TextAnswer {
+  placeholder?: string | null;
+  maxLength: number;
   id?: string | null;
   blockName?: string | null;
-  blockType: 'inputText';
+  blockType: 'text';
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -268,7 +252,7 @@ export interface PayloadLockedDocument {
         value: number | User;
       } | null)
     | ({
-        relationTo: 'questionnaire';
+        relationTo: 'questionnaires';
         value: number | Questionnaire;
       } | null);
   globalSlug?: string | null;
@@ -338,14 +322,14 @@ export interface UsersSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "questionnaire_select".
+ * via the `definition` "questionnaires_select".
  */
-export interface QuestionnaireSelect<T extends boolean = true> {
+export interface QuestionnairesSelect<T extends boolean = true> {
   title?: T;
   pages?:
     | T
     | {
-        standardPage?: T | StandardPageSelect<T>;
+        page?: T | QuestionnairePageSelect<T>;
       };
   updatedAt?: T;
   createdAt?: T;
@@ -353,21 +337,23 @@ export interface QuestionnaireSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "StandardPage_select".
+ * via the `definition` "QuestionnairePage_select".
  */
-export interface StandardPageSelect<T extends boolean = true> {
+export interface QuestionnairePageSelect<T extends boolean = true> {
+  blockName?: T;
   skippable?: T;
-  questionAnswerPair?:
+  questions?:
     | T
     | {
-        question?: T;
-        optional?: T;
+        label?: T;
+        name?: T;
+        required?: T;
         answer?:
           | T
           | {
-              booleanOptions?: T | BooleanOptionsSelect<T>;
-              multipleChoice?: T | MultipleChoiceSelect<T>;
-              inputText?: T | InputTextSelect<T>;
+              yesNo?: T | YesNoAnswerSelect<T>;
+              choice?: T | ChoiceAnswerSelect<T>;
+              text?: T | TextAnswerSelect<T>;
             };
         id?: T;
       };
@@ -387,34 +373,29 @@ export interface StandardPageSelect<T extends boolean = true> {
         id?: T;
       };
   id?: T;
-  blockName?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "BooleanOptions_select".
+ * via the `definition` "YesNoAnswer_select".
  */
-export interface BooleanOptionsSelect<T extends boolean = true> {
-  booleanOptions?:
-    | T
-    | {
-        trueOption?: T;
-        falseOption?: T;
-        trueId?: T;
-        falseId?: T;
-      };
+export interface YesNoAnswerSelect<T extends boolean = true> {
+  yesLabel?: T;
+  noLabel?: T;
+  yesId?: T;
+  noId?: T;
   id?: T;
   blockName?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "MultipleChoice_select".
+ * via the `definition` "ChoiceAnswer_select".
  */
-export interface MultipleChoiceSelect<T extends boolean = true> {
-  allowMultipleSelection?: T;
-  multipleChoice?:
+export interface ChoiceAnswerSelect<T extends boolean = true> {
+  hasMany?: T;
+  options?:
     | T
     | {
-        option?: T;
+        label?: T;
         id?: T;
       };
   id?: T;
@@ -422,10 +403,11 @@ export interface MultipleChoiceSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "InputText_select".
+ * via the `definition` "TextAnswer_select".
  */
-export interface InputTextSelect<T extends boolean = true> {
-  inputText?: T;
+export interface TextAnswerSelect<T extends boolean = true> {
+  placeholder?: T;
+  maxLength?: T;
   id?: T;
   blockName?: T;
 }

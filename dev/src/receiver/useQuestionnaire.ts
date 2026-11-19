@@ -33,9 +33,9 @@ function pruneAnswers(
   for (const [id, values] of answers) {
     const answer = questions.get(id)?.answer
     const optionIds =
-      answer?.type === 'boolean'
-        ? [answer.trueOption.id, answer.falseOption.id]
-        : answer?.type === 'multipleChoice'
+      answer?.type === 'yesNo'
+        ? [answer.yes.id, answer.no.id]
+        : answer?.type === 'choice'
           ? answer.options.map((option) => option.id)
           : undefined
     const kept =

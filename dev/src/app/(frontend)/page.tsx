@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic'
 export default async function Home() {
   const payload = await getPayload({ config })
   const { docs } = await payload.find({
-    collection: 'questionnaire',
+    collection: 'questionnaires',
     draft: false,
     where: { _status: { equals: 'published' } },
   })

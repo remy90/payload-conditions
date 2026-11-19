@@ -23,7 +23,7 @@ export default async function QuestionnairePage({
   const user = preview === '1' ? (await payload.auth({ headers: authHeaders })).user : null
   const isPreview = user?.collection === 'users'
   const { docs } = await payload.find({
-    collection: 'questionnaire',
+    collection: 'questionnaires',
     draft: isPreview,
     depth: 0,
     limit: 1,

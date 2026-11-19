@@ -26,15 +26,15 @@ try {
       data: { email: 'demo@example.com', password: 'demo' },
     })
   const existing = await payload.find({
-    collection: 'questionnaire',
+    collection: 'questionnaires',
     where: { title: { equals: trip.title } },
     draft: true,
   })
   const data = { title: trip.title, pages: trip.pages, _status: 'published' as const }
   const saved = existing.docs[0]
-    ? await payload.update({ collection: 'questionnaire', id: existing.docs[0].id, data })
-    : await payload.create({ collection: 'questionnaire', data })
-  const read = await payload.findByID({ collection: 'questionnaire', id: saved.id, draft: false })
+    ? await payload.update({ collection: 'questionnaires', id: existing.docs[0].id, data })
+    : await payload.create({ collection: 'questionnaires', data })
+  const read = await payload.findByID({ collection: 'questionnaires', id: saved.id, draft: false })
   // Check every page, question, option and condition reference through the public adapter.
   const expected = fromPayloadQuestionnaire(trip)
   const actual = fromPayloadQuestionnaire(read)
