@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { applyAnswer, evaluatePage, nextPageId } from '../src/index.js'
+import { applyAnswer, checkQuestionnaire, evaluatePage, nextPageId } from '../src/index.js'
 import { fromPayloadQuestionnaire, type StoredQuestionnaire } from '../src/payload.js'
 
 describe('Payload document adapter', () => {
@@ -123,6 +123,30 @@ describe('Payload document adapter', () => {
     const result = applyAnswer(q, new Map(), '10', ['100'])
     expect(nextPageId(q, result.visiblePageIds, '1')).toBe('2')
     expect(doc).toEqual(before)
+  })
+
+  it.each(['', null, undefined, ' \t '])('omits an optional page title of %j', (blockName) => {
+    const q = fromPayloadQuestionnaire({
+      id: 'survey',
+      title: 'Survey',
+      pages: [
+        {
+          id: 'page',
+          blockType: 'page',
+          blockName,
+          questions: [
+            {
+              id: 'details',
+              name: 'details',
+              label: 'Details',
+              answer: [{ blockType: 'text' }],
+            },
+          ],
+        },
+      ],
+    })
+    expect(q.pages[0]).not.toHaveProperty('title')
+    expect(checkQuestionnaire(q)).toEqual([])
   })
 
   it('accepts generated interfaces containing additional blocks', () => {

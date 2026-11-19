@@ -163,7 +163,7 @@ function convertPage(source: StoredPage, pageId: string): Page {
   }
   return {
     id: pageId,
-    ...(source.blockName == null ? {} : { title: source.blockName }),
+    ...(source.blockName?.trim() ? { title: source.blockName } : {}),
     skippable: source.skippable ?? false,
     questions,
     match: match(source.match),
