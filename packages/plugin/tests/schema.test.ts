@@ -62,7 +62,7 @@ describe('stored schema', () => {
     ])
     for (const name of ['trueId', 'falseId']) {
       const field = named(fields, name)
-      expect(field.admin?.hidden).toBe(true)
+      expect(field.type === 'text' && field.admin?.hidden).toBe(true)
     }
   })
 
