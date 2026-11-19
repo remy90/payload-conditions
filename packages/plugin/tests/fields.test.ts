@@ -42,7 +42,7 @@ it('fills empty names from labels, reserving explicit names before generating su
       },
     ],
   }
-  fillQuestionNames({ data } as never)
+  fillQuestionNames(data)
   expect(data.pages[0].questions.map((q) => q.name)).toEqual([
     'favourite_colour_2',
     'favourite_colour_3',
@@ -50,8 +50,19 @@ it('fills empty names from labels, reserving explicit names before generating su
   ])
   expect(data.pages[1].questions.map((q) => q.name)).toEqual(['cafe', 'question', 'a'.repeat(64)])
   const snapshot = structuredClone(data)
-  fillQuestionNames({ data } as never)
+  fillQuestionNames(data)
   expect(data).toEqual(snapshot)
+})
+
+it('leaves blank draft labels unnamed until they have text', () => {
+  const data = {
+    pages: [{ questions: [{ label: '   ', name: '' }, { label: '!!!', name: '' }] }],
+  }
+  fillQuestionNames(data)
+  expect(data.pages[0].questions.map((question) => question.name)).toEqual(['', 'question'])
+  data.pages[0].questions[0].label = 'Ready?'
+  fillQuestionNames(data)
+  expect(data.pages[0].questions[0].name).toBe('ready')
 })
 
 it('checks option labels after trimming and ignoring case', () => {
@@ -84,7 +95,7 @@ it('reports malformed text inline while checking uniqueness and filling names', 
       },
     ],
   }
-  expect(() => fillQuestionNames({ data } as never)).not.toThrow()
+  expect(() => fillQuestionNames(data)).not.toThrow()
   expect(data.pages[0].questions[0].name).toBe(42)
   const path = ['pages', '0', 'questions', '1', 'name']
   expect(validateName('ready', { data, path })).toBe(true)

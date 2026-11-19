@@ -1,16 +1,49 @@
 import {
+  beforeChangeTraverseFields,
   beforeValidateTraverseFields,
   buildConfig,
   ValidationError,
   type PayloadRequest,
+  type ValidationFieldError,
 } from 'payload'
 import { expect, it } from 'vitest'
-import { questionnairePlugin } from '../src/index.js'
+import { QuestionnairePage, questionnaireBeforeChange, questionnairePlugin } from '../src/index.js'
 import { en } from '../src/translations/languages/en.js'
 
-const { beforeChange: fieldBeforeChange } = await import(
-  new URL('./fields/hooks/beforeChange/index.js', import.meta.resolve('payload')).href
-)
+type FieldChangeArgs = Pick<
+  Parameters<typeof beforeChangeTraverseFields>[0],
+  | 'collection'
+  | 'context'
+  | 'data'
+  | 'doc'
+  | 'docWithLocales'
+  | 'global'
+  | 'operation'
+  | 'overrideAccess'
+  | 'req'
+  | 'skipValidation'
+>
+const fieldBeforeChange = async (args: FieldChangeArgs) => {
+  const data = structuredClone(args.data)
+  const errors: ValidationFieldError[] = []
+  await beforeChangeTraverseFields({
+    ...args,
+    data,
+    errors,
+    fields: args.collection!.fields,
+    fieldLabelPath: '',
+    mergeLocaleActions: [],
+    parentIndexPath: '',
+    parentPath: '',
+    parentSchemaPath: '',
+    siblingData: data,
+    siblingDoc: args.doc,
+    siblingDocWithLocales: args.docWithLocales,
+  })
+  if (errors.length)
+    throw new ValidationError({ collection: args.collection!.slug, errors, req: args.req }, args.req.t)
+  return data
+}
 
 it('reports field validation inline after the sanitized Payload traversal and skips drafts', async () => {
   const config = await buildConfig({
@@ -73,7 +106,7 @@ it('reports field validation inline after the sanitized Payload traversal and sk
     siblingData: data,
     siblingDoc: {},
   })
-  const fields = {
+  const fields: FieldChangeArgs = {
     collection,
     context: {},
     data,
@@ -117,6 +150,80 @@ it('reports field validation inline after the sanitized Payload traversal and sk
     )
   }
   await expect(fieldBeforeChange({ ...fields, skipValidation: true })).resolves.toBeDefined()
+})
+
+it('fills names deterministically in a host-composed collection with a custom blocks field', async () => {
+  const config = await buildConfig({
+    secret: 'test',
+    db: {
+      defaultIDType: 'text',
+      init: () => {
+        throw new Error('Unexpected database initialization')
+      },
+    },
+    collections: [
+      {
+        slug: 'host',
+        hooks: { beforeChange: [questionnaireBeforeChange('survey')] },
+        fields: [{ name: 'survey', type: 'blocks', blocks: [QuestionnairePage] }],
+      },
+    ],
+  })
+  const collection = config.collections.find(({ slug }) => slug === 'host')!
+  const t = (key: string) => key
+  const req = {
+    context: {},
+    t,
+    i18n: { t, language: 'en' },
+    payload: { config, collections: {} },
+  } as unknown as PayloadRequest
+  const row = (name?: string) => ({ label: ' Ready? ', name, answer: [{ blockType: 'text' }] })
+  const data: Record<string, any> = {
+    survey: [
+      { blockType: 'page', questions: [row(), row('  ')] },
+      { blockType: 'page', questions: [row('ready'), row()] },
+    ],
+  }
+  await beforeValidateTraverseFields({
+    collection,
+    context: {},
+    data,
+    doc: {},
+    fields: collection.fields,
+    global: null,
+    operation: 'create',
+    overrideAccess: true,
+    parentIndexPath: '',
+    parentPath: '',
+    parentSchemaPath: '',
+    req,
+    siblingData: data,
+    siblingDoc: {},
+  })
+  const result = await collection.hooks.beforeChange[0]({
+    collection,
+    context: {},
+    data,
+    operation: 'create',
+    req,
+    originalDoc: undefined as never,
+  })
+  expect(
+    result.survey.flatMap((page: any) => page.questions.map((question: any) => question.name)),
+  ).toEqual(['ready_2', 'ready_3', 'ready', 'ready_4'])
+  await expect(
+    fieldBeforeChange({
+      collection,
+      context: {},
+      data: result,
+      doc: {},
+      docWithLocales: {},
+      global: null,
+      operation: 'create',
+      overrideAccess: true,
+      req,
+    }),
+  ).resolves.toBeDefined()
 })
 
 it('fills row ids and trims text before collection hooks on create', async () => {
@@ -198,7 +305,6 @@ it('fills row ids and trims text before collection hooks on create', async () =>
   }
   expect(data.title).toBe('Survey')
   expect(first.blockName).toBe('Page one')
-  expect(first.questions.map((question: any) => question.name)).toEqual(['ready', 'ready_2'])
   expect(first.questions[0].label).toBe('Ready?')
   expect(first.questions[0].answer[0]).toMatchObject({
     yesLabel: 'Yes',
@@ -220,6 +326,7 @@ it('fills row ids and trims text before collection hooks on create', async () =>
     expect.fail('Expected structural validation')
   } catch (error) {
     expect(error).toBeInstanceOf(ValidationError)
+    expect(first.questions.map((question: any) => question.name)).toEqual(['ready', 'ready_2'])
     expect((error as ValidationError).data?.errors).toEqual([
       {
         path: 'pages.1.conditionGroups.0.conditions.0.questionId',

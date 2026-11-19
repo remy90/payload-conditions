@@ -1,9 +1,8 @@
-import type { CollectionBeforeValidateHook } from 'payload'
 import type { StoredQuestionnaire } from '@remy90/payload-conditions-engine/payload'
 
-export const fillQuestionNames: CollectionBeforeValidateHook = ({ data }) => {
-  if (!data) return data
-  const questions = ((data as StoredQuestionnaire).pages ?? []).flatMap((page) =>
+export const fillQuestionNames = (data: Record<string, unknown>, blocksField = 'pages') => {
+  const pages = data[blocksField] as StoredQuestionnaire['pages']
+  const questions = (pages ?? []).flatMap((page) =>
     page.blockType === 'page' || page.blockType === undefined ? (page.questions ?? []) : [],
   )
   const used = new Set<string>(
@@ -15,7 +14,8 @@ export const fillQuestionNames: CollectionBeforeValidateHook = ({ data }) => {
   for (const question of questions) {
     if (question.name != null && (typeof question.name !== 'string' || question.name.trim()))
       continue
-    const label = typeof question.label === 'string' ? question.label : ''
+    const label = typeof question.label === 'string' ? question.label.trim() : ''
+    if (!label) continue
     const base =
       label
         .normalize('NFKD')

@@ -6,11 +6,13 @@ import {
 import { ValidationError, type CollectionBeforeChangeHook } from 'payload'
 import { normalizeQuestionnaire } from '../condition/normalizeQuestionnaire.js'
 import { issueErrors } from './issueErrors.js'
+import { fillQuestionNames } from '../fields/names.js'
 
 export const questionnaireBeforeChange =
   (blocksField = 'pages'): CollectionBeforeChangeHook =>
   async ({ data, originalDoc, collection, req }) => {
     if (data[blocksField] === undefined && data._status === undefined) return data
+    fillQuestionNames(data, blocksField)
     const normalized =
       data[blocksField] === undefined
         ? data
