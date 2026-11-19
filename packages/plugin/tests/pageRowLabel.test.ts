@@ -4,7 +4,7 @@ import { beforeEach, expect, it, vi } from 'vitest'
 import { QuestionnairePageRowLabel } from '../src/blocks/QuestionnairePageRowLabel.js'
 import { translate, type TranslationKey } from '../src/translations/index.js'
 
-const state = vi.hoisted(() => ({ fields: {} as FormState }))
+const state = vi.hoisted(() => ({ fields: {} as FormState, missingTranslations: false }))
 vi.mock('@payloadcms/ui', () => ({
   SectionTitle: () => null,
   useConfig: () => ({ config: { blocksMap: {} } }),
@@ -12,7 +12,7 @@ vi.mock('@payloadcms/ui', () => ({
   useFormFields: (selector: (args: [FormState]) => unknown) => selector([state.fields]),
   useTranslation: () => ({
     t: (key: string, options?: Record<string, unknown>) =>
-      translate({}, key.split(':')[1] as TranslationKey, options),
+      state.missingTranslations ? key : translate({}, key.split(':')[1] as TranslationKey, options),
   }),
 }))
 
@@ -31,6 +31,7 @@ const props: Parameters<typeof QuestionnairePageRowLabel>[0] = {
 
 beforeEach(() => {
   state.fields = {}
+  state.missingTranslations = false
 })
 
 it('renders the current page title error beside its title control', () => {
@@ -56,6 +57,16 @@ it.each([
     expect(summary?.props.children).toEqual([questionText, groupText])
   },
 )
+
+it('uses English counts when the host has no plugin translations', () => {
+  state.missingTranslations = true
+  state.fields['survey.1.questions'] = { value: 2 }
+  state.fields['survey.1.conditionGroups'] = { value: 1 }
+  const summary = elements(QuestionnairePageRowLabel(props)).find(
+    (element) => element.type === 'span' && Array.isArray(element.props.children),
+  )
+  expect(summary?.props.children).toEqual(['2 questions', ' · 1 condition group'])
+})
 
 it('omits the title error when the field is valid or block names are disabled', () => {
   expect(

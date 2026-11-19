@@ -1,3 +1,4 @@
+import { createRequire } from 'node:module'
 import {
   beforeChangeTraverseFields,
   beforeValidateTraverseFields,
@@ -9,6 +10,12 @@ import {
 import { expect, it } from 'vitest'
 import { QuestionnairePage, questionnaireBeforeChange, questionnairePlugin } from '../src/index.js'
 import { en } from '../src/translations/languages/en.js'
+import { translate } from '../src/translations/index.js'
+
+// Resolve Payload's existing dependency without adding it to the plugin.
+const { t: payloadTranslate } = await import(
+  createRequire(import.meta.resolve('payload')).resolve('@payloadcms/translations')
+)
 
 type FieldChangeArgs = Pick<
   Parameters<typeof beforeChangeTraverseFields>[0],
@@ -152,6 +159,43 @@ it('reports field validation inline after the sanitized Payload traversal and sk
   await expect(fieldBeforeChange({ ...fields, skipValidation: true })).resolves.toBeDefined()
 })
 
+it.each([false, true])('uses English in a host-composed collection with the plugin disabled: %s', async (disabled) => {
+  const config = await buildConfig({
+    secret: 'test',
+    db: { defaultIDType: 'text', init: () => { throw new Error('Unexpected database initialization') } },
+    plugins: disabled ? [questionnairePlugin({ enabled: false })] : [],
+    collections: [{
+      slug: 'host',
+      hooks: { beforeChange: [questionnaireBeforeChange()] },
+      fields: [{ name: 'pages', type: 'blocks', blocks: [QuestionnairePage] }],
+    }],
+  })
+  const translations = config.i18n.supportedLanguages.en!.translations
+  expect(translations).not.toHaveProperty('plugin-questionnaire')
+  const t = (key: string, vars?: Record<string, unknown>) =>
+    payloadTranslate({ key, vars, translations })
+  const req = { t } as unknown as PayloadRequest
+  const pluralLabel = QuestionnairePage.labels?.plural
+  if (typeof pluralLabel !== 'function') throw new Error('Expected a page label callback')
+  expect(pluralLabel({ t } as never)).toBe('Pages')
+  const title = QuestionnairePage.fields.find((field) => 'name' in field && field.name === 'blockName')!
+  if (title.type !== 'text' || title.hasMany || typeof title.validate !== 'function')
+    throw new Error('Expected a title validator')
+  expect(await title.validate('x'.repeat(121), { req } as never)).toBe('Use at most 120 characters.')
+  expect(translate({ t }, 'questionCount', { count: 1 })).toBe('1 question')
+  expect(translate({ t }, 'questionCount', { count: 2 })).toBe('2 questions')
+  const custom = (key: string, vars?: Record<string, unknown>) => payloadTranslate({
+    key, vars,
+    translations: { ...translations, 'plugin-questionnaire': {
+      ...en['plugin-questionnaire'],
+      questionCount_one: '{{count}} custom question',
+      questionCount_other: '{{count}} custom questions',
+    } },
+  })
+  expect(translate({ t: custom }, 'questionCount', { count: 1 })).toBe('1 custom question')
+  expect(translate({ t: custom }, 'questionCount', { count: 5 })).toBe('5 custom questions')
+})
+
 it('fills names deterministically in a host-composed collection with a custom blocks field', async () => {
   const config = await buildConfig({
     secret: 'test',
@@ -170,7 +214,8 @@ it('fills names deterministically in a host-composed collection with a custom bl
     ],
   })
   const collection = config.collections.find(({ slug }) => slug === 'host')!
-  const t = (key: string) => key
+  const t = (key: string, vars?: Record<string, unknown>) =>
+    payloadTranslate({ key, vars, translations: config.i18n.supportedLanguages.en!.translations })
   const req = {
     context: {},
     t,

@@ -97,7 +97,9 @@ it('uses the host translator for validation messages and interpolation', () => {
   expect(translate({ t }, 'groupCount', { count: 2 })).toBe('Translated')
   expect(calls).toEqual([
     ['plugin-questionnaire:tooLong', { max: 64 }],
+    ['plugin-questionnaire:questionCount_one', undefined],
     ['plugin-questionnaire:questionCount', { count: 1 }],
+    ['plugin-questionnaire:groupCount_other', undefined],
     ['plugin-questionnaire:groupCount', { count: 2 }],
   ])
 })
