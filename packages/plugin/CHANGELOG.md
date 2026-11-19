@@ -11,7 +11,8 @@ Stored fields and data stay unchanged.
 ### Dependencies and packaging
 
 - Match Payload 3.94's Node support: `^22.23.5 || ^24.22.3 || >=26.13.1`. Pin workspace development to Node 26.13.1.
-- Build JavaScript and declarations with TypeScript 7. Remove SWC and rimraf, along with the plugin's unused React DOM dependency and peer.
+- Build JavaScript and declarations with TypeScript 7.1 beta using `7.1.0-beta || >=7.1.0-rc <8`. Widen the range to `^7.1.0` once 7.1 is stable. TypeScript is a development dependency only; consumers keep their own compiler version.
+- Remove SWC and rimraf, along with the plugin's unused React DOM dependency and peer.
 - Mark the package as side-effect-free and stop shipping source and declaration maps.
 - Pair with engine 1.0.1. Use Payload `^3.94.0` for development and update the test runner to Vitest 5.
 - Check the built client entry with esbuild to catch Payload server imports.

@@ -39,7 +39,7 @@
     "prepublishOnly": "pnpm build"
   },
   "devDependencies": {
-    "typescript": "^7.0.2",
+    "typescript": "7.1.0-beta || >=7.1.0-rc <8",
     "vitest": "^5.1.1"
   },
   "publishConfig": {
