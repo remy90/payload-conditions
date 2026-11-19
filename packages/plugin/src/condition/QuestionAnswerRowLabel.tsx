@@ -9,7 +9,6 @@ export const QuestionAnswerRowLabel = () => {
   return (
     <span
       className="row-label"
-      title={label}
       style={{
         display: 'block',
         minWidth: 0,
