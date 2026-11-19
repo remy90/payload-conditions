@@ -3,6 +3,7 @@ import {
   checkQuestionnaire,
   questionnaireIssueCodes,
   type Questionnaire,
+  type QuestionnaireIssueCode,
   type Condition,
 } from '../src/index.js'
 import { condition, page, questionnaire, yesNoQuestion } from './fixtures.js'
@@ -34,48 +35,76 @@ describe('questionnaire checks', () => {
     expect(q).toEqual(before)
   })
 
-  it.each<[string, (q: Questionnaire) => void]>([
-    [
-      'emptyPage',
-      (q) => {
-        q.pages[1].questions = []
-      },
-    ],
-    [
-      'emptyGroup',
-      (q) => {
-        q.pages[1].conditionGroups[0].conditions = []
-      },
-    ],
-    [
-      'duplicateName',
-      (q) => {
-        q.pages[1].questions[0].name = 'a'
-      },
-    ],
-    [
-      'invalidName',
-      (q) => {
-        q.pages[0].questions[0].name = 'Bad name'
-      },
-    ],
-    [
-      'blankText',
-      (q) => {
-        q.pages[1].title = '  '
-      },
-    ],
-  ])('reports %s', (code, change) => {
+  const issueFixtures: Record<QuestionnaireIssueCode, (q: Questionnaire) => void> = {
+    noPages: (q) => {
+      q.pages = []
+    },
+    emptyPage: (q) => {
+      q.pages[1].questions = []
+    },
+    emptyGroup: (q) => {
+      q.pages[1].conditionGroups[0].conditions = []
+    },
+    duplicateId: (q) => {
+      q.pages[1].id = 'A'
+    },
+    duplicateName: (q) => {
+      q.pages[1].questions[0].name = 'a'
+    },
+    invalidName: (q) => {
+      q.pages[0].questions[0].name = 'Bad name'
+    },
+    blankText: (q) => {
+      q.pages[1].title = '  '
+    },
+    duplicateOptionLabel: (q) => {
+      const answer = q.pages[0].questions[0].answer
+      if (answer.type === 'yesNo') answer.no.label = ' YES '
+    },
+    unknownQuestion: (q) => {
+      q.pages[1].conditionGroups[0].conditions[0].questionId = 'missing'
+    },
+    samePageQuestion: (q) => {
+      q.pages[1].conditionGroups[0].conditions[0].questionId = 'b'
+    },
+    laterQuestion: (q) => {
+      q.pages[0].conditionGroups = [{ match: 'all', conditions: [condition('b', 'b_yes')] }]
+    },
+    unsupportedSource: (q) => {
+      q.pages[0].questions[0].answer = { type: 'text', maxLength: 20 }
+    },
+    unknownAnswer: (q) => {
+      q.pages[1].conditionGroups[0].conditions[0].answerId = 'missing'
+    },
+    operatorMismatch: (q) => {
+      q.pages[1].conditionGroups[0].conditions[0].operator = 'in'
+    },
+    contradiction: (q) => {
+      q.pages[1].conditionGroups[0].conditions.push(condition('a', 'no'))
+    },
+    unreachablePage: (q) => {
+      q.pages[1].conditionGroups[0].conditions.push(condition('a', 'no'))
+      q.pages.push(
+        page('C', [{ ...yesNoQuestion('c'), answer: { type: 'text', maxLength: 20 } }], [
+          condition('b', 'b_yes'),
+        ]),
+      )
+    },
+  }
+
+  it.each(questionnaireIssueCodes)('reports %s from its dedicated fixture', (code) => {
     const q = clean()
-    change(q)
-    expect(checkQuestionnaire(q)).toContainEqual({
-      code,
-      message: expect.any(String),
-      pageId: expect.any(String),
-      ...(code === 'duplicateName' || code === 'invalidName'
-        ? { questionId: expect.any(String) }
-        : {}),
-    })
+    issueFixtures[code](q)
+    expect(checkQuestionnaire(q)).toContainEqual(
+      expect.objectContaining({
+        code,
+        message: expect.any(String),
+        ...(code === 'noPages' ? {} : { pageId: expect.any(String) }),
+        ...(code === 'duplicateName' || code === 'invalidName'
+          ? { questionId: expect.any(String) }
+          : {}),
+      }),
+    )
   })
 
   it.each(['page', 'question', 'option', 'cross-kind'] as const)(
