@@ -214,7 +214,7 @@ describe('publish gating and inline ValidationError', () => {
     expect(await run(data, { drafts: true }, originalDoc)).toEqual(data)
     expect(await run(data, false, originalDoc)).toEqual(data)
     await expect(
-      run({ _status: 'published' }, { drafts: true }, originalDoc),
+      run({ _status: 'published' }, { drafts: true }, { ...originalDoc, _status: 'draft' }),
     ).rejects.toBeInstanceOf(ValidationError)
   })
 

@@ -226,6 +226,59 @@ it('fills names deterministically in a host-composed collection with a custom bl
   ).resolves.toBeDefined()
 })
 
+it.each([
+  ['title-only', { title: 'Renamed' }, 'published', false],
+  ['trash', { deletedAt: '2026-11-17T00:00:00.000Z' }, 'published', false],
+  ['status-only publish', { _status: 'published' }, 'draft', true],
+  ['pages edit', { editPages: true }, 'published', true],
+] as const)('handles a %s update after Payload fills missing fields', async (_, update, status, fails) => {
+  const config = await buildConfig({
+    secret: 'test',
+    db: { defaultIDType: 'text', init: () => { throw new Error('Unexpected database initialization') } },
+    plugins: [questionnairePlugin()],
+  })
+  const collection = config.collections.find(({ slug }) => slug === 'questionnaires')!
+  const req = { context: {}, payload: { config, collections: {} } } as unknown as PayloadRequest
+  const originalDoc = {
+    title: 'Survey',
+    _status: status,
+    pages: [{
+      id: 'p1', blockType: 'page', skippable: false, match: 'all',
+      questions: [{
+        id: 'q1', name: 'ready', label: 'Ready?', required: true,
+        answer: [{ id: 'a1', blockType: 'yesNo', yesLabel: 'Yes', noLabel: 'No', yesId: 'same', noId: 'same' }],
+      }],
+      conditionGroups: [{
+        id: 'g1', match: 'all',
+        conditions: [{ id: 'c1', questionId: 'q1', operator: 'in', answerId: 'gone' }],
+      }],
+    }],
+  }
+  const data: Record<string, any> = { ...update }
+  if ('editPages' in update) {
+    delete data.editPages
+    data.pages = structuredClone(originalDoc.pages)
+    data.pages[0].questions[0].label = 'Changed question'
+  }
+  await beforeValidateTraverseFields({
+    collection, context: {}, data, doc: originalDoc, fields: collection.fields,
+    global: null, operation: 'update', overrideAccess: true,
+    parentIndexPath: '', parentPath: '', parentSchemaPath: '', req,
+    siblingData: data, siblingDoc: originalDoc,
+  })
+  expect(data.pages).toBeDefined()
+  expect(data._status).toBe('_status' in update ? update._status : status)
+  const result = collection.hooks.beforeChange[0]({
+    collection, context: {}, data, originalDoc, operation: 'update', req,
+  })
+  if (fails) await expect(result).rejects.toBeInstanceOf(ValidationError)
+  else {
+    const saved = await result
+    expect(saved.pages[0].questions[0].answer[0].yesId).toEqual(expect.any(String))
+    expect(saved.pages[0].conditionGroups[0].conditions[0].operator).toBe('equals')
+  }
+})
+
 it('fills row ids and trims text before collection hooks on create', async () => {
   const config = await buildConfig({
     secret: 'test',
