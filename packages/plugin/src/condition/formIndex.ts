@@ -40,17 +40,17 @@ const readAnswer = (
   const block = `${path}.answer.0`
   const type = rowString(fields, `${path}.answer`, 0, 'blockType')
   if (type === 'yesNo') {
-    const yesLabel = {
+    const yesOption = {
       id: stringValue(fields, `${block}.yesId`) ?? '',
       label: stringValue(fields, `${block}.yesLabel`) ?? '',
     }
-    const noLabel = {
+    const noOption = {
       id: stringValue(fields, `${block}.noId`) ?? '',
       label: stringValue(fields, `${block}.noLabel`) ?? '',
     }
     return {
-      answer: { type: 'yesNo', yes: yesLabel, no: noLabel },
-      options: [...option(yesLabel.id, yesLabel.label), ...option(noLabel.id, noLabel.label)],
+      answer: { type: 'yesNo', yes: yesOption, no: noOption },
+      options: [...option(yesOption.id, yesOption.label), ...option(noOption.id, noOption.label)],
     }
   }
   if (type === 'choice') {

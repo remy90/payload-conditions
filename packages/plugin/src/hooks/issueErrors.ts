@@ -5,13 +5,14 @@ import {
 } from '@remy90/payload-conditions-engine'
 import {
   fromPayloadQuestionnaire,
+  type StoredAnswer,
   type StoredQuestionnaire,
 } from '@remy90/payload-conditions-engine/payload'
 import type { ValidationFieldError } from 'payload'
 import { hasInvalidQuestionnaireArrays } from '../condition/storedShape.js'
 import { translate, type TranslationContext, type TranslationKey } from '../translations/index.js'
 
-const fieldCodes = new Set<QuestionnaireIssueCode>([
+const codesReportedByFieldValidators = [
   'noPages',
   'emptyPage',
   'emptyGroup',
@@ -19,7 +20,12 @@ const fieldCodes = new Set<QuestionnaireIssueCode>([
   'duplicateOptionLabel',
   'invalidName',
   'duplicateName',
-])
+] as const satisfies readonly QuestionnaireIssueCode[]
+const isReportedHere = (
+  code: QuestionnaireIssueCode,
+): code is Exclude<QuestionnaireIssueCode, (typeof codesReportedByFieldValidators)[number]> =>
+  !codesReportedByFieldValidators.some((fieldCode) => fieldCode === code)
+
 const conditionFields: Partial<Record<QuestionnaireIssueCode, string>> = {
   unknownQuestion: 'questionId',
   samePageQuestion: 'questionId',
@@ -103,7 +109,7 @@ export const issueErrors = (
       locations.push({ pageId, questionId, path: questionPath })
       addId(questionId, `${questionPath}.id`)
       const a = question.answer.findIndex(
-        (answer: any) =>
+        (answer: StoredAnswer) =>
           answer.blockType === 'choice' ||
           answer.blockType === 'text' ||
           (answer.blockType === 'yesNo' &&
@@ -152,7 +158,7 @@ export const issueErrors = (
   const duplicates = new Map([...ids].map(([id, paths]) => [id, paths.slice(1)]))
   const errors: ValidationFieldError[] = []
   for (const issue of issues) {
-    if (fieldCodes.has(issue.code)) continue
+    if (!isReportedHere(issue.code)) continue
     let path: string | undefined
     if (issue.code === 'duplicateId') {
       const target = issue.optionId ?? issue.questionId ?? issue.pageId
@@ -182,13 +188,7 @@ export const issueErrors = (
       errors.push({
         path,
         label: errorLabel(path, blocksField, context),
-        message: translate(
-          context,
-          issue.code as Exclude<
-            QuestionnaireIssueCode,
-            'noPages' | 'emptyPage' | 'emptyGroup' | 'blankText'
-          >,
-        ),
+        message: translate(context, issue.code),
       })
   }
   return errors

@@ -1,10 +1,9 @@
 import type { FormState, OptionObject } from 'payload'
-import { operatorsFor } from '@remy90/payload-conditions-engine'
+import { operatorsFor, type Operator } from '@remy90/payload-conditions-engine'
 import { normalizeOperator } from './normalizeOperator.js'
 import { questionOptions, selectedQuestion } from './formIndex.js'
 import { stringValue } from './formState.js'
 import { translate, type TranslationContext } from '../translations/index.js'
-import type { Operator } from '@remy90/payload-conditions-engine'
 
 export const operatorState = (
   fields: FormState,
