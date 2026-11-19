@@ -10,6 +10,7 @@ import { issueErrors } from './issueErrors.js'
 export const questionnaireBeforeChange =
   (blocksField = 'pages'): CollectionBeforeChangeHook =>
   async ({ data, originalDoc, collection, req }) => {
+    if (data[blocksField] === undefined && data._status === undefined) return data
     const normalized =
       data[blocksField] === undefined
         ? data

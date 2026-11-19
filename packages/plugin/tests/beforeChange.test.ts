@@ -159,6 +159,16 @@ describe('publish gating and inline ValidationError', () => {
     })
   })
 
+  it('skips unrelated partial updates and validates a status-only publish', async () => {
+    const originalDoc = { ...document(), _status: 'published' }
+    const data = { deletedAt: '2026-11-17T00:00:00.000Z' }
+    expect(await run(data, { drafts: true }, originalDoc)).toEqual(data)
+    expect(await run(data, false, originalDoc)).toEqual(data)
+    await expect(
+      run({ _status: 'published' }, { drafts: true }, originalDoc),
+    ).rejects.toBeInstanceOf(ValidationError)
+  })
+
   it('normalizes ids, then maps operators before structural validation', async () => {
     const data = document()
     data.pages[1].conditionGroups![0].conditions[0] = {
