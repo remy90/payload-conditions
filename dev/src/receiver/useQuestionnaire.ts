@@ -11,8 +11,19 @@ import {
   type Questionnaire,
 } from '@remy90/payload-conditions-engine'
 
-function pruneAnswers(questionnaire: Questionnaire, answers: Answers): Answers {
-  const questions = new Map<string, Questionnaire['pages'][number]['questions'][number]>()
+function pruneAnswers(
+  previousQuestionnaire: Questionnaire,
+  questionnaire: Questionnaire,
+  answers: Answers,
+): Answers {
+  type Question = Questionnaire['pages'][number]['questions'][number]
+  const previousTypes = new Map<string, Question['answer']['type']>()
+  for (const page of previousQuestionnaire.pages) {
+    for (const question of page.questions) {
+      if (!previousTypes.has(question.id)) previousTypes.set(question.id, question.answer.type)
+    }
+  }
+  const questions = new Map<string, Question>()
   for (const page of questionnaire.pages) {
     for (const question of page.questions) {
       if (!questions.has(question.id)) questions.set(question.id, question)
@@ -27,7 +38,12 @@ function pruneAnswers(questionnaire: Questionnaire, answers: Answers): Answers {
         : answer?.type === 'multipleChoice'
           ? answer.options.map((option) => option.id)
           : undefined
-    const kept = !answer ? [] : optionIds ? values.filter((id) => optionIds.includes(id)) : values
+    const kept =
+      !answer || previousTypes.get(id) !== answer.type
+        ? []
+        : optionIds
+          ? values.filter((id) => optionIds.includes(id))
+          : values
     if (kept.length === values.length && kept.length > 0) continue
     pruned ??= new Map(answers)
     if (kept.length) pruned.set(id, kept)
@@ -45,7 +61,9 @@ export function useQuestionnaire(questionnaire: Questionnaire) {
   })
   const [state, setState] = useState(initialState)
   const storedAnswers =
-    state.questionnaire !== questionnaire ? pruneAnswers(questionnaire, state.answers) : state.answers
+    state.questionnaire !== questionnaire
+      ? pruneAnswers(state.questionnaire, questionnaire, state.answers)
+      : state.answers
   const { visiblePageIds, answers } = resolveVisibility(questionnaire, storedAnswers)
   // Keep stored answers through half-edited preview conditions; expose only resolved answers.
   if (state.questionnaire !== questionnaire) {

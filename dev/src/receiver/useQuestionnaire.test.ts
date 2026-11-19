@@ -98,6 +98,63 @@ test('a removed multi-select option is pruned so Next can advance', () => {
   expect(result.current.currentPage?.id).toBe('car-seats')
 })
 
+test('a choice to Free text swap drops its answer and requires a new response', () => {
+  const { result, rerender } = renderHook((document) => useQuestionnaire(document), {
+    initialProps: questionnaire,
+  })
+  act(() => {
+    result.current.setAnswer('children', ['children-no'])
+    result.current.setAnswer('travel', ['plane'])
+  })
+  const childrenAnswer = result.current.answers.get('children')
+  expect(result.current.canContinue).toBe(true)
+  rerender({
+    ...questionnaire,
+    pages: questionnaire.pages.map((page) => ({
+      ...page,
+      questions: page.questions.map((question) =>
+        question.id === 'travel'
+          ? { ...question, answer: { type: 'inputText', prompt: '' } }
+          : question,
+      ),
+    })),
+  })
+  expect(result.current.answers.has('travel')).toBe(false)
+  expect(result.current.answers.get('children')).toBe(childrenAnswer)
+  expect(result.current.pageIssues).toEqual([{ questionId: 'travel', issue: 'required' }])
+  expect(result.current.canContinue).toBe(false)
+})
+
+test('swapping boolean and multiple choice drops answers even when option ids match', () => {
+  const { result, rerender } = renderHook((document) => useQuestionnaire(document), {
+    initialProps: questionnaire,
+  })
+  act(() => result.current.setAnswer('children', ['children-no']))
+  rerender({
+    ...questionnaire,
+    pages: questionnaire.pages.map((page) => ({
+      ...page,
+      questions: page.questions.map((question) =>
+        question.id === 'children' && question.answer.type === 'boolean'
+          ? {
+              ...question,
+              answer: {
+                type: 'multipleChoice',
+                allowMultipleSelection: false,
+                options: [question.answer.trueOption, question.answer.falseOption],
+              },
+            }
+          : question,
+      ),
+    })),
+  })
+  expect(result.current.answers.has('children')).toBe(false)
+  act(() => result.current.setAnswer('children', ['children-no']))
+  expect(result.current.answers.get('children')).toEqual(['children-no'])
+  rerender(questionnaire)
+  expect(result.current.answers.has('children')).toBe(false)
+})
+
 test('a removed question loses its answer while unchanged swaps keep the answers reference', () => {
   const { result, rerender } = renderHook((document) => useQuestionnaire(document), {
     initialProps: questionnaire,
