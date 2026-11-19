@@ -37,7 +37,6 @@
     "prepublishOnly": "pnpm build"
   },
   "devDependencies": {
-    "@types/node": "^22.0.0",
     "typescript": "^5.9.0",
     "vitest": "^3.2.0"
   },

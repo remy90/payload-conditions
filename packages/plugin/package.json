@@ -38,10 +38,8 @@
     "LICENSE"
   ],
   "scripts": {
-    "build": "pnpm clean && pnpm build:swc && pnpm build:types",
-    "build:swc": "swc src -d dist --config-file .swcrc --strip-leading-paths",
-    "build:types": "tsc --emitDeclarationOnly --outDir dist",
-    "clean": "rimraf dist tsconfig.tsbuildinfo",
+    "build": "pnpm clean && tsc -p tsconfig.json",
+    "clean": "node --input-type=module -e \"import { rmSync } from 'node:fs'; rmSync('dist', { recursive: true, force: true })\"",
     "typecheck": "tsc --project tsconfig.test.json",
     "test": "vitest run",
     "prepublishOnly": "pnpm build"
@@ -51,15 +49,10 @@
   },
   "devDependencies": {
     "@payloadcms/ui": "3.94.0",
-    "@swc/cli": "^0.8.0",
-    "@swc/core": "^1.15.0",
     "@types/node": "^22.0.0",
     "@types/react": "^19.0.0",
-    "@types/react-dom": "^19.0.0",
     "payload": "3.94.0",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "rimraf": "^6.0.0",
     "typescript": "^5.9.0",
     "vitest": "^3.2.0"
   },
@@ -86,7 +79,6 @@
   "peerDependencies": {
     "@payloadcms/ui": "^3.94.0",
     "payload": "^3.94.0",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react": "^19.0.0"
   }
 }
