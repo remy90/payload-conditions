@@ -1,5 +1,5 @@
 export * from './types.js'
-import type { AnswerIssue, Answers, Condition, Page, Question, Questionnaire } from './types.js'
+import { operatorsFor, type AnswerIssue, type Answers, type Condition, type Page, type Question, type Questionnaire } from './types.js'
 
 type Entry = { question: Question; pagePosition: number; optionIds: ReadonlySet<string> }
 type Index = { questions: Map<string, Entry>; pagePositions: Map<string, number> }
@@ -11,14 +11,14 @@ function indexFor(questionnaire: Questionnaire): Index {
   const questions = new Map<string, Entry>()
   const pagePositions = new Map<string, number>()
   questionnaire.pages.forEach((page, pagePosition) => {
-    pagePositions.set(page.id, pagePosition)
+    if (!pagePositions.has(page.id)) pagePositions.set(page.id, pagePosition)
     for (const question of page.questions) {
       if (questions.has(question.id)) continue
       const answer = question.answer
       const optionIds = new Set(
-        answer.type === 'boolean'
-          ? [answer.trueOption.id, answer.falseOption.id]
-          : answer.type === 'multipleChoice'
+        answer.type === 'yesNo'
+          ? [answer.yes.id, answer.no.id]
+          : answer.type === 'choice'
             ? answer.options.map((option) => option.id)
             : [],
       )
@@ -57,17 +57,18 @@ function conditionMatches(
 ): boolean {
   const entry = index.questions.get(condition.questionId)
   if (!entry || entry.pagePosition >= pagePosition) return false
-  const type = entry.question.answer.type
-  if (type !== 'boolean' && type !== 'multipleChoice') return false
+  if (!operatorsFor(entry.question.answer).includes(condition.operator)) return false
   if (!condition.questionId || !condition.answerId) return false
   const values = answers.get(condition.questionId)
   if (!values?.length) return false
   switch (condition.operator) {
-    case 'is':
-    case 'includes':
+    case 'equals':
+      return values.length === 1 && values[0] === condition.answerId
+    case 'not_equals':
+      return values.length === 1 && values[0] !== '' && values[0] !== condition.answerId
+    case 'in':
       return contains(values, condition.answerId)
-    case 'isNot':
-    case 'excludes':
+    case 'not_in':
       return !contains(values, condition.answerId)
     default:
       return false
@@ -187,16 +188,16 @@ export function validatePageAnswers(
   const issues: AnswerIssue[] = []
   for (const question of page.questions) {
     const values = answers.get(question.id) ?? []
-    if (!page.skippable && !question.optional && !values.some((value) => value.trim().length > 0)) {
+    if (!page.skippable && question.required && !values.some((value) => value.trim().length > 0)) {
       issues.push({ questionId: question.id, issue: 'required' })
     }
-    if (question.answer.type === 'boolean' || question.answer.type === 'multipleChoice') {
+    if (question.answer.type === 'yesNo' || question.answer.type === 'choice') {
       const entry = index.questions.get(question.id)!
       if (values.some((value) => !entry.optionIds.has(value)))
         issues.push({ questionId: question.id, issue: 'unknownOption' })
       if (
         values.length > 1 &&
-        (question.answer.type === 'boolean' || !question.answer.allowMultipleSelection)
+        (question.answer.type === 'yesNo' || !question.answer.hasMany)
       ) {
         issues.push({ questionId: question.id, issue: 'tooManySelections' })
       }

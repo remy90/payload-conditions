@@ -1,6 +1,6 @@
 import { expect, it } from 'vitest'
 import { resolveVisibility } from '../src/index.js'
-import { booleanQuestion, condition, page, questionnaire } from './fixtures.js'
+import { yesNoQuestion, condition, page, questionnaire } from './fixtures.js'
 
 it('resolves 200 pages × 10 questions × 5 conditions in under 25 ms', () => {
   const cold: number[] = []
@@ -10,7 +10,7 @@ it('resolves 200 pages × 10 questions × 5 conditions in under 25 ms', () => {
     const pages = Array.from({ length: 200 }, (_, p) =>
       page(
         `p${p}`,
-        Array.from({ length: 10 }, (_, q) => booleanQuestion(`p${p}q${q}`)),
+        Array.from({ length: 10 }, (_, q) => yesNoQuestion(`p${p}q${q}`)),
         p === 0 ? [] : Array.from({ length: 50 }, (_, c) => condition(`p${p - 1}q${c % 10}`)),
       ),
     )

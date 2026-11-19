@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import { applyAnswer, resolveVisibility } from '../src/index.js'
-import { booleanQuestion, condition, page, questionnaire } from './fixtures.js'
+import { yesNoQuestion, condition, page, questionnaire } from './fixtures.js'
 
 const chain = () =>
   questionnaire(
-    page('A', [booleanQuestion('a')]),
-    page('B', [booleanQuestion('b')], [condition('a')]),
-    page('C', [booleanQuestion('c')], [condition('b')]),
+    page('A', [yesNoQuestion('a')]),
+    page('B', [yesNoQuestion('b')], [condition('a')]),
+    page('C', [yesNoQuestion('c')], [condition('b')]),
   )
 
 describe('forward visibility', () => {
@@ -34,10 +34,10 @@ describe('forward visibility', () => {
   })
 
   it('keeps negative dependents hidden after clearing their source answer', () => {
-    for (const operator of ['isNot', 'excludes'] as const) {
+    for (const operator of ['not_equals', 'not_in'] as const) {
       const q = questionnaire(
-        page('A', [booleanQuestion('a')]),
-        page('B', [booleanQuestion('b')], [condition('a')]),
+        page('A', [yesNoQuestion('a')]),
+        page('B', [yesNoQuestion('b')], [condition('a')]),
         page('C', [], [{ ...condition('b', 'no'), operator }]),
       )
       const answers = new Map([

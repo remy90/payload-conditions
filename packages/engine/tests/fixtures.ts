@@ -1,18 +1,19 @@
 import type { Condition, Page, Question, Questionnaire } from '../src/index.js'
 
-export const booleanQuestion = (id: string): Question => ({
+export const yesNoQuestion = (id: string): Question => ({
   id,
-  text: id,
-  optional: false,
+  name: id,
+  label: id,
+  required: true,
   answer: {
-    type: 'boolean',
-    trueOption: { id: 'yes', label: 'Yes' },
-    falseOption: { id: 'no', label: 'No' },
+    type: 'yesNo',
+    yes: { id: 'yes', label: 'Yes' },
+    no: { id: 'no', label: 'No' },
   },
 })
 export const condition = (questionId: string, answerId = 'yes'): Condition => ({
   questionId,
-  operator: 'is',
+  operator: 'equals',
   answerId,
 })
 export const page = (
