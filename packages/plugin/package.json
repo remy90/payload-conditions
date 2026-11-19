@@ -29,10 +29,12 @@
   "bugs": {
     "url": "https://github.com/remy90/payload-conditions/issues"
   },
+  "sideEffects": false,
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "files": [
     "dist",
+    "!dist/**/*.map",
     "README.md",
     "CHANGELOG.md",
     "LICENSE"
@@ -41,7 +43,7 @@
     "build": "pnpm clean && tsc -p tsconfig.json",
     "clean": "node --input-type=module -e \"import { rmSync } from 'node:fs'; rmSync('dist', { recursive: true, force: true })\"",
     "typecheck": "tsc --project tsconfig.test.json",
-    "test": "vitest run",
+    "test": "pnpm build && vitest run",
     "prepublishOnly": "pnpm build"
   },
   "engines": {
@@ -51,6 +53,7 @@
     "@payloadcms/ui": "^3.94.0",
     "@types/node": "^22.20.5",
     "@types/react": "^19.3.0",
+    "esbuild": "^0.28.2",
     "payload": "^3.94.0",
     "react": "^19.3.1",
     "typescript": "^7.0.2",
