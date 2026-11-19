@@ -3,6 +3,7 @@ import {
   type StoredQuestionnaire,
 } from '@remy90/payload-conditions-engine/payload'
 import type { Question } from '@remy90/payload-conditions-engine'
+import { hasInvalidQuestionnaireArrays } from './storedShape.js'
 
 import type { TranslationContext } from '../translations/index.js'
 
@@ -19,6 +20,9 @@ type Index = Map<string, { question: Question; pageIndex: number }>
 const cacheKey = '__questionnairePluginValidationIndexes'
 
 const buildIndex = (pages: unknown[]): Index => {
+  // Read each page once for the shape check and adapter.
+  pages = pages.map((page) => record(page) ? { ...page } : page)
+  if (hasInvalidQuestionnaireArrays({ pages })) return new Map()
   const positions: number[] = []
   pages.forEach((page, index) => {
     if (

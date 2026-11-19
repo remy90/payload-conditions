@@ -45,7 +45,7 @@ export const validateName = (value: unknown, context: Context): true | string =>
   const pages = at(context.data, path.slice(0, -4))
   if (Array.isArray(pages)) {
     for (const [p, page] of pages.entries()) {
-      for (const [q, question] of (page?.questions ?? []).entries()) {
+      for (const [q, question] of (Array.isArray(page?.questions) ? page.questions : []).entries()) {
         if (String(p) === String(path.at(-4)) && String(q) === String(path.at(-2))) continue
         if (typeof question.name === 'string' && question.name.trim() === name)
           return translate(context, 'duplicateName')

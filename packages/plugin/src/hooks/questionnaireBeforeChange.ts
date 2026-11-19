@@ -6,6 +6,7 @@ import {
 } from '@remy90/payload-conditions-engine/payload'
 import { ValidationError, type CollectionBeforeChangeHook } from 'payload'
 import { normalizeQuestionnaire } from '../condition/normalizeQuestionnaire.js'
+import { hasInvalidQuestionnaireArrays } from '../condition/storedShape.js'
 import { issueErrors } from './issueErrors.js'
 import { fillQuestionNames } from '../fields/names.js'
 
@@ -52,6 +53,7 @@ export const questionnaireBeforeChange =
     const validateDrafts = drafts && typeof drafts === 'object' && drafts.validate
     if (drafts && !validateDrafts && document._status !== 'published') return normalized
     const stored: StoredQuestionnaire = { ...document, pages: document[blocksField] }
+    if (hasInvalidQuestionnaireArrays(stored)) return normalized
     const issues = checkQuestionnaire(fromPayloadQuestionnaire(stored))
     const errors = issueErrors(stored, issues, { req }, blocksField)
     if (errors.length)

@@ -5,6 +5,7 @@ import {
 } from '@remy90/payload-conditions-engine/payload'
 import { normalizeYesNoIds } from '../blocks/Answers/normalizeYesNoIds.js'
 import { normalizeOperator } from './normalizeOperator.js'
+import { hasInvalidQuestionnaireArrays } from './storedShape.js'
 
 /** Repair answer ids before deriving the current operator choices. */
 export const normalizeQuestionnaire = (
@@ -14,6 +15,7 @@ export const normalizeQuestionnaire = (
 ): unknown => {
   const normalized = normalizeYesNoIds(document, createId, options)
   const data = normalized as Record<string, unknown>
+  if (!data || hasInvalidQuestionnaireArrays(data, options.blocksField)) return normalized
   const source = options.blocksField ? data?.[options.blocksField] : data?.pages
   const questions = fromPayloadQuestionnaire({
     pages: source,

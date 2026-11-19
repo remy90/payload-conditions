@@ -8,6 +8,7 @@ import {
   type StoredQuestionnaire,
 } from '@remy90/payload-conditions-engine/payload'
 import type { ValidationFieldError } from 'payload'
+import { hasInvalidQuestionnaireArrays } from '../condition/storedShape.js'
 import { translate, type TranslationContext, type TranslationKey } from '../translations/index.js'
 
 const fieldCodes = new Set<QuestionnaireIssueCode>([
@@ -81,6 +82,7 @@ export const issueErrors = (
   context: TranslationContext = {},
   blocksField = 'pages',
 ): ValidationFieldError[] => {
+  if (hasInvalidQuestionnaireArrays(document)) return []
   const locations: Location[] = []
   const ids = new Map<string, string[]>()
   const addId = (value: string, path: string) => ids.set(value, [...(ids.get(value) ?? []), path])

@@ -2,8 +2,12 @@ import type { StoredQuestionnaire } from '@remy90/payload-conditions-engine/payl
 
 export const fillQuestionNames = (data: Record<string, unknown>, blocksField = 'pages') => {
   const pages = data[blocksField] as StoredQuestionnaire['pages']
-  const questions = (pages ?? []).flatMap((page) =>
-    page.blockType === 'page' || page.blockType === undefined ? (page.questions ?? []) : [],
+  const questions = (Array.isArray(pages) ? pages : []).flatMap((page) =>
+    page &&
+    (page.blockType === 'page' || page.blockType === undefined) &&
+    Array.isArray(page.questions)
+      ? page.questions.filter((question) => question && typeof question === 'object')
+      : [],
   )
   const used = new Set<string>(
     questions.flatMap((question) =>

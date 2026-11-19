@@ -279,6 +279,72 @@ it.each([
   }
 })
 
+it.each(
+  ['draft', 'published'].flatMap((status) =>
+    [
+      ['pages'],
+      ['pages', 0, 'questions'],
+      ['pages', 0, 'questions', 0, 'answer'],
+      ['pages', 0, 'questions', 0, 'answer', 0, 'options'],
+      ['pages', 0, 'conditionGroups'],
+      ['pages', 0, 'conditionGroups', 0, 'conditions'],
+    ].map((path) => ({ status, path })),
+  ),
+)('passes malformed $path to Payload shape validation on $status saves', async ({ status, path }) => {
+  const config = await buildConfig({
+    secret: 'test',
+    db: { defaultIDType: 'text', init: () => { throw new Error('Unexpected database initialization') } },
+    plugins: [questionnairePlugin()],
+  })
+  const collection = config.collections.find(({ slug }) => slug === 'questionnaires')!
+  const t = (key: string) => key
+  const req = {
+    context: {}, t, i18n: { t, language: 'en' }, payload: { config, collections: {} },
+  } as unknown as PayloadRequest
+  const data: Record<string, any> = {
+    title: 'Survey', _status: status,
+    pages: [{
+      blockType: 'page',
+      questions: [{
+        label: 'Colour', name: 'colour',
+        answer: [{ blockType: 'choice', options: [{ label: 'Red' }, { label: 'Blue' }] }],
+      }],
+      conditionGroups: [{ conditions: [] }],
+    }, {
+      blockType: 'page',
+      questions: [{ label: 'Comment', name: 'comment', answer: [{ blockType: 'text' }] }],
+      conditionGroups: [{ conditions: [{ questionId: 'source', operator: 'equals', answerId: 'red' }] }],
+    }],
+  }
+  let parent: any = data
+  for (const part of path.slice(0, -1)) parent = parent[part]
+  parent[path.at(-1)!] = 'x'
+  await beforeValidateTraverseFields({
+    collection, context: {}, data, doc: {}, fields: collection.fields,
+    global: null, operation: 'create', overrideAccess: true,
+    parentIndexPath: '', parentPath: '', parentSchemaPath: '', req,
+    siblingData: data, siblingDoc: {},
+  })
+  const result = await collection.hooks.beforeChange[0]({
+    collection, context: {}, data, originalDoc: undefined as never, operation: 'create', req,
+  })
+  expect(path.reduce<any>((value, part) => value[part], result), path.join('.')).toBe('x')
+  try {
+    await fieldBeforeChange({
+      collection, context: {}, data: result, doc: {}, docWithLocales: {},
+      global: null, operation: 'create', overrideAccess: true, req,
+      skipValidation: status === 'draft',
+    })
+    expect.fail(`Expected shape validation for ${path.join('.')}`)
+  } catch (error) {
+    expect(error, path.join('.')).toBeInstanceOf(ValidationError)
+    expect((error as ValidationError).status).toBe(400)
+    expect((error as ValidationError).data?.errors).toEqual(expect.arrayContaining([
+      expect.objectContaining({ path: path.join('.'), message: 'validation:invalidInput' }),
+    ]))
+  }
+})
+
 it('fills row ids and trims text before collection hooks on create', async () => {
   const config = await buildConfig({
     secret: 'test',
