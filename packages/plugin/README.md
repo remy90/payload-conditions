@@ -8,7 +8,7 @@ A Payload CMS plugin for authoring page conditions based on answers to earlier q
 pnpm add @remy90/payload-conditions-plugin @remy90/payload-conditions-engine
 ```
 
-Version 1.0.0 targets Payload 3.94. Install matching versions of `payload` and `@payloadcms/ui` (`^3.94.0`) in your app, with React 19 and a matching `react-dom`. Payload 3.94 supports React `~19.0.9 || ~19.1.10 || ~19.2.9 || ^19.3.1`.
+Version 1.1.0 targets Payload 3.94. Install matching versions of `payload` and `@payloadcms/ui` (`^3.94.0`) in your app, with React 19 and a matching `react-dom`. Payload 3.94 supports React `~19.0.9 || ~19.1.10 || ~19.2.9 || ^19.3.1`.
 
 Use a Next.js version supported by `@payloadcms/ui`. For Next 15.4, that means `>=15.4.11 <15.5.0`; Next 16 requires `>=16.4.5 <17.0.0`. The package requires Node `>=22.23.5`. Payload 3.94 supports Node `^22.23.5 || ^24.22.3 || >=26.13.1`.
 
@@ -34,6 +34,25 @@ pnpm payload generate:importmap
 ```
 
 Keep your app's `admin.importMap.baseDir` and generated import-map location configured as described in the Payload setup guide. Restart the app after generation.
+
+## Preview
+
+Pass Payload's collection admin settings through the plugin:
+
+```ts
+payloadConditions({
+  preview: (doc) => `/q/${doc.id}?preview=1`,
+  livePreview: {
+    url: ({ data }) => `/q/${data.id}?preview=1`,
+    breakpoints: [
+      { name: 'mobile', label: 'Mobile', width: 375, height: 667 },
+      { name: 'desktop', label: 'Desktop', width: 1440, height: 900 },
+    ],
+  },
+})
+```
+
+Both options use Payload's `CollectionAdminOptions` types and merge into the `questionnaire` collection's admin settings. Omitting them keeps the default configuration. Your frontend handles the preview route, authenticates requests before loading drafts, and subscribes with `@payloadcms/live-preview-react` for unsaved edits.
 
 ## Author conditions
 
@@ -91,7 +110,7 @@ export const Survey: CollectionConfig = {
 
 On save, missing or duplicate boolean ids receive fresh ids. A question row that held an id in the stored document keeps it after copies are reordered. When no stored holder remains, the first occurrence in document order keeps it. Conditions targeting a copied question row follow its regenerated answer ids. Restoring a version uses that version's data and document order without borrowing ids or ownership from the current document.
 
-The `@remy90/payload-conditions-plugin/client` entry point exports the condition selects (`QuestionCondition`, `OperatorCondition`, `AnswerCondition`) and `QuestionAnswerRowLabel`. The plugin config already references these through Payload's import map.
+The `@remy90/payload-conditions-plugin/client` entry point exports the condition selects (`QuestionCondition`, `OperatorCondition`, `AnswerCondition`) `QuestionAnswerRowLabel` and `StandardPageRowLabel`. The plugin config already references these through Payload's import map.
 
 Version 1.0.0 replaces `allOrAnyCondition` with `match`, and replaces `conditionalLogicGroup` with `conditionGroups[].conditions[]`. Conditions now use `questionId`, `operator` and `answerId`, with readable operator values. Version 0.2.2 never loaded, so there is no migration.
 

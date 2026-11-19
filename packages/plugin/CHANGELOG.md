@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.1.0
+
+- Accept collection `preview` and `livePreview` settings through plugin options.
+- Show full question labels with responsive ellipsis and lay out boolean labels in a responsive row.
+- Add reactive question and condition-group counts to standard page headers. Regenerate the admin import map after upgrading.
+
+Stored fields and data stay unchanged.
+
 ## 1.0.0
 
 ### Schema and engine

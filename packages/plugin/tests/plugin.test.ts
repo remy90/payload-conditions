@@ -40,6 +40,21 @@ describe('payloadConditions', () => {
     expect(config).toEqual({ ...baseConfig, collections: [existing] })
   })
 
+  it('merges preview options without changing the shared questionnaire config', async () => {
+    const preview = () => '/preview'
+    const livePreview = { url: '/live' }
+    const result = await payloadConditions({ preview, livePreview })(baseConfig)
+    expect(result.collections?.[0]?.admin).toEqual({
+      ...Questionnaire.admin,
+      preview,
+      livePreview,
+    })
+    expect(Questionnaire.admin?.preview).toBeUndefined()
+    expect(Questionnaire.admin?.livePreview).toBeUndefined()
+    const defaults = await payloadConditions()(baseConfig)
+    expect(defaults.collections?.[0]).toBe(Questionnaire)
+  })
+
   it('adds the questionnaire when no collections were configured', async () => {
     const config = Object.freeze({ ...baseConfig })
     expect(await payloadConditions({ enabled: true })(config)).toEqual({
