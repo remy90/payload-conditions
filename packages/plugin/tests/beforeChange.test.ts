@@ -65,6 +65,7 @@ it('maps condition issues without looking up the missing source question', () =>
   ).toEqual([
     {
       path: 'pages.1.conditionGroups.0.conditions.0.answerId',
+      label: 'Page 2 > Condition group 1 > Condition 1 > Answer',
       message: 'Select a current answer option for the selected question.',
     },
   ])
@@ -95,6 +96,25 @@ it('keeps every duplicate id path and reports second and subsequent occurrences'
   ])
 })
 
+it('labels duplicate ids on hidden fields for the validation toast', async () => {
+  const data = document()
+  data.pages[0].questions.push(question('q1'))
+  try {
+    await run({ ...data, _status: 'published' })
+    expect.fail('Expected validation')
+  } catch (error) {
+    expect(error).toBeInstanceOf(ValidationError)
+    expect((error as ValidationError).data?.errors).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          path: 'pages.0.questions.1.id',
+          label: 'Page 1 > Question 2',
+        }),
+      ]),
+    )
+  }
+})
+
 it('maps label and title locations and drops field-validator issues and incomplete conditions', () => {
   const data = document()
   data.pages[1].conditionGroups![0].conditions[0].answerId = ''
@@ -111,6 +131,35 @@ it('maps label and title locations and drops field-validator issues and incomple
       { code: 'unknownQuestion', message: '', pageId: 'p2', groupId: 'g', conditionId: 'c' },
     ]),
   ).toEqual([])
+})
+
+it('drops incomplete conditions with invalid operators like the adapter', async () => {
+  const data = document()
+  data.pages[1].conditionGroups![0].conditions[0].operator = 'invalid'
+  expect(
+    issueErrors(data, [
+      { code: 'unknownQuestion', message: '', pageId: 'p2', groupId: 'g', conditionId: 'c' },
+    ]),
+  ).toEqual([])
+  await expect(run({ ...data, _status: 'published' })).resolves.toBeDefined()
+})
+
+it('maps unreachable pages and drops issues without a matching field mapping', () => {
+  const data = document()
+  expect(
+    issueErrors(data, [
+      { code: 'unknownAnswer', message: '', pageId: 'p1', questionId: 'q1' },
+      { code: 'unreachablePage', message: '', pageId: 'p2' },
+      { code: 'unmapped' as never, message: '', pageId: 'p1' },
+      { code: 'unmapped' as never, message: '', pageId: 'p2', groupId: 'g', conditionId: 'c' },
+    ]),
+  ).toEqual([
+    {
+      path: 'pages.1.conditionGroups',
+      label: 'Page 2 > Condition groups',
+      message: 'This page can never become visible.',
+    },
+  ])
 })
 
 describe('publish gating and inline ValidationError', () => {

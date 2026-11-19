@@ -1,10 +1,14 @@
-import type { QuestionnaireIssue, QuestionnaireIssueCode } from '@remy90/payload-conditions-engine'
+import {
+  operators,
+  type QuestionnaireIssue,
+  type QuestionnaireIssueCode,
+} from '@remy90/payload-conditions-engine'
 import {
   fromPayloadQuestionnaire,
   type StoredQuestionnaire,
 } from '@remy90/payload-conditions-engine/payload'
 import type { ValidationFieldError } from 'payload'
-import { translate, type TranslationContext } from '../translations/index.js'
+import { translate, type TranslationContext, type TranslationKey } from '../translations/index.js'
 
 const fieldCodes = new Set<QuestionnaireIssueCode>([
   'noPages',
@@ -15,6 +19,15 @@ const fieldCodes = new Set<QuestionnaireIssueCode>([
   'invalidName',
   'duplicateName',
 ])
+const conditionFields: Partial<Record<QuestionnaireIssueCode, string>> = {
+  unknownQuestion: 'questionId',
+  samePageQuestion: 'questionId',
+  laterQuestion: 'questionId',
+  unsupportedSource: 'questionId',
+  unknownAnswer: 'answerId',
+  operatorMismatch: 'operator',
+  contradiction: 'operator',
+}
 type Location = {
   pageId?: string
   questionId?: string
@@ -26,6 +39,41 @@ type Location = {
 }
 const id = (value: unknown): string | undefined =>
   value == null || value === '' ? undefined : String(value)
+
+const errorLabel = (path: string, blocksField: string, context: TranslationContext): string => {
+  const rows: Record<string, TranslationKey> = {
+    page: 'page',
+    questions: 'question',
+    conditionGroups: 'conditionGroup',
+    conditions: 'condition',
+    options: 'option',
+  }
+  const fields: Record<string, TranslationKey> = {
+    questionId: 'question',
+    answerId: 'answer',
+    operator: 'operator',
+    yesId: 'yesLabel',
+    noId: 'noLabel',
+  }
+  const segments = ['page', ...path.slice(blocksField.length + 1).split('.')]
+  const labels: string[] = []
+  for (let index = 0; index < segments.length; index++) {
+    const segment = segments[index]
+    const row = rows[segment]
+    if (row) {
+      const number = segments[index + 1]
+      if (/^\d+$/.test(number ?? '')) {
+        labels.push(`${translate(context, row)} ${Number(number) + 1}`)
+        index++
+      } else if (segment === 'conditionGroups') {
+        labels.push(translate(context, 'conditionGroups'))
+      }
+    } else if (fields[segment]) {
+      labels.push(translate(context, fields[segment]))
+    }
+  }
+  return labels.join(' > ')
+}
 
 export const issueErrors = (
   document: StoredQuestionnaire,
@@ -90,7 +138,11 @@ export const issueErrors = (
           groupId,
           conditionId,
           path: `${groupPath}.conditions.${c}`,
-          complete: !!(condition.questionId && condition.operator && condition.answerId),
+          complete: !!(
+            condition.questionId &&
+            operators.includes(condition.operator) &&
+            condition.answerId
+          ),
         })
       }
     }
@@ -111,16 +163,10 @@ export const issueErrors = (
           location.conditionId === issue.conditionId,
       )
       if (location?.complete === false) continue
-      const field =
-        issue.code === 'unknownAnswer'
-          ? 'answerId'
-          : issue.code === 'operatorMismatch'
-            ? 'operator'
-            : issue.code === 'contradiction'
-              ? 'operator'
-              : 'questionId'
+      const field = conditionFields[issue.code]
+      if (!field) continue
       path = location && `${location.path}.${field}`
-    } else {
+    } else if (issue.code === 'unreachablePage') {
       const location = locations.find(
         (location) =>
           location.pageId === issue.pageId &&
@@ -133,6 +179,7 @@ export const issueErrors = (
     if (path)
       errors.push({
         path,
+        label: errorLabel(path, blocksField, context),
         message: translate(
           context,
           issue.code as Exclude<

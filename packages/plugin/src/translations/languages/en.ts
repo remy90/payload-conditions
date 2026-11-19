@@ -51,6 +51,7 @@ export const en = {
     selectQuestion: 'Select a question',
     selectAnswer: 'Select an answer',
     selectOperator: 'Select an operator',
+    operator: 'Operator',
     requiredText: 'Enter a value.',
     invalidText: 'Enter text.',
     tooLong: 'Use at most {{max}} characters.',

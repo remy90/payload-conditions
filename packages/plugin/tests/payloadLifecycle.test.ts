@@ -330,6 +330,7 @@ it('fills row ids and trims text before collection hooks on create', async () =>
     expect((error as ValidationError).data?.errors).toEqual([
       {
         path: 'pages.1.conditionGroups.0.conditions.0.questionId',
+        label: 'Page 2 > Condition group 1 > Condition 1 > Question',
         message: 'The source question does not exist.',
       },
     ])
