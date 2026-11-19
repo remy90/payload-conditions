@@ -82,7 +82,7 @@ pnpm --filter dev build
 pnpm --filter dev start
 ```
 
-Root build, typecheck and test target only `packages/*`. The private `dev` workspace is excluded from publishing. The app uses Node 26 types. The plugin keeps Node 22 types for its build-time bundle test; its published API follows Payload's supported Node range.
+Root build, typecheck and test target only `packages/*`. The private `dev` workspace is excluded from publishing. The app and plugin use matching Node 26 types so pnpm resolves a single Payload UI instance. The plugin's published API follows Payload's supported Node range.
 
 Admin tidy screenshots use `/tmp/demo-shots/tidy-*.png`, including the desktop and 800px layouts, mobile respondent, Preview tab and Live Preview before/after captures.
 

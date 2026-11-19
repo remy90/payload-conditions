@@ -10,7 +10,7 @@ pnpm add @remy90/payload-conditions-plugin @remy90/payload-conditions-engine
 
 Version 1.1.0 targets Payload 3.94. Install matching versions of `payload` and `@payloadcms/ui` (`^3.94.0`) in your app, with React 19 and a matching `react-dom`. Payload 3.94 supports React `~19.0.9 || ~19.1.10 || ~19.2.9 || ^19.3.1`.
 
-Use a Next.js version supported by `@payloadcms/ui`. For Next 15.4, that means `>=15.4.11 <15.5.0`; Next 16 requires `>=16.4.5 <17.0.0`. The package follows Payload 3.94\'s Node support: `^22.23.5 || ^24.22.3 || >=26.13.1`.
+Use a Next.js version supported by `@payloadcms/ui`. For Next 15.4, that means `>=15.4.11 <15.5.0`; Next 16 requires `>=16.4.5 <17.0.0`. The package follows Payload 3.94's Node support: `^22.23.5 || ^24.22.3 || >=26.13.1`.
 
 ## Configure
 
