@@ -1,8 +1,10 @@
 # Local questionnaire demo
 
-Payload 3.94, Next 16 and SQLite. Use this app for a screen recording on localhost. Prefilled credentials and a checked-in fallback secret make it unsuitable for deployment. The server binds to 127.0.0.1.
+Payload 3.94, Next 16 and SQLite. Use this app for a screen recording on localhost. Prefilled credentials make it unsuitable for deployment. The config requires `PAYLOAD_SECRET` unless `DEMO_LOCALHOST=1` explicitly enables the demo secret. The server binds to 127.0.0.1.
 
 ## Run
+
+The dev scripts support macOS and Linux. Windows is unsupported. These scripts set `DEMO_LOCALHOST=1`, including the build script.
 
 Use Node 26.13.1 (pinned in the root and dev `.node-version` files) and pnpm 10.34.9. Tools such as mise and fnm pick up the pinned Node version.
 

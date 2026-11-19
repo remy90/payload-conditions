@@ -3,11 +3,11 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "next dev --hostname 127.0.0.1",
-    "build": "next build --webpack",
-    "start": "next start --hostname 127.0.0.1",
-    "seed": "payload run src/seed.ts",
-    "payload": "payload",
+    "dev": "DEMO_LOCALHOST=1 next dev --hostname 127.0.0.1",
+    "build": "DEMO_LOCALHOST=1 next build --webpack",
+    "start": "DEMO_LOCALHOST=1 next start --hostname 127.0.0.1",
+    "seed": "DEMO_LOCALHOST=1 payload run src/seed.ts",
+    "payload": "DEMO_LOCALHOST=1 payload",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },

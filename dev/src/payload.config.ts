@@ -5,9 +5,14 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const dirname = path.dirname(fileURLToPath(import.meta.url))
+const secret = process.env.PAYLOAD_SECRET ||
+  (process.env.DEMO_LOCALHOST === '1' ? 'localhost-demo-only-change-before-deploying' : undefined)
+if (!secret) {
+  throw new Error('PAYLOAD_SECRET is required. Set DEMO_LOCALHOST=1 only for the localhost demo.')
+}
 
 export default buildConfig({
-  secret: process.env.PAYLOAD_SECRET || 'localhost-demo-only-change-before-deploying',
+  secret,
   admin: {
     user: 'users',
     importMap: { baseDir: dirname },
