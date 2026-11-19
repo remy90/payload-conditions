@@ -42,6 +42,21 @@ it('renders the current page title error beside its title control', () => {
   )
 })
 
+it.each([
+  [1, 1, '1 question', ' · 1 condition group'],
+  [2, 2, '2 questions', ' · 2 condition groups'],
+])(
+  'pluralises the header counts for %i questions and %i groups',
+  (questions, groups, questionText, groupText) => {
+    state.fields['survey.1.questions'] = { value: questions }
+    state.fields['survey.1.conditionGroups'] = { value: groups }
+    const summary = elements(QuestionnairePageRowLabel(props)).find(
+      (element) => element.type === 'span' && Array.isArray(element.props.children),
+    )
+    expect(summary?.props.children).toEqual([questionText, groupText])
+  },
+)
+
 it('omits the title error when the field is valid or block names are disabled', () => {
   expect(
     elements(QuestionnairePageRowLabel(props)).some((element) => element.props.role === 'alert'),
