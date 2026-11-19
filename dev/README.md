@@ -4,17 +4,15 @@ Payload 3.94, Next 16 and SQLite. Use this app for a screen recording on localho
 
 ## Run
 
-Use Node 24.22.3 (pinned in `.node-version`) and pnpm 10.34.9. Node 26.13.0 falls outside Payload 3.94's supported range, which starts at 26.13.1 for Node 26.
+Use Node 26.13.1 (pinned in the root and dev `.node-version` files) and pnpm 10.34.9. Tools such as mise and fnm pick up the pinned Node version.
 
 From the workspace root:
 
 ```sh
-mise x node@24 pnpm@10.34.9 -- pnpm install
-mise x node@24 pnpm@10.34.9 -- pnpm dev:seed
-mise x node@24 pnpm@10.34.9 -- pnpm dev
+pnpm install
+pnpm dev:seed
+pnpm dev
 ```
-
-With the supported Node version active and Corepack enabled, the equivalent commands are `pnpm install`, `pnpm dev:seed` and `pnpm dev`.
 
 Open http://localhost:3000 for the questionnaire list, then choose **Plan a trip**. The initial seed links to http://localhost:3000/q/1. Open http://localhost:3000/admin to edit it. The login form prefills `demo@example.com` / `demo`; click **Log in** once to create an admin session. Draft previews require that session. Use `localhost:3000` for both the editor and frontend so the preview messages and session cookie share an origin.
 
@@ -23,7 +21,7 @@ Stop the server with Ctrl-C. To reset the content, stop it and rerun `pnpm seed`
 After changing plugin component registrations, regenerate the committed import map:
 
 ```sh
-mise x node@24 pnpm@10.34.9 -- pnpm --filter dev payload generate:importmap
+pnpm --filter dev payload generate:importmap
 ```
 
 ## Recording script
@@ -77,14 +75,14 @@ The Logic panel opens by default. Click its heading to collapse it, or append `?
 From the workspace root:
 
 ```sh
-mise x node@24 pnpm@10.34.9 -- sh -c 'pnpm build && pnpm typecheck && pnpm test'
-mise x node@24 pnpm@10.34.9 -- pnpm --filter dev test
-mise x node@24 pnpm@10.34.9 -- pnpm --filter dev typecheck
-mise x node@24 pnpm@10.34.9 -- pnpm --filter dev build
-mise x node@24 pnpm@10.34.9 -- pnpm --filter dev start
+pnpm build && pnpm typecheck && pnpm test
+pnpm --filter dev test
+pnpm --filter dev typecheck
+pnpm --filter dev build
+pnpm --filter dev start
 ```
 
-Root build, typecheck and test target only `packages/*`. The private `dev` workspace is excluded from publishing. Keep its `@types/node` version aligned with the plugin's development dependency so pnpm shares one instance of Payload UI and its form contexts.
+Root build, typecheck and test target only `packages/*`. The private `dev` workspace is excluded from publishing. The app uses Node 26 types. The plugin keeps Node 22 types for its build-time bundle test; its published API follows Payload's supported Node range.
 
 Admin tidy screenshots use `/tmp/demo-shots/tidy-*.png`, including the desktop and 800px layouts, mobile respondent, Preview tab and Live Preview before/after captures.
 
