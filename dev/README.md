@@ -11,12 +11,15 @@ Use Node 26.13.1 (pinned in the root and dev `.node-version` files) and pnpm 10.
 From the workspace root:
 
 ```sh
-pnpm install
+pnpm install --frozen-lockfile
+pnpm build
 pnpm dev:seed
 pnpm dev
 ```
 
 Open http://localhost:3000 for the questionnaire list, then choose **Plan a trip**. The initial seed links to http://localhost:3000/q/1. Open http://localhost:3000/admin to edit it. The login form prefills `demo@example.com` / `demo`; click **Log in** once to create an admin session. Draft previews require that session. Use `localhost:3000` for both the editor and frontend so the preview messages and session cookie share an origin.
+
+For a different port, run `DEMO_ORIGIN=http://localhost:3013 pnpm --filter dev dev --port 3013`. Use that origin for the editor and respondent; it also sets Preview and Live Preview URLs.
 
 Stop the server with Ctrl-C. To reset the content, stop it and rerun `pnpm seed` (an alias for the same seed workflow as `pnpm dev:seed`). The seed updates the questionnaire by title, keeps its document id, publishes it, and reads it back to verify page, question and option ids along with condition references. SQLite lives at `dev/demo.db` and stays out of Git. To start with an empty database, remove `dev/demo.db` and any `dev/demo.db-*` files while the server is stopped, then seed again.
 
@@ -33,11 +36,12 @@ Use a 1920 × 1080 browser window at 100% zoom. Keep two tabs open: the admin an
 ### Authoring
 
 1. In the admin, choose **Questionnaires → Plan a trip**.
-2. Under **Pages**, open **About you**. Its header shows the page number, editable title and counts. Expand **Questions** to show the **Yes / No** answer and its **Optional** checkbox. **Free text** answers use a **Placeholder** for the empty answer box.
+2. Under **Pages**, open **About you**. Its header shows the page number, editable title and counts. Expand **Questions** to show the **Yes / No** answer and its **Required** checkbox. **Free text** answers use a **Placeholder** for the empty answer box.
 3. Scroll to **Children → Condition groups**. The **Question** and **Answer** selects read **Are you travelling with children? / is / Yes**.
 4. Open **Car seats → Condition groups**. **Show this page when** is **All groups match**. Group 1 uses **All conditions are true**, with children **is Yes**. Group 2's **This group matches when** is **Any condition is true**, combining travel **is Car** with age groups **includes Under 2**.
 5. Open the second group's question select to show the available earlier questions. Keep the seeded values selected. Click **Publish changes** if you changed them.
 6. Point out **Accessibility**, which uses **How are you travelling? / is not / Car**, and its skippable checkbox.
+7. Under **Children**, add a second condition to its existing **All conditions are true** group: **Are you travelling with children? / is / No**. Keep the original **is / Yes** condition. Click **Publish changes**. The second operator shows **These conditions cannot all match.** Save a draft to show that incomplete logic can be kept while editing. Remove the second condition and publish again before recording the respondent paths.
 
 Payload mounts some nested fields as they enter the viewport. Scroll to a condition group to see its selects.
 
@@ -86,6 +90,8 @@ pnpm --filter dev start
 ```
 
 Root build, typecheck and test target only `packages/*`. The private `dev` workspace is excluded from publishing. The app and plugin use matching Node 26 types so pnpm resolves a single Payload UI instance. The plugin's published API follows Payload's supported Node range.
+
+Version 0.3 browser checks use `/tmp/demo-shots/v03-*.png`. Integration tests create a temporary SQLite database, check ids at the collection hook, publish validation paths and title-only updates, then remove it. The SQLite check also verifies the page tables each have one `block_name` column.
 
 Terminology screenshots use `/tmp/demo-shots/terms-admin.png` and `/tmp/demo-shots/terms-conditions.png` at 1920 × 1080.
 

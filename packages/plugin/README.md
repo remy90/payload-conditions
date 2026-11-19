@@ -1,46 +1,39 @@
-# Payload conditions
+# Payload questionnaire plugin
 
-A Payload CMS plugin for authoring page conditions based on answers to earlier questions. Answer types include Yes / No, multiple choice and Free text. Your frontend uses the saved conditions to decide which pages to show.
+Author questionnaires in Payload with Yes / No, multiple-choice and Free text answers. Pages can depend on answers from earlier pages. Version 0.3.0 uses the matching conditions engine.
 
 ## Install
 
 ```sh
-pnpm add @remy90/payload-conditions-plugin @remy90/payload-conditions-engine
+pnpm add @remy90/payload-conditions-plugin@^0.3.0 @remy90/payload-conditions-engine@^0.3.0
 ```
 
-Version 1.1.0 targets Payload 3.94. Install matching versions of `payload` and `@payloadcms/ui` (`^3.94.0`) in your app, with React 19 and a matching `react-dom`. Payload 3.94 supports React `~19.0.9 || ~19.1.10 || ~19.2.9 || ^19.3.1`.
-
-Use a Next.js version supported by `@payloadcms/ui`. For Next 15.4, that means `>=15.4.11 <15.5.0`; Next 16 requires `>=16.4.5 <17.0.0`. The package follows Payload 3.94's Node support: `^22.23.5 || ^24.22.3 || >=26.13.1`.
+Use Payload and `@payloadcms/ui` 3.94 with React 19 and matching `react-dom`. Payload 3.94 supports React `~19.0.9 || ~19.1.10 || ~19.2.9 || ^19.3.1`. Next 15.4 requires `>=15.4.11 <15.5.0`; Next 16 requires `>=16.4.5 <17.0.0`. Supported Node versions are `^22.23.5 || ^24.22.3 || >=26.13.1`.
 
 ## Configure
 
-Add the plugin to the `plugins` array in your existing `payload.config.ts`:
-
 ```ts
-import { payloadConditions } from '@remy90/payload-conditions-plugin'
+import { questionnairePlugin } from '@remy90/payload-conditions-plugin'
 
-// Keep your existing database adapter, collections and other config.
-plugins: [
-  payloadConditions(),
-]
+// Add to your existing Payload config:
+plugins: [questionnairePlugin()]
 ```
 
-The plugin adds the `questionnaire` collection. It is enabled by default; pass `{ enabled: false }` to skip registration. It returns a new config object.
+The plugin registers the `questionnaires` collection with drafts enabled. Pass `{ enabled: false }` to skip registration. It uses Payload's `definePlugin` with slug `questionnaire`.
 
-Generate Payload's admin import map after adding the plugin:
+Generate the admin import map and document types after configuration:
 
 ```sh
 pnpm payload generate:importmap
+pnpm payload generate:types
 ```
 
-Keep your app's `admin.importMap.baseDir` and generated import-map location configured as described in the Payload setup guide. Restart the app after generation.
+Keep `admin.importMap.baseDir` and your import-map location configured for your app. Restart after generating the map.
 
-## Preview
-
-Pass Payload's collection admin settings through the plugin:
+### Preview
 
 ```ts
-payloadConditions({
+questionnairePlugin({
   preview: (doc) => `/q/${doc.id}?preview=1`,
   livePreview: {
     url: ({ data }) => `/q/${data.id}?preview=1`,
@@ -52,66 +45,108 @@ payloadConditions({
 })
 ```
 
-Both options use Payload's `CollectionAdminOptions` types and merge into the `questionnaire` collection's admin settings. Omitting them keeps the default configuration. Your frontend handles the preview route, authenticates requests before loading drafts, and subscribes with `@payloadcms/live-preview-react` for unsaved edits.
+`preview` and `livePreview` use Payload's `CollectionAdminOptions` types. Your frontend authenticates draft access and subscribes through `@payloadcms/live-preview-react` for unsaved edits.
 
-## Author conditions
+## Authoring and stored schema
 
-Create a questionnaire and add pages. Each page contains questions with an **Optional** checkbox (`optional`, default false). **Page is skippable** (`skippable`) lets respondents skip every question on the page. Multiple-choice answers have an `allowMultipleSelection` checkbox, also false by default. Choose **Yes / No** for two labelled options or **Free text** for a written answer. Its **Placeholder** appears in the empty answer box.
+`questionnaires` stores `title` and a `pages` blocks field. Each `page` block stores `{ id, blockName, skippable, questions, match, conditionGroups }`. Page titles are edited in their draggable headers. The label respects the block's `admin.disableBlockName` setting.
 
-**Show this page when** offers **All groups match** (`all`) or **Any group matches** (`any`). Each group's **This group matches when** offers **All conditions are true** (`all`) or **Any condition is true** (`any`). Only Yes / No and multiple-choice questions on earlier pages appear as sources. Yes / No and single-select questions offer `is` and `isNot` (labelled “is not”). Multi-select questions offer `includes` and `excludes`.
+Questions store `{ id, name, label, required, answer }`. `required` defaults to true. Blank names fill from the question label in snake_case, with `_2`, `_3` suffixes to avoid collisions. Names are unique within the questionnaire and match `^[a-z][a-z0-9_]*$`. Conditions reference question row ids, so changing a name keeps those references intact.
 
-Changing a condition's question clears its answer and clears an incompatible operator. Toggling multiple selection or changing an answer type maps equivalent operators: `is` ↔ `includes` and `isNot` ↔ `excludes`. The admin displays and saves that equivalent; the collection hook also maps operators on save. Yes / No answers receive ids when their fields initialize, so you can select them before saving.
+`answer` contains exactly one answer block:
 
-Publishing validates condition operators and requires an answer id from the selected question's current options. The collection allows drafts to skip field validation. A host collection with `drafts.validate: true` validates drafts too. After deleting an option, select another answer or remove its condition. The engine can treat a stale answer id under `isNot` or `excludes` as true, so data written outside the plugin needs the same validation.
+| Block | Fields |
+| --- | --- |
+| `yesNo` | `yesId`, `yesLabel`, `noId`, `noLabel` |
+| `choice` | `hasMany` (default false), `options: [{ id, label }]` |
+| `text` | `placeholder`, `maxLength` (default 2000) |
 
-If question ids repeat, the admin uses the first occurrence in document order for condition sources.
+Answer blocks also have row ids. Generated interfaces are `QuestionnairePage`, `YesNoAnswer`, `ChoiceAnswer` and `TextAnswer`.
 
-## Stored schema and engine
+A page's `match` combines `conditionGroups`. Each group has `{ id, match, conditions }`; each condition has `{ id, questionId, operator, answerId }`. Both match modes default to `all`; `any` accepts one matching child. **Show this page when** controls the page mode. **This group matches when** controls its group.
 
-The plugin pairs with `@remy90/payload-conditions-engine` 1.0.1, which it also uses as a runtime dependency. The engine shares the stored types and operator definitions with the editor. Use its Payload adapter in your frontend:
+Only Yes / No and choice questions on earlier pages can be sources. Single-select sources offer `equals` (is) and `not_equals` (is not). Sources with `hasMany: true` offer `in` (includes) and `not_in` (excludes). Changing a condition's question clears its answer. Changing selection mode maps equivalent operators: `equals` ↔ `in` and `not_equals` ↔ `not_in`.
 
-```ts
-import { fromPayloadQuestionnaire } from '@remy90/payload-conditions-engine/payload'
-import { resolveVisibility } from '@remy90/payload-conditions-engine'
+Yes / No ids initialize in the editor. The collection hook repairs missing or duplicate option ids and updates matching references. Existing ownership follows the stored question id when copies are reordered. Restoring a version uses that version's data and order.
 
-const questionnaire = fromPayloadQuestionnaire(document)
-const { visiblePageIds, answers } = resolveVisibility(questionnaire, new Map())
-```
+## Validation
 
-The `questionnaire` collection stores `title` and `pages`, a blocks field with `standardPage` blocks. A page stores:
+Required text is trimmed. Inline validators check fields when publishing. The limits in characters are:
 
-- `skippable`, default false, and `questionAnswerPair` rows with `id`, `question`, `optional` and exactly one block in `answer`.
-- `match`, default `all`, and `conditionGroups` rows with `id`, their own `match` and `conditions`.
+| Field | Maximum |
+| --- | --- |
+| Questionnaire title | 200 |
+| Question label | 500 |
+| Option, Yes and No labels | 200 |
+| Placeholder | 200 |
+| Question name | 64 |
+| Page title | 120 |
 
-Each condition stores `{ id, questionId, operator, answerId }`; its references and operator are required. `questionId` is the question row id. `answerId` is a Yes / No `trueId`/`falseId` or a multiple-choice option row id. Yes / No answers keep their `booleanOptions` group. Multiple-choice blocks store `multipleChoice: [{ id, option }]` (at least two rows) and `allowMultipleSelection`. Free text blocks store their placeholder in `inputText` and remain available as questions.
+Choice option labels must be unique within a question, and Yes and No labels must differ. Free text `maxLength` is an integer from 1 to 10000. Pages and questions need at least one row; condition groups need at least one condition, and choices need at least two options.
 
-## Exports and upgrading
+`questionnaireBeforeChange()` fills names and normalizes ids and operators before running the engine's `checkQuestionnaire` on publish. It throws Payload `ValidationError` with field paths, so structural errors appear beside their fields. Draft saves skip validation. A collection without drafts validates every save; `versions.drafts.validate: true` also validates drafts. An update to a published questionnaire with unchanged pages and status skips the structural check, so title-only updates succeed.
 
-The server entry point exports `payloadConditions`, `Questionnaire`, the `StandardPage` block and `normalizeBooleanIdsHook`. It re-exports the engine's stored types, including `StoredQuestionnaire` and `StoredStandardPage`. The names `StandardPage`, `BooleanOptions`, `MultipleChoice` and `InputText` remain as type aliases.
+Structural issue codes are `noPages`, `emptyPage`, `emptyGroup`, `duplicateId`, `duplicateName`, `invalidName`, `blankText`, `duplicateOptionLabel`, `unknownQuestion`, `samePageQuestion`, `laterQuestion`, `unsupportedSource`, `unknownAnswer`, `operatorMismatch`, `contradiction` and `unreachablePage`. Field validators handle missing rows, text and names. Structural errors cover references, incompatible operators and impossible page logic.
 
-Use `StandardPage` in your own blocks field to reuse the editor. Page conditions work under nested field paths as well as `pages`. Add the collection hook when embedding the block elsewhere:
+`versions.drafts.localizeStatus` is unsupported in 0.3. The publish gate skips collections using it.
+
+## Compose your own collection
 
 ```ts
 import type { CollectionConfig } from 'payload'
-import { normalizeBooleanIdsHook, StandardPage } from '@remy90/payload-conditions-plugin'
+import { QuestionnairePage, questionnaireBeforeChange } from '@remy90/payload-conditions-plugin'
 
-export const Survey: CollectionConfig = {
+export const Surveys: CollectionConfig = {
   slug: 'surveys',
-  hooks: {
-    beforeChange: [normalizeBooleanIdsHook('surveyPages')],
-  },
+  versions: { drafts: true },
+  hooks: { beforeChange: [questionnaireBeforeChange('surveyPages')] },
   fields: [
-    { name: 'surveyPages', type: 'blocks', blocks: [StandardPage] },
+    { name: 'title', type: 'text', required: true },
+    { name: 'surveyPages', type: 'blocks', blocks: [QuestionnairePage], required: true, minRows: 1 },
   ],
 }
 ```
 
-`normalizeBooleanIdsHook(blocksField = 'pages')` returns a Payload `CollectionBeforeChangeHook`. Pass the top-level blocks field name. Each hook normalizes boolean ids within that field and updates matching `conditionGroups[].conditions[]` references anywhere in the document. It also maps equivalent operators to the referenced question's current answer settings. `Questionnaire` already includes the hook for `pages`. Standalone `StandardPage` blocks require this opt-in.
+Pass the top-level blocks field name to `questionnaireBeforeChange(blocksField = 'pages')`. The hook handles empty names as well as ids and validation. `Questionnaires` already includes it for `pages`. Generate the import map for host-composed collections too.
 
-On save, missing or duplicate boolean ids receive fresh ids. A question row that held an id in the stored document keeps it after copies are reordered. When no stored holder remains, the first occurrence in document order keeps it. Conditions targeting a copied question row follow its regenerated answer ids. Restoring a version uses that version's data and document order without borrowing ids or ownership from the current document.
+### Translations
 
-The `@remy90/payload-conditions-plugin/client` entry point exports the condition selects (`QuestionCondition`, `OperatorCondition`, `AnswerCondition`), `QuestionAnswerRowLabel` and `StandardPageRowLabel`. The plugin config already references these through Payload's import map.
+The plugin merges English strings under `plugin-questionnaire` into `config.i18n.translations` for configured languages. A host-composed collection gets English through the built-in fallback even when `questionnairePlugin()` is absent. Override individual strings in Payload's config:
 
-Version 1.0.0 replaces `allOrAnyCondition` with `match`, and replaces `conditionalLogicGroup` with `conditionGroups[].conditions[]`. Conditions now use `questionId`, `operator` and `answerId`, with readable operator values. Version 0.2.2 never loaded, so there is no migration.
+```ts
+i18n: {
+  translations: {
+    en: {
+      'plugin-questionnaire': {
+        questions: 'Prompts',
+        requiredText: 'Enter a value for this prompt.',
+      },
+    },
+  },
+}
+```
 
-The alpha Payload API and the old `/types` subpath have been removed. Import types from the package root. This package ships ESM; use `import`.
+Version 0.3 ships English only. Supply overrides under each language key you use.
+
+## Frontend and API
+
+```ts
+import { fromPayloadQuestionnaire } from '@remy90/payload-conditions-engine/payload'
+import { resolveVisibility, validateAnswers } from '@remy90/payload-conditions-engine'
+
+const questionnaire = fromPayloadQuestionnaire(document)
+const { visiblePageIds, answers } = resolveVisibility(questionnaire, new Map())
+const issues = validateAnswers(questionnaire, answers)
+```
+
+The engine exports `operatorsFor`, `checkQuestionnaire`, `validatePageAnswers`, `validateAnswers`, `resolveVisibility`, `evaluatePage`, `applyAnswer`, `nextPageId` and `previousPageId`, with domain types. Answers use `ReadonlyMap<string, readonly string[]>`; Free text uses a single string. Visibility clears hidden answers in page order. Drop empty-array answers before calling `validateAnswers`. Respondent issue codes are `required`, `unknownOption`, `tooManySelections`, `tooLong`, `unknownQuestion` and `hiddenQuestion`. See the engine README for signatures and semantics.
+
+The server entry exports `questionnairePlugin`, type `QuestionnairePluginOptions`, collection `Questionnaires`, block `QuestionnairePage`, hook factory `questionnaireBeforeChange`, and the engine's `Stored*` types.
+
+`@remy90/payload-conditions-plugin/client` exports `QuestionCondition`, `OperatorCondition`, `AnswerCondition`, `QuestionnairePageRowLabel` and `QuestionRowLabel`. The block registers these components through Payload's import map.
+
+## Upgrading to 0.3
+
+Use `questionnairePlugin` in place of `payloadConditions`. The collection is `questionnaires`, the page block is `page`, and questions live in `questions`. Answer blocks are `yesNo`, `choice` and `text`. Questions use `name`, `label` and `required`; choices use `hasMany` and `options`. Operators are `equals`, `not_equals`, `in`, `not_in`.
+
+Compose collections with `QuestionnairePage` and `questionnaireBeforeChange()`. The old `normalizeBooleanIdsHook` is removed. Stored answer types are `StoredYesNo`, `StoredChoice` and `StoredText`. Import types from the package root or the engine's `/payload` entry. There is no data migration. The briefly published 1.0.0 plugin release was withdrawn.
