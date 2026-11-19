@@ -1,63 +1,36 @@
 # Changelog
 
-## 1.1.0 (unreleased)
+## 0.3.0
 
-- Accept collection `preview` and `livePreview` settings through plugin options.
-- Show full question labels with responsive ellipsis and lay out boolean labels in a responsive row.
-- Add reactive question and condition-group counts to page headers. Regenerate the admin import map after upgrading.
-- Honour `admin.disableBlockName` in page headers, including referenced blocks.
+This entry covers changes since 0.2.2. Version 1.0.0 was published briefly and withdrawn.
+The schema changes without a data migration.
 
-Stored fields and data stay unchanged.
+### Schema and API
 
-### Admin terminology
+- Add `questionnairePlugin`, built with Payload's `definePlugin` and slug `questionnaire`. It accepts `enabled`, `preview` and `livePreview`; disabled plugins leave the host config unchanged.
+- Export the `Questionnaires` collection with slug `questionnaires`, the `QuestionnairePage` block and `questionnaireBeforeChange(blocksField = 'pages')`. Collections embedding the page block can install this hook with their own top-level blocks field name.
+- Use block slugs `page`, `yesNo`, `choice` and `text`. Generated block interfaces are `QuestionnairePage`, `YesNoAnswer`, `ChoiceAnswer` and `TextAnswer`.
+- Store question rows under `questions`, with `name`, `label`, `required` and one `answer` block. Questions are required by default. Choice answers use `hasMany` and `options: { id, label }[]`. Yes / No answers have flat `yesLabel`, `yesId`, `noLabel` and `noId` fields. Text answers have an optional `placeholder` and a `maxLength` of 2000 by default.
+- Store visibility rules under `conditionGroups`, with `match` on pages and groups. Both default to `all`. Conditions use `questionId`, `operator` and `answerId`.
+- Use Payload operator names `equals`, `not_equals`, `in` and `not_in`. The editor labels remain “is”, “is not”, “includes” and “excludes”. Equivalent operators map when selection settings change.
+- Keep database table and enum names short, including names for version tables.
+- Depend on engine `^0.3.0` through `workspace:^` and re-export its stored types. Remove `payloadConditions`, `normalizeBooleanIdsHook` and the `/types` subpath.
 
-- Label the editor's pages and questions as Pages and Questions. Page headers keep their number, editable title and counts; remove the Standard page pill.
-- Rename the answer labels to Yes / No and Free text. Describe the Placeholder, Optional and Page is skippable fields.
-- Label page matching as Show this page when, with All groups match and Any group matches. Groups use This group matches when, with All conditions are true and Any condition is true. Condition selects use Question and Answer.
-- Keep stored names, generated type shapes and database identifiers unchanged.
+### Validation and saves
 
-### Dependencies and packaging
+- Trim authored text before validation. Apply length limits to titles, question labels, names, option labels and placeholders. Require a page, a question per page, a condition per group and two options per choice answer.
+- Generate missing question names from their labels in snake_case. Add numeric suffixes for uniqueness, validate the name format and enforce uniqueness across the questionnaire.
+- Require distinct option labels after trimming and ignoring case. Yes and No labels must differ. Limit Free text `maxLength` to a number from 1 to 10000.
+- Normalize missing and duplicate Yes / No answer ids while preserving stored ownership across reordered copies. Update condition references throughout the document. Restored versions use their own id ownership.
+- Run the engine's structural checks when publishing, saving a collection without drafts or enabling `drafts.validate`. Report issues through Payload's inline field errors. Field validation remains skipped for ordinary drafts.
+- Validate selected operators and current answer options on the server. Offer earlier Yes / No and choice questions as condition sources. Changing the source clears its selected answer and keeps compatible operators.
+- Share a form-state index between condition selects and cache source questions per request for server field validation. Unchanged normalization preserves object references.
 
-- Match Payload 3.94's Node support: `^22.23.5 || ^24.22.3 || >=26.13.1`. Pin workspace development to Node 26.13.1.
-- Build JavaScript and declarations with TypeScript 7.1 beta using `7.1.0-beta || >=7.1.0-rc <8`. Widen the range to `^7.1.0` once 7.1 is stable. TypeScript is a development dependency only; consumers keep their own compiler version.
-- Remove SWC and rimraf, along with the plugin's unused React DOM dependency and peer.
-- Mark the package as side-effect-free and stop shipping source and declaration maps.
-- Pair with engine 1.0.1. Use Payload `^3.94.0` for development and update the test runner to Vitest 5.
-- Check the built client entry with esbuild to catch Payload server imports.
+### Admin and packaging
 
-## 1.0.0
-
-### Schema and engine
-
-- Pair with `@remy90/payload-conditions-engine` 1.0.0 through a runtime dependency. Import shared operators and match modes from the engine and re-export its stored types.
-- Replace `allOrAnyCondition` with `match`. Replace `conditionalLogicGroup` with `conditionGroups`, each with its own `match` and `conditions` array. Both match fields default to `all`.
-- Store required condition fields as `questionId`, `operator` and `answerId`. Operators are `is`, `isNot`, `includes` and `excludes`.
-- Give SQL arrays, blocks and selects short database names, including version tables and enums. Stored document keys stay unchanged.
-- Add `optional` to question rows and `allowMultipleSelection` to multiple-choice answer blocks. Both default to false.
-
-Version 0.2.2 never loaded, so there is no migration.
-
-### Payload support
-
-- Require Payload and `@payloadcms/ui` `^3.94.0`, React 19 and Node `>=22.23.5`. Payload and React are peer dependencies.
-- Split server exports from the `/client` components. Regenerate the Payload admin import map after upgrading.
-- Remove the `/types` subpath. Import stored types from the package root. The package ships ESM with explicit `.js` imports.
-- Move boolean-id normalization to a collection `beforeChange` hook. Collections embedding `StandardPage` must add `normalizeBooleanIdsHook()` and pass their top-level blocks field name when it differs from `pages`. `Questionnaire` includes the hook.
-
-### Editor and saves
-
-- Offer earlier boolean and multiple-choice questions as condition sources. Derive operator choices with the engine's `operatorsFor`; validate incompatible stored operators on the server. Input text remains available as a question type.
-- Map `is`/`includes` and `isNot`/`excludes` when answer settings change. The admin displays and saves the equivalent operator; the collection hook applies the same mapping alongside boolean-id normalization.
-- Validate condition answer ids against the selected question's current options. Payload skips field validation on drafts with the collection's default settings.
-- Clear the answer when a condition's question changes, retaining compatible operators. Apply field changes together so Payload can preserve them through autosave.
-- Share one form-state index across condition selects per snapshot, with direct path lookups and cached question options for each page.
-- Share one source-question index across server field validators per document in the request context.
-- Create boolean answer ids through field defaults and regenerate missing or duplicate ids on save. Keep stored ownership when copies are reordered. Conditions under `conditionGroups[].conditions[]` follow regenerated ids throughout the document. No-op saves return the same data reference; rewrites preserve untouched branches.
-- Normalize restored versions using their own data and document order.
-- Keep incoming plugin config unchanged and enable the plugin by default.
-- Replace the alpha demo submodule and app-specific tooling with workspace packages and tests.
-
-### Known limitations
-
-- Deleting a source question or moving it to the same or a later page leaves its condition references in storage. Operator validation rejects the reference on a validated save. Payload can save drafts without field validation; the engine treats invalid conditions as false.
-- The engine treats a stale `answerId` under `isNot` or `excludes` as true when the question has a non-empty answer that lacks that id. Saving through the plugin validates current option ids and blocks publishing stale references. Data edited through other means needs the same care; editors must select another answer or remove the condition.
+- Put authored admin labels and validation messages under the `plugin-questionnaire` translation namespace, with English defaults. Host overrides use Payload's `i18n.translations`.
+- Keep Pages, Questions, Yes / No, Multiple choice and Free text as editor labels. Pages have numbered headers, editable titles and reactive counts. Page headers honour `admin.disableBlockName`, including referenced blocks.
+- Rename client exports `StandardPageRowLabel` to `QuestionnairePageRowLabel` and `QuestionAnswerRowLabel` to `QuestionRowLabel`. Regenerate the admin import map after upgrading.
+- Split server exports from `/client`. Ship side-effect-free ESM and declarations without source maps. Guard the client bundle against Payload server imports.
+- Require Payload and `@payloadcms/ui` `^3.94.0` with React 19. Match Payload's Node support: `^22.23.5 || ^24.22.3 || >=26.13.1`. Workspace development uses Node 26.13.1 and TypeScript 7.1 beta.
+- Remove SWC, rimraf and the unused React DOM dependency. Move development and tests into the pnpm workspace.
