@@ -24,6 +24,9 @@ const isRow = (value: unknown): value is Record<string, unknown> =>
 // Offsets from the end of pages.N.questions.M.name.
 const nameFieldPathOffsets = { pageIndex: -4, questionIndex: -2 } as const
 
+// Offsets from the end of pages.N.questions.M.answer.K.options.L.label.
+const optionLabelFieldPathOffsets = { optionIndex: -2 } as const
+
 const rowArrays = (data: unknown, key: string): Record<string, unknown>[][] => {
   if (Array.isArray(data)) return data.flatMap((value) => rowArrays(value, key))
   if (!data || typeof data !== 'object') return []
@@ -38,12 +41,14 @@ export const validateName = (value: unknown, context: Context): true | string =>
   const name = String(value).trim()
   if (!/^[a-z][a-z0-9_]*$/.test(name)) return translate(context, 'invalidName')
   if (!context.path) {
-    return rowArrays(context.data, 'questions').flat().some(
-      (question) =>
-        question.id !== context.siblingData?.id &&
-        typeof question.name === 'string' &&
-        question.name.trim() === name,
-    )
+    return rowArrays(context.data, 'questions')
+      .flat()
+      .some(
+        (question) =>
+          question.id !== context.siblingData?.id &&
+          typeof question.name === 'string' &&
+          question.name.trim() === name,
+      )
       ? translate(context, 'duplicateName')
       : true
   }
@@ -51,7 +56,10 @@ export const validateName = (value: unknown, context: Context): true | string =>
   const pages = at(context.data, path.slice(0, nameFieldPathOffsets.pageIndex))
   if (Array.isArray(pages)) {
     for (const [p, page] of pages.entries()) {
-      for (const [q, question] of (Array.isArray(page?.questions) ? page.questions : []).entries()) {
+      for (const [q, question] of (Array.isArray(page?.questions)
+        ? page.questions
+        : []
+      ).entries()) {
         if (!isRow(question)) continue
         if (
           String(p) === String(path.at(nameFieldPathOffsets.pageIndex)) &&
@@ -71,7 +79,7 @@ export const validateOptionLabel = (value: unknown, context: Context): true | st
   if (valid !== true) return valid
   const path = context.path
   const options = path
-    ? at(context.data, path.slice(0, -2))
+    ? at(context.data, path.slice(0, optionLabelFieldPathOffsets.optionIndex))
     : rowArrays(context.data, 'options').find((rows) =>
         rows.some((option) => option.id === context.siblingData?.id),
       )
@@ -81,7 +89,7 @@ export const validateOptionLabel = (value: unknown, context: Context): true | st
       (option, index) =>
         isRow(option) &&
         (path
-          ? String(index) !== String(path.at(-2))
+          ? String(index) !== String(path.at(optionLabelFieldPathOffsets.optionIndex))
           : option.id !== context.siblingData?.id) &&
         typeof option.label === 'string' &&
         option.label.trim().toLowerCase() === label,
