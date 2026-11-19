@@ -110,7 +110,7 @@ export const Survey: CollectionConfig = {
 
 On save, missing or duplicate boolean ids receive fresh ids. A question row that held an id in the stored document keeps it after copies are reordered. When no stored holder remains, the first occurrence in document order keeps it. Conditions targeting a copied question row follow its regenerated answer ids. Restoring a version uses that version's data and document order without borrowing ids or ownership from the current document.
 
-The `@remy90/payload-conditions-plugin/client` entry point exports the condition selects (`QuestionCondition`, `OperatorCondition`, `AnswerCondition`) `QuestionAnswerRowLabel` and `StandardPageRowLabel`. The plugin config already references these through Payload's import map.
+The `@remy90/payload-conditions-plugin/client` entry point exports the condition selects (`QuestionCondition`, `OperatorCondition`, `AnswerCondition`), `QuestionAnswerRowLabel` and `StandardPageRowLabel`. The plugin config already references these through Payload's import map.
 
 Version 1.0.0 replaces `allOrAnyCondition` with `match`, and replaces `conditionalLogicGroup` with `conditionGroups[].conditions[]`. Conditions now use `questionId`, `operator` and `answerId`, with readable operator values. Version 0.2.2 never loaded, so there is no migration.
 
