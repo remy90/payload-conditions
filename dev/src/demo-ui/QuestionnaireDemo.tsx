@@ -281,13 +281,19 @@ export function QuestionnaireDemo({ document, logicOpen }: Props) {
                     {page.pass ? '✓' : '×'}
                   </span>{' '}
                   {labels.get(page.id)}
-                  {!!page.groups.length && <small> {page.match.toUpperCase()} groups</small>}
+                  {!!page.groups.length && (
+                    <small>
+                      {' '}
+                      {page.match === 'all' ? 'All groups match' : 'Any group matches'}
+                    </small>
+                  )}
                 </h4>
                 {!page.groups.length && <p className={styles.muted}>Always shown</p>}
                 {page.groups.map((group, index) => (
                   <div key={index} className={styles.group}>
                     <p className={styles.groupTitle}>
-                      {group.pass ? '✓' : '×'} Group {index + 1} · {group.match.toUpperCase()}
+                      {group.pass ? '✓' : '×'} Group {index + 1} ·{' '}
+                      {group.match === 'all' ? 'All conditions are true' : 'Any condition is true'}
                     </p>
                     {group.conditions.map((condition, index) => (
                       <p key={index} className={styles.condition}>

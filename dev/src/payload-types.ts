@@ -160,6 +160,9 @@ export interface Questionnaire {
  * via the `definition` "StandardPage".
  */
 export interface StandardPage {
+  /**
+   * Respondents can skip every question on this page
+   */
   skippable?: boolean | null;
   questionAnswerPair?:
     | {
@@ -167,6 +170,9 @@ export interface StandardPage {
          * This can be a question or input prompt
          */
         question: string;
+        /**
+         * Respondents can leave this question unanswered
+         */
         optional?: boolean | null;
         answer: (BooleanOptions | MultipleChoice | InputText)[];
         id?: string | null;
@@ -225,6 +231,9 @@ export interface MultipleChoice {
  * via the `definition` "InputText".
  */
 export interface InputText {
+  /**
+   * Shown in the empty answer box
+   */
   inputText: string;
   id?: string | null;
   blockName?: string | null;

@@ -31,10 +31,11 @@ Use a 1920 × 1080 browser window at 100% zoom. Keep two tabs open: the admin an
 ### Authoring
 
 1. In the admin, choose **Questionnaires → Plan a trip**.
-2. Scroll to **Children → Condition groups**. Its selects read **Are you travelling with children? / is / Yes**.
-3. Open **Car seats → Condition groups**. The page matches **All** groups. Group 1 matches children **is Yes**. Group 2 matches **Any**, combining travel **is Car** with age groups **includes Under 2**.
-4. Open the second group's question select to show the available earlier questions. Keep the seeded values selected. Click **Publish changes** if you changed them.
-5. Point out **Accessibility**, which uses **How are you travelling? / is not / Car**, and its skippable checkbox.
+2. Under **Pages**, open **About you**. Its header shows the page number, editable title and counts. Expand **Questions** to show the **Yes / No** answer and its **Optional** checkbox. **Free text** answers use a **Placeholder** for the empty answer box.
+3. Scroll to **Children → Condition groups**. The **Question** and **Answer** selects read **Are you travelling with children? / is / Yes**.
+4. Open **Car seats → Condition groups**. **Show this page when** is **All groups match**. Group 1 uses **All conditions are true**, with children **is Yes**. Group 2's **This group matches when** is **Any condition is true**, combining travel **is Car** with age groups **includes Under 2**.
+5. Open the second group's question select to show the available earlier questions. Keep the seeded values selected. Click **Publish changes** if you changed them.
+6. Point out **Accessibility**, which uses **How are you travelling? / is not / Car**, and its skippable checkbox.
 
 Payload mounts some nested fields as they enter the viewport. Scroll to a condition group to see its selects.
 
@@ -83,6 +84,8 @@ pnpm --filter dev start
 ```
 
 Root build, typecheck and test target only `packages/*`. The private `dev` workspace is excluded from publishing. The app and plugin use matching Node 26 types so pnpm resolves a single Payload UI instance. The plugin's published API follows Payload's supported Node range.
+
+Terminology screenshots use `/tmp/demo-shots/terms-admin.png` and `/tmp/demo-shots/terms-conditions.png` at 1920 × 1080.
 
 Admin tidy screenshots use `/tmp/demo-shots/tidy-*.png`, including the desktop and 800px layouts, mobile respondent, Preview tab and Live Preview before/after captures.
 
