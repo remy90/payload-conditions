@@ -18,16 +18,28 @@ export function validationFixtures() {
   const contradiction = structuredClone(trip)
   contradiction.title = 'Check contradiction'
   contradiction.pages[1].conditionGroups![0].conditions.push({
-    id: 'conflicting-condition', questionId: 'children', operator: 'equals', answerId: 'children-no',
+    id: 'conflicting-condition',
+    questionId: 'children',
+    operator: 'equals',
+    answerId: 'children-no',
   })
 
   const unreachable = structuredClone(contradiction)
   unreachable.title = 'Check unreachable'
-  unreachable.pages[2].conditionGroups = [{
-    id: 'blocked-source-group', match: 'all', conditions: [{
-      id: 'blocked-source-condition', questionId: 'ages', operator: 'in', answerId: 'under2',
-    }],
-  }]
+  unreachable.pages[2].conditionGroups = [
+    {
+      id: 'blocked-source-group',
+      match: 'all',
+      conditions: [
+        {
+          id: 'blocked-source-condition',
+          questionId: 'ages',
+          operator: 'in',
+          answerId: 'under2',
+        },
+      ],
+    },
+  ]
 
   const longTitle = structuredClone(trip)
   longTitle.title = 'Check page title'
@@ -38,17 +50,22 @@ export function validationFixtures() {
   name.pages[0].questions[0].label = 'Your favourite destination?'
   name.pages[0].questions[0].name = ''
 
-  return [blank, duplicate, empty, contradiction, unreachable, longTitle, name].map((fixture, index) => {
-    // SQLite row ids are unique across documents, including draft copies.
-    const prefixIds = (value: unknown) => {
-      if (!value || typeof value !== 'object') return
-      for (const [key, child] of Object.entries(value)) {
-        if (['id', 'yesId', 'noId', 'questionId', 'answerId'].includes(key) && typeof child === 'string') {
-          Object.assign(value, { [key]: `check${index}-${child}` })
-        } else prefixIds(child)
+  return [blank, duplicate, empty, contradiction, unreachable, longTitle, name].map(
+    (fixture, index) => {
+      // SQLite row ids are unique across documents, including draft copies.
+      const prefixIds = (value: unknown) => {
+        if (!value || typeof value !== 'object') return
+        for (const [key, child] of Object.entries(value)) {
+          if (
+            ['id', 'yesId', 'noId', 'questionId', 'answerId'].includes(key) &&
+            typeof child === 'string'
+          ) {
+            Object.assign(value, { [key]: `check${index}-${child}` })
+          } else prefixIds(child)
+        }
       }
-    }
-    prefixIds(fixture)
-    return fixture
-  })
+      prefixIds(fixture)
+      return fixture
+    },
+  )
 }

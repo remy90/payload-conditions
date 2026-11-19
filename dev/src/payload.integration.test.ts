@@ -10,6 +10,10 @@ import { trip } from './seed-data'
 let payload: Payload
 let directory: string
 let beforeChangeData: Record<string, any> | undefined
+const originalEnvironment = {
+  DEMO_LOCALHOST: process.env.DEMO_LOCALHOST,
+  DEMO_DATABASE_URL: process.env.DEMO_DATABASE_URL,
+}
 
 beforeAll(async () => {
   directory = await mkdtemp(path.join(tmpdir(), 'questionnaire-demo-'))
@@ -26,9 +30,15 @@ beforeAll(async () => {
 }, 30000)
 
 afterAll(async () => {
-  await payload?.destroy()
-  if (directory) await rm(directory, { recursive: true, force: true })
-  delete process.env.DEMO_DATABASE_URL
+  try {
+    await payload?.destroy()
+    if (directory) await rm(directory, { recursive: true, force: true })
+  } finally {
+    for (const [key, value] of Object.entries(originalEnvironment)) {
+      if (value === undefined) delete process.env[key]
+      else process.env[key] = value
+    }
+  }
 })
 
 test('publish-on-create has row ids before the collection hook and blocks a contradiction at its operator', async () => {
@@ -51,16 +61,23 @@ test('publish-on-create has row ids before the collection hook and blocks a cont
     }
   }
   data.pages[1].conditionGroups![0].conditions.push({
-    questionId: 'children', operator: 'equals', answerId: 'children-no',
+    questionId: 'children',
+    operator: 'equals',
+    answerId: 'children-no',
   })
-  await expect(payload.create({
-    collection: 'questionnaires', data: { ...data, _status: 'published' },
-  })).rejects.toSatisfy((error: unknown) => {
+  await expect(
+    payload.create({
+      collection: 'questionnaires',
+      data: { ...data, _status: 'published' },
+    }),
+  ).rejects.toSatisfy((error: unknown) => {
     expect(error).toBeInstanceOf(ValidationError)
-    expect((error as ValidationError).data.errors).toContainEqual(expect.objectContaining({
-      path: 'pages.1.conditionGroups.0.conditions.1.operator',
-      message: 'These conditions cannot all match.',
-    }))
+    expect((error as ValidationError).data.errors).toContainEqual(
+      expect.objectContaining({
+        path: 'pages.1.conditionGroups.0.conditions.1.operator',
+        message: 'These conditions cannot all match.',
+      }),
+    )
     return true
   })
   const pages = beforeChangeData!.pages

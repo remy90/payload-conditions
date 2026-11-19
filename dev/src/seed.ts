@@ -50,11 +50,18 @@ try {
   if (process.env.DEMO_VALIDATION_FIXTURES === '1') {
     for (const fixture of validationFixtures()) {
       const existing = await payload.find({
-        collection: 'questionnaires', where: { title: { equals: fixture.title } }, draft: true,
+        collection: 'questionnaires',
+        where: { title: { equals: fixture.title } },
+        draft: true,
       })
       const data = { ...fixture, _status: 'draft' as const }
       const saved = existing.docs[0]
-        ? await payload.update({ collection: 'questionnaires', id: existing.docs[0].id, data, draft: true })
+        ? await payload.update({
+            collection: 'questionnaires',
+            id: existing.docs[0].id,
+            data,
+            draft: true,
+          })
         : await payload.create({ collection: 'questionnaires', data, draft: true })
       payload.logger.info(`${fixture.title}: /admin/collections/questionnaires/${saved.id}`)
     }

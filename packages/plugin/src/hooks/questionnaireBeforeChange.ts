@@ -32,13 +32,17 @@ export const questionnaireBeforeChange =
       let index = 0
       return value[blocksField] === undefined
         ? value
-        : (normalizeQuestionnaire(value, () => {
-            ids[index] ??= crypto.randomUUID()
-            return ids[index++]
-          }, {
-            blocksField,
-            originalDoc: req.context.isRestoringVersion ? undefined : originalDoc,
-          }) as typeof data)
+        : (normalizeQuestionnaire(
+            value,
+            () => {
+              ids[index] ??= crypto.randomUUID()
+              return ids[index++]
+            },
+            {
+              blocksField,
+              originalDoc: req.context.isRestoringVersion ? undefined : originalDoc,
+            },
+          ) as typeof data)
     }
     const previous = originalDoc && normalize(structuredClone(originalDoc))
     const normalized = normalize(data)
@@ -47,7 +51,8 @@ export const questionnaireBeforeChange =
       previous &&
       document._status === previous._status &&
       isDeepStrictEqual(definedFields(document[blocksField]), definedFields(previous[blocksField]))
-    ) return normalized
+    )
+      return normalized
     const versions = collection.versions
     const drafts = versions && typeof versions === 'object' && versions.drafts
     const validateDrafts = drafts && typeof drafts === 'object' && drafts.validate
@@ -56,7 +61,6 @@ export const questionnaireBeforeChange =
     if (hasInvalidQuestionnaireArrays(stored)) return normalized
     const issues = checkQuestionnaire(fromPayloadQuestionnaire(stored))
     const errors = issueErrors(stored, issues, { req }, blocksField)
-    if (errors.length)
-      throw new ValidationError({ collection: collection.slug, errors, req }, req.t)
+    if (errors.length) throw new ValidationError({ collection: collection.slug, errors, req }, req.t)
     return normalized
   }
