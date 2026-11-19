@@ -34,6 +34,19 @@ export default buildConfig({
         ],
       },
     }),
+    (config) => process.env.DEMO_DISABLE_BLOCK_NAME === '1' ? {
+      ...config,
+      collections: config.collections?.map((collection) => collection.slug === 'questionnaires' ? {
+        ...collection,
+        fields: collection.fields.map((field) => field.type === 'blocks' && field.name === 'pages' ? {
+          ...field,
+          blocks: field.blocks.map((block) => typeof block === 'object' && block.slug === 'page' ? {
+            ...block,
+            admin: { ...block.admin, disableBlockName: true },
+          } : block),
+        } : field),
+      } : collection),
+    } : config,
   ],
   typescript: { outputFile: path.resolve(dirname, 'payload-types.ts') },
 })

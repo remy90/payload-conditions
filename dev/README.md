@@ -91,7 +91,7 @@ pnpm --filter dev start
 
 Root build, typecheck and test target only `packages/*`. The private `dev` workspace is excluded from publishing. The app and plugin use matching Node 26 types so pnpm resolves a single Payload UI instance. The plugin's published API follows Payload's supported Node range.
 
-Version 0.3 browser checks use `/tmp/demo-shots/v03-*.png`. Integration tests create a temporary SQLite database, check ids at the collection hook, publish validation paths and title-only updates, then remove it. The SQLite check also verifies the page tables each have one `block_name` column.
+Version 0.3 browser checks use `/tmp/demo-shots/v03-*.png`. Run `DEMO_VALIDATION_FIXTURES=1 pnpm --filter dev seed` to add draft questionnaires for whitespace, duplicate options, empty groups, impossible logic, a long page title and name generation. Each fixture uses its own row ids for SQLite. Start the app with `DEMO_DISABLE_BLOCK_NAME=1` to check headers with page titles disabled; restart without it to restore editing. Integration tests create a temporary SQLite database, check ids at the collection hook, publish validation paths and title-only updates, then remove it. The SQLite check also verifies the page tables each have one `block_name` column.
 
 Terminology screenshots use `/tmp/demo-shots/terms-admin.png` and `/tmp/demo-shots/terms-conditions.png` at 1920 × 1080.
 

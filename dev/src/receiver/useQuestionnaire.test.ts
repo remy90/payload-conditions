@@ -7,6 +7,33 @@ import { useQuestionnaire } from './useQuestionnaire'
 afterEach(cleanup)
 const questionnaire = fromPayloadQuestionnaire(trip)
 
+test('excludes requires a multi-select answer and hides dependent pages when the option is selected', () => {
+  const document = {
+    ...questionnaire,
+    pages: questionnaire.pages.map((page) => page.id === 'anything' ? {
+      ...page,
+      conditionGroups: [{
+        match: 'all' as const,
+        conditions: [{ questionId: 'ages', operator: 'not_in' as const, answerId: 'under2' }],
+      }],
+    } : page),
+  }
+  const { result } = renderHook(() => useQuestionnaire(document))
+  const visible = () => result.current.visiblePages.map((page) => page.id)
+  expect(visible()).not.toContain('anything')
+  act(() => {
+    result.current.setAnswer('children', ['children-yes'])
+    result.current.setAnswer('travel', ['car'])
+    result.current.setAnswer('ages', ['2to11'])
+  })
+  expect(visible()).toContain('anything')
+  act(() => result.current.setAnswer('ages', ['under2', '2to11']))
+  expect(visible()).not.toContain('anything')
+  act(() => result.current.setAnswer('ages', []))
+  expect(result.current.answers.has('ages')).toBe(false)
+  expect(visible()).not.toContain('anything')
+})
+
 test('a questionnaire swap removing the current page selects its nearest visible predecessor and keeps answers', () => {
   const { result, rerender } = renderHook((document) => useQuestionnaire(document), {
     initialProps: questionnaire,
