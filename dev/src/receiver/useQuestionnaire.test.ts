@@ -11,7 +11,8 @@ test('required answers block Next until the current page is complete', () => {
   const { result } = renderHook(() => useQuestionnaire(questionnaire))
   expect(result.current.canContinue).toBe(false)
   expect(result.current.pageIssues).toEqual([
-    { questionId: 'children', issue: 'required' }, { questionId: 'travel', issue: 'required' },
+    { questionId: 'children', issue: 'required' },
+    { questionId: 'travel', issue: 'required' },
   ])
   act(() => result.current.next())
   expect(result.current.currentPage?.id).toBe('about')
@@ -67,9 +68,21 @@ test('hiding Children clears ages before evaluating the dependent Car seats page
     result.current.setAnswer('ages', ['under2'])
     result.current.setAnswer('seat-help', ['seat-help-yes'])
   })
-  expect(result.current.visiblePages.map((page) => page.id)).toEqual(['about', 'children-page', 'flight', 'car-seats', 'accessibility', 'anything'])
+  expect(result.current.visiblePages.map((page) => page.id)).toEqual([
+    'about',
+    'children-page',
+    'flight',
+    'car-seats',
+    'accessibility',
+    'anything',
+  ])
   act(() => result.current.setAnswer('children', ['children-no']))
-  expect(result.current.visiblePages.map((page) => page.id)).toEqual(['about', 'flight', 'accessibility', 'anything'])
+  expect(result.current.visiblePages.map((page) => page.id)).toEqual([
+    'about',
+    'flight',
+    'accessibility',
+    'anything',
+  ])
   expect(result.current.answers.has('ages')).toBe(false)
   expect(result.current.answers.has('seat-help')).toBe(false)
   act(() => result.current.setAnswer('children', ['children-yes']))
