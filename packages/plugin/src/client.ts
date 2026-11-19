@@ -3,4 +3,5 @@
 export { QuestionCondition } from './condition/questionCondition/index.js'
 export { OperatorCondition } from './condition/operatorCondition/index.js'
 export { AnswerCondition } from './condition/answerCondition/index.js'
+export { StandardPageRowLabel } from './blocks/StandardPageRowLabel.js'
 export { QuestionAnswerRowLabel } from './condition/QuestionAnswerRowLabel.js'

@@ -25,6 +25,9 @@ const operatorLabels: Record<Operator, string> = {
 
 export const StandardPage: Block = {
   slug: 'standardPage',
+  admin: {
+    components: { Label: '@remy90/payload-conditions-plugin/client#StandardPageRowLabel' },
+  },
   dbName: ({ tableName }) => `${tableName}_page`,
   fields: [
     ...pageFields,
