@@ -5,7 +5,6 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const dirname = path.dirname(fileURLToPath(import.meta.url))
-const origin = process.env.DEMO_ORIGIN || 'http://localhost:3000'
 const secret = process.env.PAYLOAD_SECRET ||
   (process.env.DEMO_LOCALHOST === '1' ? 'localhost-demo-only-change-before-deploying' : undefined)
 if (!secret) {
@@ -25,28 +24,15 @@ export default buildConfig({
   collections: [{ slug: 'users', auth: true, fields: [] }],
   plugins: [
     questionnairePlugin({
-      preview: (doc) => `${origin}/q/${doc.id}?preview=1`,
+      preview: (doc) => `/q/${doc.id}?preview=1`,
       livePreview: {
-        url: ({ data }) => `${origin}/q/${data.id}?preview=1`,
+        url: ({ data }) => `/q/${data.id}?preview=1`,
         breakpoints: [
           { name: 'mobile', label: 'Mobile', width: 375, height: 667 },
           { name: 'desktop', label: 'Desktop', width: 1440, height: 900 },
         ],
       },
     }),
-    (config) => process.env.DEMO_DISABLE_BLOCK_NAME === '1' ? {
-      ...config,
-      collections: config.collections?.map((collection) => collection.slug === 'questionnaires' ? {
-        ...collection,
-        fields: collection.fields.map((field) => field.type === 'blocks' && field.name === 'pages' ? {
-          ...field,
-          blocks: field.blocks.map((block) => typeof block === 'object' && block.slug === 'page' ? {
-            ...block,
-            admin: { ...block.admin, disableBlockName: true },
-          } : block),
-        } : field),
-      } : collection),
-    } : config,
   ],
   typescript: { outputFile: path.resolve(dirname, 'payload-types.ts') },
 })

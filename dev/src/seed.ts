@@ -46,7 +46,7 @@ try {
     Object.fromEntries(savedIds(trip.pages)),
   )
   assert.equal(read._status, 'published')
-  payload.logger.info(`Seeded and verified: ${process.env.DEMO_ORIGIN || 'http://localhost:3000'}/q/${saved.id}`)
+  payload.logger.info(`Seeded and verified: /q/${saved.id}`)
   if (process.env.DEMO_VALIDATION_FIXTURES === '1') {
     for (const fixture of validationFixtures()) {
       const existing = await payload.find({

@@ -19,7 +19,7 @@ pnpm dev
 
 Open http://localhost:3000 for the questionnaire list, then choose **Plan a trip**. The initial seed links to http://localhost:3000/q/1. Open http://localhost:3000/admin to edit it. The login form prefills `demo@example.com` / `demo`; click **Log in** once to create an admin session. Draft previews require that session. Use `localhost:3000` for both the editor and frontend so the preview messages and session cookie share an origin.
 
-For a different port, run `DEMO_ORIGIN=http://localhost:3013 pnpm --filter dev dev --port 3013`. Use that origin for the editor and respondent; it also sets Preview and Live Preview URLs.
+For a different port, run `pnpm --filter dev dev --port 3013`. Open the editor and respondent on that port. Preview and Live Preview URLs resolve against the admin origin.
 
 Stop the server with Ctrl-C. To reset the content, stop it and rerun `pnpm seed` (an alias for the same seed workflow as `pnpm dev:seed`). The seed updates the questionnaire by title, keeps its document id, publishes it, and reads it back to verify page, question and option ids along with condition references. SQLite lives at `dev/demo.db` and stays out of Git. To start with an empty database, remove `dev/demo.db` and any `dev/demo.db-*` files while the server is stopped, then seed again.
 
@@ -91,7 +91,7 @@ pnpm --filter dev start
 
 Root build, typecheck and test target only `packages/*`. The private `dev` workspace is excluded from publishing. The app and plugin use matching Node 26 types so pnpm resolves a single Payload UI instance. The plugin's published API follows Payload's supported Node range.
 
-Version 0.3 browser checks use `/tmp/demo-shots/v03-*.png`. Run `DEMO_VALIDATION_FIXTURES=1 pnpm --filter dev seed` to add draft questionnaires for whitespace, duplicate options, empty groups, impossible logic, a long page title and name generation. Each fixture uses its own row ids for SQLite. Start the app with `DEMO_DISABLE_BLOCK_NAME=1` to check headers with page titles disabled; restart without it to restore editing. Integration tests create a temporary SQLite database, check ids at the collection hook, publish validation paths and title-only updates, then remove it. The SQLite check also verifies the page tables each have one `block_name` column.
+Version 0.3 browser checks use `/tmp/demo-shots/v03-*.png`. Run `DEMO_VALIDATION_FIXTURES=1 pnpm --filter dev seed` to add draft questionnaires for whitespace, duplicate options, empty groups, impossible logic, a long page title and name generation. Each fixture uses its own row ids for SQLite. Integration tests create a temporary SQLite database, check ids at the collection hook, publish validation paths and title-only updates, then remove it. The SQLite check also verifies the page tables each have one `block_name` column.
 
 Terminology screenshots use `/tmp/demo-shots/terms-admin.png` and `/tmp/demo-shots/terms-conditions.png` at 1920 × 1080.
 
