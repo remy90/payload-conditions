@@ -1,10 +1,11 @@
 'use client'
 
-import { SelectInput, useField, useForm, useFormFields } from '@payloadcms/ui'
+import { SelectInput, useField, useForm, useFormFields, useTranslation } from '@payloadcms/ui'
 import type { TextFieldClientComponent } from 'payload'
 import { useMemo } from 'react'
 import { buildQuestionOptions } from '../options.js'
 import { questionChangeFields, selectedOptionValue } from '../helper.js'
+import { translate } from '../../translations/index.js'
 
 export const QuestionCondition: TextFieldClientComponent = ({
   path: fieldPath,
@@ -14,9 +15,10 @@ export const QuestionCondition: TextFieldClientComponent = ({
   const { path, value, showError, disabled } = useField<string | null>({
     potentiallyStalePath: fieldPath,
   })
+  const { t } = useTranslation()
   const fields = useFormFields(([fields]) => fields)
   const { dispatchFields, setModified } = useForm()
-  const options = useMemo(() => buildQuestionOptions(fields, path), [fields, path])
+  const options = useMemo(() => buildQuestionOptions(fields, path, { t }), [fields, path, t])
 
   return (
     <SelectInput
@@ -38,7 +40,7 @@ export const QuestionCondition: TextFieldClientComponent = ({
         }
       }}
       options={options}
-      placeholder="Select a question"
+      placeholder={translate({ t }, 'selectQuestion')}
       value={value ?? ''}
     />
   )

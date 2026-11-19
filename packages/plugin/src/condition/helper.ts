@@ -1,6 +1,7 @@
 import { operatorsFor } from '@remy90/payload-conditions-engine'
 import type { FormState } from 'payload'
 import { selectedQuestion } from './formIndex.js'
+import { translate, type TranslationContext } from '../translations/index.js'
 
 export const selectedOptionValue = (option: unknown): string | null =>
   option &&
@@ -11,10 +12,14 @@ export const selectedOptionValue = (option: unknown): string | null =>
     ? option.value
     : null
 
-export const questionRowLabel = (question: unknown, rowNumber?: number): string =>
+export const questionRowLabel = (
+  question: unknown,
+  rowNumber?: number,
+  context: TranslationContext = {},
+): string =>
   typeof question === 'string' && question
     ? question
-    : `Question ${(rowNumber ?? 0) + 1}`
+    : translate(context, 'questionNumber', { number: (rowNumber ?? 0) + 1 })
 
 export const questionChangeFields = (
   fields: FormState,

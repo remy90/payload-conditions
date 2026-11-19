@@ -1,11 +1,12 @@
 'use client'
 
-import { useRowLabel } from '@payloadcms/ui'
+import { useRowLabel, useTranslation } from '@payloadcms/ui'
 import { questionRowLabel } from './helper.js'
 
-export const QuestionAnswerRowLabel = () => {
-  const { data, rowNumber } = useRowLabel<{ question?: string | null }>()
-  const label = questionRowLabel(data?.question, rowNumber)
+export const QuestionRowLabel = () => {
+  const { data, rowNumber } = useRowLabel<{ label?: string | null }>()
+  const { t } = useTranslation()
+  const label = questionRowLabel(data?.label, rowNumber, { t })
   return (
     <span
       className="row-label"

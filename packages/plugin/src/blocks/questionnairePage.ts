@@ -1,56 +1,51 @@
-import { operators, type Operator } from '@remy90/payload-conditions-engine'
-import { questionAnswerPair } from '../fields/questionAnswerPair.js'
+import { operators } from '@remy90/payload-conditions-engine'
+import { questions } from '../fields/questions.js'
 import { matchField } from '../fields/questionAnswerCondition.js'
-import type { Block, Field } from 'payload'
+import type { Block } from 'payload'
 import { validateConditionOperator } from '../condition/validateOperator.js'
 import { validateConditionAnswer } from '../condition/validateAnswer.js'
+import { textField } from '../fields/validation.js'
+import { label } from '../translations/index.js'
 
-export const pageFields: Field[] = [
-  {
-    name: 'skippable',
-    type: 'checkbox',
-    defaultValue: false,
-    hidden: false,
-    label: 'Page is skippable',
-    admin: { description: 'Respondents can skip every question on this page' },
-  },
-  questionAnswerPair,
-]
-
-const operatorLabels: Record<Operator, string> = {
-  is: 'is',
-  isNot: 'is not',
-  includes: 'includes',
-  excludes: 'excludes',
-}
-
-export const StandardPage: Block = {
-  slug: 'standardPage',
+export const QuestionnairePage: Block = {
+  slug: 'page',
+  interfaceName: 'QuestionnairePage',
   admin: {
-    components: { Label: '@remy90/payload-conditions-plugin/client#StandardPageRowLabel' },
+    components: { Label: '@remy90/payload-conditions-plugin/client#QuestionnairePageRowLabel' },
   },
   dbName: ({ tableName }) => `${tableName}_page`,
+  labels: { plural: label('pages'), singular: label('page') },
   fields: [
-    ...pageFields,
-    matchField('Show this page when', { all: 'All groups match', any: 'Any group matches' }),
+    { ...textField('blockName', 'pageTitle', 120), admin: { disabled: true } },
+    {
+      name: 'skippable',
+      type: 'checkbox',
+      defaultValue: false,
+      label: label('skippable'),
+      admin: { description: label('skippableDescription') },
+    },
+    questions,
+    matchField('pageMatch', { all: 'allGroups', any: 'anyGroup' }),
     {
       type: 'array',
       name: 'conditionGroups',
       dbName: ({ tableName }) => `${tableName}_cg`,
-      label: 'Condition groups',
+      label: label('conditionGroups'),
+      labels: { singular: label('conditionGroup'), plural: label('conditionGroups') },
       fields: [
-        matchField('This group matches when', {
-          all: 'All conditions are true',
-          any: 'Any condition is true',
-        }),
+        matchField('groupMatch', { all: 'allConditions', any: 'anyCondition' }),
         {
           type: 'array',
           name: 'conditions',
           dbName: ({ tableName }) => `${tableName}_cond`,
+          label: label('conditions'),
+          labels: { singular: label('condition'), plural: label('conditions') },
+          minRows: 1,
+          required: true,
           fields: [
             {
               type: 'text',
-              label: 'Question',
+              label: label('question'),
               name: 'questionId',
               required: true,
               admin: {
@@ -67,13 +62,13 @@ export const StandardPage: Block = {
                 components: { Field: '@remy90/payload-conditions-plugin/client#OperatorCondition' },
               },
               label: false,
-              options: operators.map((value) => ({ label: operatorLabels[value], value })),
+              options: operators.map((value) => ({ label: label(value), value })),
               validate: validateConditionOperator,
               required: true,
             },
             {
               type: 'text',
-              label: 'Answer',
+              label: label('answer'),
               name: 'answerId',
               required: true,
               validate: validateConditionAnswer,
@@ -86,6 +81,4 @@ export const StandardPage: Block = {
       ],
     },
   ],
-  interfaceName: 'StandardPage',
-  labels: { plural: 'Pages', singular: 'Page' },
 }
