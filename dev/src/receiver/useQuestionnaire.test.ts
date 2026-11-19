@@ -7,6 +7,33 @@ import { useQuestionnaire } from './useQuestionnaire'
 afterEach(cleanup)
 const questionnaire = fromPayloadQuestionnaire(trip)
 
+test('excludes requires a multi-select answer and hides dependent pages when the option is selected', () => {
+  const document = {
+    ...questionnaire,
+    pages: questionnaire.pages.map((page) => page.id === 'anything' ? {
+      ...page,
+      conditionGroups: [{
+        match: 'all' as const,
+        conditions: [{ questionId: 'ages', operator: 'not_in' as const, answerId: 'under2' }],
+      }],
+    } : page),
+  }
+  const { result } = renderHook(() => useQuestionnaire(document))
+  const visible = () => result.current.visiblePages.map((page) => page.id)
+  expect(visible()).not.toContain('anything')
+  act(() => {
+    result.current.setAnswer('children', ['children-yes'])
+    result.current.setAnswer('travel', ['car'])
+    result.current.setAnswer('ages', ['2to11'])
+  })
+  expect(visible()).toContain('anything')
+  act(() => result.current.setAnswer('ages', ['under2', '2to11']))
+  expect(visible()).not.toContain('anything')
+  act(() => result.current.setAnswer('ages', []))
+  expect(result.current.answers.has('ages')).toBe(false)
+  expect(visible()).not.toContain('anything')
+})
+
 test('a questionnaire swap removing the current page selects its nearest visible predecessor and keeps answers', () => {
   const { result, rerender } = renderHook((document) => useQuestionnaire(document), {
     initialProps: questionnaire,
@@ -44,7 +71,7 @@ test('an added condition hiding the current page selects a visible predecessor a
             conditionGroups: [
               {
                 match: 'all',
-                conditions: [{ questionId: 'travel', operator: 'is', answerId: 'train' }],
+                conditions: [{ questionId: 'travel', operator: 'equals', answerId: 'train' }],
               },
             ],
           }
@@ -80,7 +107,7 @@ test('a removed multi-select option is pruned so Next can advance', () => {
     pages: questionnaire.pages.map((page) => ({
       ...page,
       questions: page.questions.map((question) =>
-        question.answer.type === 'multipleChoice'
+        question.answer.type === 'choice'
           ? {
               ...question,
               answer: {
@@ -114,7 +141,7 @@ test('a choice to Free text swap drops its answer and requires a new response', 
       ...page,
       questions: page.questions.map((question) =>
         question.id === 'travel'
-          ? { ...question, answer: { type: 'inputText', prompt: '' } }
+          ? { ...question, answer: { type: 'text', placeholder: '', maxLength: 2000 } }
           : question,
       ),
     })),
@@ -135,13 +162,13 @@ test('swapping boolean and multiple choice drops answers even when option ids ma
     pages: questionnaire.pages.map((page) => ({
       ...page,
       questions: page.questions.map((question) =>
-        question.id === 'children' && question.answer.type === 'boolean'
+        question.id === 'children' && question.answer.type === 'yesNo'
           ? {
               ...question,
               answer: {
-                type: 'multipleChoice',
-                allowMultipleSelection: false,
-                options: [question.answer.trueOption, question.answer.falseOption],
+                type: 'choice',
+                hasMany: false,
+                options: [question.answer.yes, question.answer.no],
               },
             }
           : question,
@@ -192,7 +219,7 @@ test('removing every selected option drops its answer before resolving dependent
     pages: questionnaire.pages.map((page) => ({
       ...page,
       questions: page.questions.map((question) =>
-        question.answer.type === 'multipleChoice'
+        question.answer.type === 'choice'
           ? { ...question, answer: { ...question.answer, options: [] } }
           : question,
       ),
@@ -260,9 +287,10 @@ test('a finished questionnaire stays finished when a swap adds a required page',
         conditionGroups: [],
         questions: [{
           id: 'new-question',
-          text: 'A new required question',
-          optional: false,
-          answer: { type: 'inputText', prompt: '' },
+          name: 'new_question',
+          label: 'A new required question',
+          required: true,
+          answer: { type: 'text', placeholder: '', maxLength: 2000 },
         }],
       },
     ],

@@ -13,7 +13,7 @@ export function QuestionnairePreview({
 }) {
   const { data } = useLivePreview({
     initialData: document,
-    serverURL: 'http://localhost:3000',
+    serverURL: typeof window === 'undefined' ? '' : window.location.origin,
     depth: 0,
   })
   return <QuestionnaireDemo document={data} logicOpen={logicOpen} />

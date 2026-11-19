@@ -1,5 +1,5 @@
 import { sqliteAdapter } from '@payloadcms/db-sqlite'
-import { payloadConditions } from '@remy90/payload-conditions-plugin'
+import { questionnairePlugin } from '@remy90/payload-conditions-plugin'
 import { buildConfig } from 'payload'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -18,13 +18,15 @@ export default buildConfig({
     importMap: { baseDir: dirname },
     autoLogin: { email: 'demo@example.com', password: 'demo', prefillOnly: true },
   },
-  db: sqliteAdapter({ client: { url: `file:${path.resolve(dirname, '../demo.db')}` } }),
+  db: sqliteAdapter({
+    client: { url: process.env.DEMO_DATABASE_URL || `file:${path.resolve(dirname, '../demo.db')}` },
+  }),
   collections: [{ slug: 'users', auth: true, fields: [] }],
   plugins: [
-    payloadConditions({
-      preview: (doc) => `http://localhost:3000/q/${doc.id}?preview=1`,
+    questionnairePlugin({
+      preview: (doc) => `/q/${doc.id}?preview=1`,
       livePreview: {
-        url: ({ data }) => `http://localhost:3000/q/${data.id}?preview=1`,
+        url: ({ data }) => `/q/${data.id}?preview=1`,
         breakpoints: [
           { name: 'mobile', label: 'Mobile', width: 375, height: 667 },
           { name: 'desktop', label: 'Desktop', width: 1440, height: 900 },
