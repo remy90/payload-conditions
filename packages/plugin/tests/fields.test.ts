@@ -23,6 +23,20 @@ it('checks question names across pages using row paths, including duplicate ids'
   }
 })
 
+it('keeps name uniqueness errors during form-state validation without a path', () => {
+  const siblingData = { id: 'q2', name: 'same' }
+  const data = {
+    pages: [
+      { questions: [{ id: 'q1', name: 'same' }] },
+      { questions: [siblingData] },
+    ],
+  }
+  expect(validateName('same', { data, siblingData })).toBe('Question names must be unique.')
+  expect(validateName('unique', { data, siblingData })).toBe(true)
+  data.pages[0].questions[0].name = 'different'
+  expect(validateName('same', { data, siblingData })).toBe(true)
+})
+
 it('fills empty names from labels, reserving explicit names before generating suffixes', () => {
   const data = {
     pages: [
@@ -84,6 +98,27 @@ it('checks option labels after trimming and ignoring case', () => {
   expect(validateYesNoLabel('noLabel')('No', { siblingData: { yesLabel: 'Yes' } })).toBe(true)
 })
 
+it('keeps option uniqueness errors scoped to the current question without a path', () => {
+  const siblingData = { id: 'o2', label: 'red' }
+  const options = [{ id: 'o1', label: ' Red ' }, siblingData]
+  const data = {
+    survey: [
+      {
+        questions: [
+          { answer: [{ options }] },
+          { answer: [{ options: [{ id: 'o3', label: 'Blue' }] }] },
+        ],
+      },
+    ],
+  }
+  expect(validateOptionLabel('red', { data, siblingData })).toBe(
+    'Option labels must be unique within a question.',
+  )
+  expect(validateOptionLabel('Blue', { data, siblingData })).toBe(true)
+  options[0].label = 'Green'
+  expect(validateOptionLabel('red', { data, siblingData })).toBe(true)
+})
+
 it('reports malformed text inline while checking uniqueness and filling names', () => {
   const data = {
     pages: [
@@ -110,8 +145,8 @@ it('reports malformed text inline while checking uniqueness and filling names', 
   ).toBe(true)
 })
 
-it('limits free text length to a finite number from 1 to 10000', () => {
-  for (const value of [undefined, null, 0, 10001, NaN, Infinity, '20'])
+it('limits free text length to an integer from 1 to 10000', () => {
+  for (const value of [undefined, null, 0, 1.5, 10001, NaN, Infinity, '20'])
     expect(validateMaxLength(value, {})).toEqual(expect.any(String))
   for (const value of [1, 2000, 10000]) expect(validateMaxLength(value, {})).toBe(true)
 })
