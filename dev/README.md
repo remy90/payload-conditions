@@ -1,6 +1,6 @@
 # Local questionnaire demo
 
-Payload 3.94, Next 16 and SQLite. Use this app for a screen recording on localhost. Auto-login and a checked-in fallback secret make it unsuitable for deployment. The server binds to 127.0.0.1.
+Payload 3.94, Next 16 and SQLite. Use this app for a screen recording on localhost. Prefilled credentials and a checked-in fallback secret make it unsuitable for deployment. The server binds to 127.0.0.1.
 
 ## Run
 
@@ -16,7 +16,7 @@ mise x node@24 pnpm@10.34.9 -- pnpm dev
 
 With the supported Node version active and Corepack enabled, the equivalent commands are `pnpm install`, `pnpm dev:seed` and `pnpm dev`.
 
-Open http://localhost:3000 for the questionnaire list, then choose **Plan a trip**. The initial seed links to http://localhost:3000/q/1. Open http://localhost:3000/admin to edit it. Auto-login uses `demo@example.com` / `demo`.
+Open http://localhost:3000 for the questionnaire list, then choose **Plan a trip**. The initial seed links to http://localhost:3000/q/1. Open http://localhost:3000/admin to edit it. The login form prefills `demo@example.com` / `demo`; click **Log in** once to create an admin session. Draft previews require that session. Use `localhost:3000` for both the editor and frontend so the preview messages and session cookie share an origin.
 
 Stop the server with Ctrl-C. To reset the content, stop it and rerun `pnpm seed` (an alias for the same seed workflow as `pnpm dev:seed`). The seed updates the questionnaire by title, keeps its document id, publishes it, and reads it back to verify page, question and option ids along with condition references. SQLite lives at `dev/demo.db` and stays out of Git. To start with an empty database, remove `dev/demo.db` and any `dev/demo.db-*` files while the server is stopped, then seed again.
 
@@ -39,6 +39,16 @@ Use a 1920 × 1080 browser window at 100% zoom. Keep two tabs open: the admin an
 5. Point out **Accessibility**, which uses **How are you travelling? / is not / Car**, and its skippable checkbox.
 
 Payload mounts some nested fields as they enter the viewport. Scroll to a condition group to see its selects.
+
+### Live Preview
+
+1. Log in and open **Questionnaires → Plan a trip**, then toggle **Live Preview** (the eye icon).
+2. In the iframe, choose **No**, then **Plane**. Flight and Accessibility enter the progress strip. Click **Next** to open Flight.
+3. In the editor, expand **Flight → Condition groups → Group 1 → Conditions**. Change its answer from **Plane** to **Train**, leaving **How are you travelling? / is** selected.
+4. Watch Flight leave the iframe's progress strip without saving. The respondent returns to About you with No and Plane still selected. Choose **Train** to make Flight appear again.
+5. Restore the condition to **Plane** before continuing the recording. Exit Live Preview to return to the full-width editor. The panel's size menu also offers Mobile (375 × 667) and Desktop (1440 × 900).
+
+The **Preview** button opens `/q/<id>?preview=1` in a new tab. It loads the latest saved draft for a signed-in admin. Requests without a valid session receive the published questionnaire. Unsaved edits arrive through Live Preview while that panel is open. Ordinary `/q/<id>` visits stay published-only.
 
 ### Responding: Plane
 
@@ -76,7 +86,9 @@ mise x node@24 pnpm@10.34.9 -- pnpm --filter dev start
 
 Root build, typecheck and test target only `packages/*`. The private `dev` workspace is excluded from publishing. Keep its `@types/node` version aligned with the plugin's development dependency so pnpm shares one instance of Payload UI and its form contexts.
 
-The tested receiver boundary is `src/receiver/useQuestionnaire.ts`. It imports React and the public engine API. Answer inputs and Embla live in `src/demo-ui/`; the server routes load published documents through Payload's Local API. Answers stay in memory and reset on refresh or Restart. Dragging is disabled, inactive slides are inert, and reduced-motion preferences turn off animated navigation.
+Admin tidy screenshots use `/tmp/demo-shots/tidy-*.png`, including the desktop and 800px layouts, mobile respondent, Preview tab and Live Preview before/after captures.
+
+The tested receiver boundary is `src/receiver/useQuestionnaire.ts`. It imports React and the public engine API. Answer inputs and Embla live in `src/demo-ui/`; the server routes load published documents through Payload's Local API, with authenticated draft access for preview requests. Answers stay in memory and reset on refresh or Restart. Dragging is disabled, inactive slides are inert, and reduced-motion preferences turn off animated navigation.
 
 Browser walkthrough screenshots are stored outside Git in `/tmp/demo-shots/`:
 `admin-conditions.png`, `plane-about.png`, `plane-flight.png`, `plane-finish.png`, `car-children.png`, `car-finish.png`, `car-dependencies-cleared.png`, `chain-enabled.png` and `chain-cleared.png`. Validation captures are `children-required.png`, `car-seats-required.png` and `flight-required.png`.

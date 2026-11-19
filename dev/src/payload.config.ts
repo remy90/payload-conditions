@@ -11,7 +11,7 @@ export default buildConfig({
   admin: {
     user: 'users',
     importMap: { baseDir: dirname },
-    autoLogin: { email: 'demo@example.com', password: 'demo', prefillOnly: false },
+    autoLogin: { email: 'demo@example.com', password: 'demo', prefillOnly: true },
   },
   db: sqliteAdapter({ client: { url: `file:${path.resolve(dirname, '../demo.db')}` } }),
   collections: [{ slug: 'users', auth: true, fields: [] }],

@@ -17,7 +17,10 @@ export default async function QuestionnairePage({
   const { id } = await params
   const { logic, preview } = await searchParams
   const payload = await getPayload({ config })
-  const user = preview === '1' ? (await payload.auth({ headers: await headers() })).user : null
+  const authHeaders = new Headers(await headers())
+  // The local demo's auto-login fallback does not prove a browser session exists.
+  authHeaders.set('DisableAutologin', 'true')
+  const user = preview === '1' ? (await payload.auth({ headers: authHeaders })).user : null
   const isPreview = user?.collection === 'users'
   const { docs } = await payload.find({
     collection: 'questionnaire',

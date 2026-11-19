@@ -20,6 +20,7 @@ export function useQuestionnaire(questionnaire: Questionnaire) {
   })
   const [state, setState] = useState(initialState)
   const { visiblePageIds, answers } = resolveVisibility(questionnaire, state.answers)
+  // Keep stored answers through half-edited preview conditions; expose only resolved answers.
   if (state.questionnaire !== questionnaire) {
     const oldIndex = state.questionnaire.pages.findIndex((page) => page.id === state.pageId)
     const previous = state.questionnaire.pages
