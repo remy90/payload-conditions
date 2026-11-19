@@ -11,6 +11,31 @@ import {
   type Questionnaire,
 } from '@remy90/payload-conditions-engine'
 
+function pruneAnswers(questionnaire: Questionnaire, answers: Answers): Answers {
+  const questions = new Map<string, Questionnaire['pages'][number]['questions'][number]>()
+  for (const page of questionnaire.pages) {
+    for (const question of page.questions) {
+      if (!questions.has(question.id)) questions.set(question.id, question)
+    }
+  }
+  let pruned: Map<string, readonly string[]> | undefined
+  for (const [id, values] of answers) {
+    const answer = questions.get(id)?.answer
+    const optionIds =
+      answer?.type === 'boolean'
+        ? [answer.trueOption.id, answer.falseOption.id]
+        : answer?.type === 'multipleChoice'
+          ? answer.options.map((option) => option.id)
+          : undefined
+    const kept = !answer ? [] : optionIds ? values.filter((id) => optionIds.includes(id)) : values
+    if (kept.length === values.length && kept.length > 0) continue
+    pruned ??= new Map(answers)
+    if (kept.length) pruned.set(id, kept)
+    else pruned.delete(id)
+  }
+  return pruned ?? answers
+}
+
 export function useQuestionnaire(questionnaire: Questionnaire) {
   const initialState = () => ({
     questionnaire,
@@ -19,7 +44,9 @@ export function useQuestionnaire(questionnaire: Questionnaire) {
     finished: false,
   })
   const [state, setState] = useState(initialState)
-  const { visiblePageIds, answers } = resolveVisibility(questionnaire, state.answers)
+  const storedAnswers =
+    state.questionnaire !== questionnaire ? pruneAnswers(questionnaire, state.answers) : state.answers
+  const { visiblePageIds, answers } = resolveVisibility(questionnaire, storedAnswers)
   // Keep stored answers through half-edited preview conditions; expose only resolved answers.
   if (state.questionnaire !== questionnaire) {
     const oldIndex = state.questionnaire.pages.findIndex((page) => page.id === state.pageId)
@@ -30,6 +57,7 @@ export function useQuestionnaire(questionnaire: Questionnaire) {
     setState({
       ...state,
       questionnaire,
+      answers: storedAnswers,
       pageId:
         state.pageId && visiblePageIds.has(state.pageId)
           ? state.pageId
