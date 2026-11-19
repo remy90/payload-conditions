@@ -118,13 +118,14 @@ function convertQuestion(row: StoredQuestion): Question | undefined {
   if (questionId === undefined) return undefined
   for (const block of row.answer ?? []) {
     const answer = convertAnswer(block)
-    if (answer) return {
-      id: questionId,
-      name: row.name ?? '',
-      label: row.label ?? '',
-      required: row.required ?? true,
-      answer,
-    }
+    if (answer)
+      return {
+        id: questionId,
+        name: row.name ?? '',
+        label: row.label ?? '',
+        required: row.required ?? true,
+        answer,
+      }
   }
   return undefined
 }
@@ -157,7 +158,8 @@ function convertPage(source: StoredPage, pageId: string): Page {
       const condition = convertCondition(row)
       if (condition) conditions.push(condition)
     }
-    if (conditions.length) conditionGroups.push({ id: groupId, match: match(group.match), conditions })
+    if (conditions.length)
+      conditionGroups.push({ id: groupId, match: match(group.match), conditions })
   }
   return {
     id: pageId,

@@ -47,12 +47,22 @@ describe('two-level prerequisites', () => {
     ['not_in', [], false],
   ])('%s with %j is %s', (operator, values, expected) => {
     const q = questionnaire(
-      page('source', [{
-        ...yesNoQuestion('a'),
-        answer: operator === 'in' || operator === 'not_in'
-          ? { type: 'choice', hasMany: true, options: [{ id: 'yes', label: 'Yes' }, { id: 'no', label: 'No' }] }
-          : yesNoQuestion('a').answer,
-      }]),
+      page('source', [
+        {
+          ...yesNoQuestion('a'),
+          answer:
+            operator === 'in' || operator === 'not_in'
+              ? {
+                  type: 'choice',
+                  hasMany: true,
+                  options: [
+                    { id: 'yes', label: 'Yes' },
+                    { id: 'no', label: 'No' },
+                  ],
+                }
+              : yesNoQuestion('a').answer,
+        },
+      ]),
       page('target', [], [{ ...condition('a'), operator }]),
     )
     expect(evaluatePage(q, 'target', new Map([['a', values]]))).toBe(expected)
@@ -149,12 +159,11 @@ describe('two-level prerequisites', () => {
     expect(operators).toEqual(['equals', 'not_equals', 'in', 'not_in'])
     expect(matchModes).toEqual(['all', 'any'])
     expect(operatorsFor(yesNoQuestion('a').answer)).toEqual(['equals', 'not_equals'])
-    expect(
-      operatorsFor({ type: 'choice', hasMany: false, options: [] }),
-    ).toEqual(['equals', 'not_equals'])
-    expect(
-      operatorsFor({ type: 'choice', hasMany: true, options: [] }),
-    ).toEqual(['in', 'not_in'])
+    expect(operatorsFor({ type: 'choice', hasMany: false, options: [] })).toEqual([
+      'equals',
+      'not_equals',
+    ])
+    expect(operatorsFor({ type: 'choice', hasMany: true, options: [] })).toEqual(['in', 'not_in'])
     expect(operatorsFor({ type: 'text', maxLength: 2000 })).toEqual([])
   })
 
@@ -170,11 +179,7 @@ describe('two-level prerequisites', () => {
       }
       const q = questionnaire(
         page('source', [source]),
-        page(
-          'target',
-          [],
-          [{ ...condition('a'), operator: hasMany ? 'in' : 'equals' }],
-        ),
+        page('target', [], [{ ...condition('a'), operator: hasMany ? 'in' : 'equals' }]),
       )
       expect(evaluatePage(q, 'target', new Map([['a', ['yes']]]))).toBe(true)
       expect(evaluatePage(q, 'target', new Map([['a', ['no']]]))).toBe(false)
@@ -183,11 +188,7 @@ describe('two-level prerequisites', () => {
       expect(evaluatePage(q, 'target', new Map([['a', values]]))).toBe(false)
       const negative = questionnaire(
         q.pages[0],
-        page(
-          'target',
-          [],
-          [{ ...condition('a'), operator: hasMany ? 'not_in' : 'not_equals' }],
-        ),
+        page('target', [], [{ ...condition('a'), operator: hasMany ? 'not_in' : 'not_equals' }]),
       )
       expect(evaluatePage(negative, 'target', new Map([['a', values]]))).toBe(hasMany)
       expect(evaluatePage(negative, 'target', new Map([['a', [...values, 'yes']]]))).toBe(false)

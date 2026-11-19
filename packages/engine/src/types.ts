@@ -7,7 +7,13 @@ export type Answer =
   | { type: 'yesNo'; yes: Option; no: Option }
   | { type: 'choice'; hasMany: boolean; options: Option[] }
   | { type: 'text'; placeholder?: string; maxLength: number }
-export type Question = { id: string; name: string; label: string; required: boolean; answer: Answer }
+export type Question = {
+  id: string
+  name: string
+  label: string
+  required: boolean
+  answer: Answer
+}
 export type Condition = { id?: string; questionId: string; operator: Operator; answerId: string }
 export type ConditionGroup = { id?: string; match: Match; conditions: Condition[] }
 export type Page = {
@@ -23,13 +29,32 @@ export type Answers = ReadonlyMap<string, readonly string[]>
 export type AnswerIssue = {
   questionId: string
   pageId?: string
-  issue: 'required' | 'unknownOption' | 'tooManySelections' | 'tooLong' | 'unknownQuestion' | 'hiddenQuestion'
+  issue:
+    | 'required'
+    | 'unknownOption'
+    | 'tooManySelections'
+    | 'tooLong'
+    | 'unknownQuestion'
+    | 'hiddenQuestion'
 }
 
 export const questionnaireIssueCodes = [
-  'noPages', 'emptyPage', 'emptyGroup', 'duplicateId', 'duplicateName', 'invalidName',
-  'blankText', 'duplicateOptionLabel', 'unknownQuestion', 'samePageQuestion', 'laterQuestion',
-  'unsupportedSource', 'unknownAnswer', 'operatorMismatch', 'contradiction', 'unreachablePage',
+  'noPages',
+  'emptyPage',
+  'emptyGroup',
+  'duplicateId',
+  'duplicateName',
+  'invalidName',
+  'blankText',
+  'duplicateOptionLabel',
+  'unknownQuestion',
+  'samePageQuestion',
+  'laterQuestion',
+  'unsupportedSource',
+  'unknownAnswer',
+  'operatorMismatch',
+  'contradiction',
+  'unreachablePage',
 ] as const
 export type QuestionnaireIssueCode = (typeof questionnaireIssueCodes)[number]
 export type QuestionnaireIssue = {

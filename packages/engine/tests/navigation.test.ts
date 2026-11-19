@@ -18,6 +18,14 @@ describe('navigation', () => {
     expect(previousPageId(single, visiblePageIds, 'one')).toBeUndefined()
   })
 
+  it('navigates past repeated page ids using the first position', () => {
+    const q = questionnaire(page('A'), page('A'), page('B'), page('A'))
+    const visible = new Set(['A', 'B'])
+    expect(nextPageId(q, visible, 'A')).toBe('B')
+    expect(previousPageId(q, visible, 'B')).toBe('A')
+    expect(nextPageId(q, visible, 'B')).toBeUndefined()
+  })
+
   it('moves between two unconditional pages', () => {
     const q = questionnaire(page('one'), page('two'))
     const { visiblePageIds } = resolveVisibility(q, new Map())

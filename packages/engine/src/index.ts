@@ -1,5 +1,14 @@
 export * from './types.js'
-import { operatorsFor, type AnswerIssue, type Answers, type Condition, type Page, type Question, type Questionnaire } from './types.js'
+export { checkQuestionnaire } from './checkQuestionnaire.js'
+import {
+  operatorsFor,
+  type AnswerIssue,
+  type Answers,
+  type Condition,
+  type Page,
+  type Question,
+  type Questionnaire,
+} from './types.js'
 
 type Entry = { question: Question; pagePosition: number; optionIds: ReadonlySet<string> }
 type Index = { questions: Map<string, Entry>; pagePositions: Map<string, number> }
@@ -11,7 +20,8 @@ function indexFor(questionnaire: Questionnaire): Index {
   const questions = new Map<string, Entry>()
   const pagePositions = new Map<string, number>()
   questionnaire.pages.forEach((page, pagePosition) => {
-    if (!pagePositions.has(page.id)) pagePositions.set(page.id, pagePosition)
+    if (pagePositions.has(page.id)) return
+    pagePositions.set(page.id, pagePosition)
     for (const question of page.questions) {
       if (questions.has(question.id)) continue
       const answer = question.answer
@@ -115,10 +125,12 @@ export function resolveVisibility(
   const visiblePageIds = new Set<string>()
   let cleared: Map<string, readonly string[]> | undefined
   questionnaire.pages.forEach((page, position) => {
+    if (index.pagePositions.get(page.id) !== position) return
     if (pageMatches(page, position, index, cleared ?? answers, contains)) {
       visiblePageIds.add(page.id)
     } else {
       for (const question of page.questions) {
+        if (index.questions.get(question.id)?.pagePosition !== position) continue
         if ((cleared ?? answers).has(question.id)) {
           cleared ??= new Map(answers)
           cleared.delete(question.id)
@@ -148,13 +160,11 @@ export function nextPageId(
   visiblePageIds: ReadonlySet<string>,
   currentPageId?: string,
 ): string | undefined {
-  const position =
-    currentPageId === undefined
-      ? undefined
-      : indexFor(questionnaire).pagePositions.get(currentPageId)
+  const index = indexFor(questionnaire)
+  const position = currentPageId === undefined ? undefined : index.pagePositions.get(currentPageId)
   for (let i = (position ?? -1) + 1; i < questionnaire.pages.length; i++) {
     const id = questionnaire.pages[i].id
-    if (visiblePageIds.has(id)) return id
+    if (index.pagePositions.get(id) === i && visiblePageIds.has(id)) return id
   }
   return undefined
 }
@@ -164,14 +174,12 @@ export function previousPageId(
   visiblePageIds: ReadonlySet<string>,
   currentPageId?: string,
 ): string | undefined {
-  const position =
-    currentPageId === undefined
-      ? undefined
-      : indexFor(questionnaire).pagePositions.get(currentPageId)
+  const index = indexFor(questionnaire)
+  const position = currentPageId === undefined ? undefined : index.pagePositions.get(currentPageId)
   if (position === undefined) return undefined
   for (let i = position - 1; i >= 0; i--) {
     const id = questionnaire.pages[i].id
-    if (visiblePageIds.has(id)) return id
+    if (index.pagePositions.get(id) === i && visiblePageIds.has(id)) return id
   }
   return undefined
 }
@@ -186,21 +194,50 @@ export function validatePageAnswers(
   if (position === undefined) return []
   const page = questionnaire.pages[position]
   const issues: AnswerIssue[] = []
+  const seen = new Set<string>()
   for (const question of page.questions) {
+    const entry = index.questions.get(question.id)!
+    if (entry.question !== question || entry.pagePosition !== position || seen.has(question.id))
+      continue
+    seen.add(question.id)
     const values = answers.get(question.id) ?? []
     if (!page.skippable && question.required && !values.some((value) => value.trim().length > 0)) {
       issues.push({ questionId: question.id, issue: 'required' })
     }
     if (question.answer.type === 'yesNo' || question.answer.type === 'choice') {
-      const entry = index.questions.get(question.id)!
       if (values.some((value) => !entry.optionIds.has(value)))
         issues.push({ questionId: question.id, issue: 'unknownOption' })
-      if (
-        values.length > 1 &&
-        (question.answer.type === 'yesNo' || !question.answer.hasMany)
-      ) {
+      if (values.length > 1 && (question.answer.type === 'yesNo' || !question.answer.hasMany)) {
         issues.push({ questionId: question.id, issue: 'tooManySelections' })
       }
+    } else if (question.answer.type === 'text') {
+      const maxLength = question.answer.maxLength
+      if (values.some((value) => value.length > maxLength)) {
+        issues.push({ questionId: question.id, issue: 'tooLong' })
+      }
+    }
+  }
+  return issues
+}
+
+export function validateAnswers(questionnaire: Questionnaire, answers: Answers): AnswerIssue[] {
+  const index = indexFor(questionnaire)
+  const resolved = resolveVisibility(questionnaire, answers)
+  const issues: AnswerIssue[] = []
+  for (const [position, page] of questionnaire.pages.entries()) {
+    if (index.pagePositions.get(page.id) !== position || !resolved.visiblePageIds.has(page.id))
+      continue
+    for (const issue of validatePageAnswers(questionnaire, page.id, resolved.answers)) {
+      issues.push({ ...issue, pageId: page.id })
+    }
+  }
+  for (const questionId of answers.keys()) {
+    const entry = index.questions.get(questionId)
+    if (!entry) issues.push({ questionId, issue: 'unknownQuestion' })
+    else {
+      const pageId = questionnaire.pages[entry.pagePosition].id
+      if (!resolved.visiblePageIds.has(pageId))
+        issues.push({ questionId, pageId, issue: 'hiddenQuestion' })
     }
   }
   return issues

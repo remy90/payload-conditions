@@ -48,6 +48,27 @@ describe('forward visibility', () => {
     }
   })
 
+  it('keeps the first question answer when a hidden page repeats its id', () => {
+    const q = questionnaire(
+      page('A', [yesNoQuestion('a')]),
+      page('B', [yesNoQuestion('a')], [condition('a', 'no')]),
+      page('C', [], [condition('a')]),
+    )
+    const answers = new Map([['a', ['yes']]])
+    const resolved = resolveVisibility(q, answers)
+    expect([...resolved.visiblePageIds]).toEqual(['A', 'C'])
+    expect(resolved.answers).toBe(answers)
+  })
+
+  it('uses only the first occurrence of a page id', () => {
+    const q = questionnaire(
+      page('A', [yesNoQuestion('a')], [condition('missing')]),
+      page('A', [yesNoQuestion('b')]),
+      page('C', [], [condition('b')]),
+    )
+    expect([...resolveVisibility(q, new Map([['b', ['yes']]])).visiblePageIds]).toEqual([])
+  })
+
   it('preserves the answers reference when no entries need clearing', () => {
     const answers = new Map([
       ['a', ['yes']],
