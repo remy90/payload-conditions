@@ -1,6 +1,6 @@
 {
   "name": "@remy90/payload-conditions-engine",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "type": "module",
   "description": "Framework-free conditional questionnaire evaluation",
   "license": "MIT",
@@ -11,10 +11,12 @@
   },
   "files": [
     "dist",
+    "!dist/**/*.map",
     "README.md",
     "CHANGELOG.md",
     "LICENSE"
   ],
+  "sideEffects": false,
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -36,13 +38,9 @@
     "test": "vitest run",
     "prepublishOnly": "pnpm build"
   },
-  "engines": {
-    "node": ">=20"
-  },
   "devDependencies": {
-    "@types/node": "^22.0.0",
-    "typescript": "^5.9.0",
-    "vitest": "^3.2.0"
+    "typescript": "7.1.0-beta || >=7.1.0-rc <8",
+    "vitest": "^5.1.1"
   },
   "publishConfig": {
     "access": "public"

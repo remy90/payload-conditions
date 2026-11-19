@@ -1,5 +1,30 @@
 # Changelog
 
+## 1.1.0 (unreleased)
+
+- Accept collection `preview` and `livePreview` settings through plugin options.
+- Show full question labels with responsive ellipsis and lay out boolean labels in a responsive row.
+- Add reactive question and condition-group counts to page headers. Regenerate the admin import map after upgrading.
+- Honour `admin.disableBlockName` in page headers, including referenced blocks.
+
+Stored fields and data stay unchanged.
+
+### Admin terminology
+
+- Label the editor's pages and questions as Pages and Questions. Page headers keep their number, editable title and counts; remove the Standard page pill.
+- Rename the answer labels to Yes / No and Free text. Describe the Placeholder, Optional and Page is skippable fields.
+- Label page matching as Show this page when, with All groups match and Any group matches. Groups use This group matches when, with All conditions are true and Any condition is true. Condition selects use Question and Answer.
+- Keep stored names, generated type shapes and database identifiers unchanged.
+
+### Dependencies and packaging
+
+- Match Payload 3.94's Node support: `^22.23.5 || ^24.22.3 || >=26.13.1`. Pin workspace development to Node 26.13.1.
+- Build JavaScript and declarations with TypeScript 7.1 beta using `7.1.0-beta || >=7.1.0-rc <8`. Widen the range to `^7.1.0` once 7.1 is stable. TypeScript is a development dependency only; consumers keep their own compiler version.
+- Remove SWC and rimraf, along with the plugin's unused React DOM dependency and peer.
+- Mark the package as side-effect-free and stop shipping source and declaration maps.
+- Pair with engine 1.0.1. Use Payload `^3.94.0` for development and update the test runner to Vitest 5.
+- Check the built client entry with esbuild to catch Payload server imports.
+
 ## 1.0.0
 
 ### Schema and engine

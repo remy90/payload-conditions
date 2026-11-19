@@ -5,10 +5,20 @@ import { question } from './question.js'
 export const questionAnswerPair: Field = {
   name: 'questionAnswerPair',
   dbName: ({ tableName }) => `${tableName}_qa`,
-  label: 'Question & answer pair',
-  labels: { singular: 'question & answer pair', plural: 'question and answer pairs' },
+  label: 'Questions',
+  labels: { singular: 'Question', plural: 'Questions' },
   type: 'array',
-  fields: [question, { name: 'optional', type: 'checkbox', defaultValue: false }, answer],
+  fields: [
+    question,
+    {
+      name: 'optional',
+      type: 'checkbox',
+      defaultValue: false,
+      label: 'Optional',
+      admin: { description: 'Respondents can leave this question unanswered' },
+    },
+    answer,
+  ],
   admin: {
     components: {
       RowLabel: '@remy90/payload-conditions-plugin/client#QuestionAnswerRowLabel',

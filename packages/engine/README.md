@@ -1,6 +1,8 @@
 # Payload conditions engine
 
-Framework-free questionnaire evaluation with zero runtime dependencies. Version 1.0.0 ships ESM and TypeScript declarations.
+Framework-free questionnaire evaluation with zero runtime dependencies. Version 1.0.1 ships ESM and TypeScript declarations.
+
+The ES2022 build runs on modern runtimes, including Node, Bun and Deno.
 
 ```sh
 pnpm add @remy90/payload-conditions-engine

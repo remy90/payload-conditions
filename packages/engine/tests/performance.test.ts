@@ -1,4 +1,3 @@
-import { performance } from 'node:perf_hooks'
 import { expect, it } from 'vitest'
 import { resolveVisibility } from '../src/index.js'
 import { booleanQuestion, condition, page, questionnaire } from './fixtures.js'

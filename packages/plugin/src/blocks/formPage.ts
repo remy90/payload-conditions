@@ -1,6 +1,6 @@
 import { operators, type Operator } from '@remy90/payload-conditions-engine'
 import { questionAnswerPair } from '../fields/questionAnswerPair.js'
-import { match } from '../fields/questionAnswerCondition.js'
+import { matchField } from '../fields/questionAnswerCondition.js'
 import type { Block, Field } from 'payload'
 import { validateConditionOperator } from '../condition/validateOperator.js'
 import { validateConditionAnswer } from '../condition/validateAnswer.js'
@@ -12,6 +12,7 @@ export const pageFields: Field[] = [
     defaultValue: false,
     hidden: false,
     label: 'Page is skippable',
+    admin: { description: 'Respondents can skip every question on this page' },
   },
   questionAnswerPair,
 ]
@@ -25,17 +26,23 @@ const operatorLabels: Record<Operator, string> = {
 
 export const StandardPage: Block = {
   slug: 'standardPage',
+  admin: {
+    components: { Label: '@remy90/payload-conditions-plugin/client#StandardPageRowLabel' },
+  },
   dbName: ({ tableName }) => `${tableName}_page`,
   fields: [
     ...pageFields,
-    match,
+    matchField('Show this page when', { all: 'All groups match', any: 'Any group matches' }),
     {
       type: 'array',
       name: 'conditionGroups',
       dbName: ({ tableName }) => `${tableName}_cg`,
       label: 'Condition groups',
       fields: [
-        match,
+        matchField('This group matches when', {
+          all: 'All conditions are true',
+          any: 'Any condition is true',
+        }),
         {
           type: 'array',
           name: 'conditions',
@@ -43,7 +50,7 @@ export const StandardPage: Block = {
           fields: [
             {
               type: 'text',
-              label: 'Question condition',
+              label: 'Question',
               name: 'questionId',
               required: true,
               admin: {
@@ -66,7 +73,7 @@ export const StandardPage: Block = {
             },
             {
               type: 'text',
-              label: 'Answer condition',
+              label: 'Answer',
               name: 'answerId',
               required: true,
               validate: validateConditionAnswer,
@@ -80,5 +87,5 @@ export const StandardPage: Block = {
     },
   ],
   interfaceName: 'StandardPage',
-  labels: { plural: 'Standard pages', singular: 'Standard page' },
+  labels: { plural: 'Pages', singular: 'Page' },
 }

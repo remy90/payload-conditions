@@ -44,12 +44,12 @@ export const booleanOptionsBlock: Block = {
     {
       name: 'booleanOptions',
       type: 'group',
-      fields: [truthyField, trueId, falsyField, falseId],
+      fields: [{ type: 'row', fields: [truthyField, falsyField] }, trueId, falseId],
       label: false,
     },
   ],
   slug: 'booleanOptions',
   dbName: ({ tableName }) => `${tableName}_bool`,
-  labels: { singular: 'True or false', plural: 'True or false' },
+  labels: { singular: 'Yes / No', plural: 'Yes / No' },
   interfaceName: 'BooleanOptions',
 }

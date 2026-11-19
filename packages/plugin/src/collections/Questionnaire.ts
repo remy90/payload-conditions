@@ -18,8 +18,8 @@ export const Questionnaire: CollectionConfig = {
       name: 'pages',
       type: 'blocks',
       blocks: [StandardPage],
-      label: 'Survey pages',
-      labels: { plural: 'pages', singular: 'page' },
+      label: 'Pages',
+      labels: { plural: 'Pages', singular: 'Page' },
     },
   ],
   versions: {
