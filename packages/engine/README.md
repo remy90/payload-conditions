@@ -1,141 +1,100 @@
 # Payload conditions engine
 
-Framework-free questionnaire evaluation with zero runtime dependencies. Version 1.0.1 ships ESM and TypeScript declarations.
+Evaluate questionnaire conditions and validate respondent answers. Version 0.3.0 ships ESM and has no Payload or React runtime dependency.
 
-The ES2022 build runs on modern runtimes, including Node, Bun and Deno.
+## Install
 
 ```sh
-pnpm add @remy90/payload-conditions-engine
+pnpm add @remy90/payload-conditions-engine@^0.3.0
 ```
 
-## Consumer example
-
-Convert a saved Payload document once and retain the resulting questionnaire while the respondent answers it.
+Use the matching `@remy90/payload-conditions-plugin@^0.3.0` to author questionnaires in Payload:
 
 ```ts
-import { applyAnswer, nextPageId, type Answers } from '@remy90/payload-conditions-engine'
-import { fromPayloadQuestionnaire, type StoredQuestionnaire } from '@remy90/payload-conditions-engine/payload'
+import { questionnairePlugin } from '@remy90/payload-conditions-plugin'
 
-const doc: StoredQuestionnaire = {
-  id: 'survey',
-  title: 'Getting started',
-  pages: [
-    {
-      id: 'start',
-      blockType: 'standardPage',
-      questionAnswerPair: [{
-        id: 'continue',
-        question: 'Continue?',
-        answer: [{
-          blockType: 'booleanOptions',
-          booleanOptions: { trueId: 'yes', trueOption: 'Yes', falseId: 'no', falseOption: 'No' },
-        }],
-      }],
-    },
-    {
-      id: 'details',
-      blockType: 'standardPage',
-      conditionGroups: [{
-        id: 'group',
-        conditions: [{ id: 'condition', questionId: 'continue', operator: 'is', answerId: 'yes' }],
-      }],
-    },
-  ],
-}
-
-const questionnaire = fromPayloadQuestionnaire(doc)
-let answers: Answers = new Map()
-const result = applyAnswer(questionnaire, answers, 'continue', ['yes'])
-answers = result.answers
-const destination = nextPageId(questionnaire, result.visiblePageIds, 'start') // 'details'
+// In your Payload config:
+plugins: [questionnairePlugin()]
 ```
 
-Persist `result.answers` after each change so cleared answers stay cleared.
+## Load a stored questionnaire
+
+```ts
+import { fromPayloadQuestionnaire } from '@remy90/payload-conditions-engine/payload'
+import { applyAnswer, resolveVisibility, validateAnswers } from '@remy90/payload-conditions-engine'
+
+// doc is a questionnaire document loaded through Payload's Local API.
+const questionnaire = fromPayloadQuestionnaire(doc)
+const initial = resolveVisibility(questionnaire, new Map())
+const next = applyAnswer(questionnaire, initial.answers, 'travel', ['plane'])
+const issues = validateAnswers(questionnaire, next.answers)
+```
+
+The plugin stores documents in `questionnaires`. `pages` contains `page` blocks with `id`, `blockName`, `skippable`, `questions`, `match` and `conditionGroups`. Each question has `{ id, name, label, required, answer }`. `required` defaults to true. The `answer` blocks field contains exactly one supported block:
+
+| `blockType` | Stored fields |
+| --- | --- |
+| `yesNo` | `id`, `yesId`, `yesLabel`, `noId`, `noLabel` |
+| `choice` | `id`, `hasMany` (default false), `options: [{ id, label }]` |
+| `text` | `id`, `placeholder`, `maxLength` (default 2000) |
+
+A condition group stores `{ id, match, conditions }`. Conditions store `{ id, questionId, operator, answerId }`. References use row ids and Yes / No option ids. A question's `name` is a stable key for consumers; conditions reference its `id`.
+
+The adapter returns `{ id, title, pages }`. Domain pages use `title` for `blockName`. Domain answers use `{ type: 'yesNo', yes, no }`, `{ type: 'choice', hasMany, options }` or `{ type: 'text', placeholder?, maxLength }`; each option is `{ id, label }`.
+
+Stored fields accept null and missing values. Numeric ids become strings. The adapter skips unknown blocks and rows without ids. Questions use their first supported answer block; Yes / No needs both option ids. Id-bearing incomplete conditions remain as failing conditions. Empty condition groups are omitted. Missing match modes default to `all`, `required` to true, and `skippable` and `hasMany` to false. A missing questionnaire id becomes an empty string.
+
+## Conditions
+
+`operators` is `['equals', 'not_equals', 'in', 'not_in']`; `matchModes` is `['all', 'any']`.
+
+| Operator | Editor label | Sources |
+| --- | --- | --- |
+| `equals` | is | Yes / No, single choice |
+| `not_equals` | is not | Yes / No, single choice |
+| `in` | includes | Multiple choice with `hasMany: true` |
+| `not_in` | excludes | Multiple choice with `hasMany: true` |
+
+`operatorsFor(answer)` returns the supported operators. Free text cannot control visibility. Conditions require a question on an earlier page. Missing answers fail every operator, including negative operators. `equals` and `not_equals` require exactly one value. A negative operator can match a stale option id, so check definitions before accepting externally authored data.
+
+A group's `match` combines conditions. A page's `match` combines groups. Empty groups are ignored during evaluation, and a page with no remaining groups is visible. An unknown page id evaluates false.
 
 ## API
 
-Import evaluation functions and domain types from `@remy90/payload-conditions-engine`.
+All functions preserve their inputs. `Answers` is `ReadonlyMap<string, readonly string[]>`; text uses one string value. Keep questionnaire definitions immutable. The engine caches its index by questionnaire identity.
 
-```ts
-const operators = ['is', 'isNot', 'includes', 'excludes'] as const
-const matchModes = ['all', 'any'] as const
+- `checkQuestionnaire(questionnaire): QuestionnaireIssue[]` checks a definition before publishing.
+- `evaluatePage(questionnaire, pageId, answers): boolean` evaluates a page directly against the supplied answers.
+- `resolveVisibility(questionnaire, answers)` returns `{ visiblePageIds, answers }`. It walks pages in order and clears hidden answers before evaluating later dependencies. It preserves the answer map reference when nothing is cleared.
+- `applyAnswer(questionnaire, answers, questionId, values)` copies values, updates the answer and resolves visibility. Empty values delete an answer. Unknown question ids are ignored.
+- `nextPageId(questionnaire, visiblePageIds, currentPageId?)` returns the next visible id. Omit the current id to start at the first visible page.
+- `previousPageId(questionnaire, visiblePageIds, currentPageId?)` returns the preceding visible id. Navigation returns `undefined` at an edge; a hidden current page uses its position in the definition.
+- `validatePageAnswers(questionnaire, pageId, answers): AnswerIssue[]` validates a page, including a hidden page if requested. An unknown page returns no issues.
+- `validateAnswers(questionnaire, answers): AnswerIssue[]` validates every visible page and reports submitted answers for unknown or hidden questions. Drop empty-array entries before calling it. Issues for visible questions include `pageId`.
 
-type Operator = (typeof operators)[number]
-type Match = (typeof matchModes)[number]
-type Option = { id: string; label: string }
-type Answer =
-  | { type: 'boolean'; trueOption: Option; falseOption: Option }
-  | { type: 'multipleChoice'; allowMultipleSelection: boolean; options: Option[] }
-  | { type: 'inputText'; prompt: string }
-type Question = { id: string; text: string; optional: boolean; answer: Answer }
-type Condition = { questionId: string; operator: Operator; answerId: string }
-type ConditionGroup = { match: Match; conditions: Condition[] }
-type Page = { id: string; skippable: boolean; questions: Question[]; match: Match; conditionGroups: ConditionGroup[] }
-type Questionnaire = { id: string; title: string; pages: Page[] }
-type Answers = ReadonlyMap<string, readonly string[]>
-type AnswerIssue = { questionId: string; issue: 'required' | 'unknownOption' | 'tooManySelections' }
+`AnswerIssue.issue` is `required`, `unknownOption`, `tooManySelections`, `tooLong`, `unknownQuestion` or `hiddenQuestion`. Required answers need trimmed, nonempty content. `required: false` and `skippable: true` suppress the required check. Choice ids must exist and single-choice answers accept at most one value. Text values longer than `maxLength` report `tooLong`; callers retain control over trimming stored responses. A question can produce several issues.
 
-function operatorsFor(answer: Answer): readonly Operator[]
-function evaluatePage(questionnaire: Questionnaire, pageId: string, answers: Answers): boolean
-function resolveVisibility(questionnaire: Questionnaire, answers: Answers): {
-  visiblePageIds: ReadonlySet<string>; answers: Answers
-}
-function applyAnswer(questionnaire: Questionnaire, answers: Answers, questionId: string, values: readonly string[]): {
-  visiblePageIds: ReadonlySet<string>; answers: Answers
-}
-function nextPageId(questionnaire: Questionnaire, visiblePageIds: ReadonlySet<string>, currentPageId?: string): string | undefined
-function previousPageId(questionnaire: Questionnaire, visiblePageIds: ReadonlySet<string>, currentPageId?: string): string | undefined
-function validatePageAnswers(questionnaire: Questionnaire, pageId: string, answers: Answers): AnswerIssue[]
-```
+The root exports the types `Questionnaire`, `Page`, `Question`, `Answer`, `Option`, `Condition`, `ConditionGroup`, `Operator`, `Match`, `Answers`, `AnswerIssue`, `QuestionnaireIssue` and `QuestionnaireIssueCode`, plus `questionnaireIssueCodes`.
 
-Each question's answer map entry holds selected option ids, or `[text]` for input text. Use unique page and question ids throughout a questionnaire.
+The `/payload` entry exports `fromPayloadQuestionnaire` and `StoredQuestionnaire`, `StoredPage`, `StoredQuestion`, `StoredAnswer`, `StoredYesNo`, `StoredChoice`, `StoredText`, `StoredOption`, `StoredConditionGroup`, `StoredCondition`, `StoredUnknownBlock` and `StoredId`.
 
-`operatorsFor` returns `is`/`isNot` for boolean and single-select answers, `includes`/`excludes` for multi-select answers, and an empty array for input text. These choices guide authoring. Evaluation accepts all four operators for either choice type.
+## Definition validation
 
-### Evaluation semantics
+`QuestionnaireIssue` contains `code` and `message`, with row ids such as `pageId`, `questionId`, `optionId`, `groupId` and `conditionId` where available. The codes are:
 
-If question ids repeat, the index uses the first occurrence in document order.
+| Codes | Meaning |
+| --- | --- |
+| `noPages`, `emptyPage`, `emptyGroup` | Missing required rows |
+| `duplicateId`, `duplicateName`, `invalidName` | Invalid identity or question name |
+| `blankText`, `duplicateOptionLabel` | Blank labels or repeated option labels |
+| `unknownQuestion`, `samePageQuestion`, `laterQuestion`, `unsupportedSource` | Invalid condition source |
+| `unknownAnswer`, `operatorMismatch` | Invalid answer reference or operator |
+| `contradiction`, `unreachablePage` | Conditions cannot match, or a page cannot become visible |
 
-- A condition can reference a boolean or multiple-choice question on an earlier page. Its answer must contain at least one value. Unknown questions, unknown operators, unsupported answer types, same-page references and later-page references evaluate false.
-- `is` and `includes` test membership of `answerId`. `isNot` and `excludes` require a non-empty answer that lacks `answerId`. Conditions evaluate the supplied values; use validation to detect unknown option ids.
-- A group combines its conditions with `all` or `any`. The page applies its own `all` or `any` mode to the groups. Empty groups are ignored. A page with no remaining groups is visible, including a page with no questions.
-- An unknown page id passed to `evaluatePage` returns false. This function evaluates against the supplied answers directly.
+The `unreachablePage` check reports only certain cases in one forward pass and does not combine constraints across groups, so an unflagged page can still be unreachable.
 
-### Visibility and updates
+Names match `^[a-z][a-z0-9_]*$` and must be unique across the questionnaire. Option labels must be unique within a question; Yes and No labels must differ. The plugin also enforces field limits: title 200, question label 500, option labels 200, placeholder 200, name 64 and page title 120 characters. Free text `maxLength` must be an integer from 1 to 10000. Collections require pages and questions; groups require conditions, and choices require at least two options. See the plugin README for Payload's draft and publish gates.
 
-`resolveVisibility` makes one forward pass in page order. It clears answers for every question on a hidden page before evaluating later pages. In an A → B → C dependency chain, hiding B removes its answer before C's condition runs. The returned answer map has the same reference as the input when nothing was cleared.
+## Upgrading to 0.3
 
-`applyAnswer` copies the answer map and the submitted values, then resolves visibility. Empty values delete the question's entry. An unknown question is ignored while visibility still resolves. All functions preserve their inputs.
-
-### Navigation
-
-Both navigation functions follow questionnaire order through the supplied visible ids and return `undefined` at an edge.
-
-- `nextPageId` with an omitted or unknown current page returns the first visible page. A hidden current page uses its position and returns the next visible page after it.
-- `previousPageId` with an omitted or unknown current page returns `undefined`. A hidden current page returns the nearest visible page before its position.
-
-### Validation
-
-`validatePageAnswers` returns an empty array for an unknown page. Callers choose which visible pages to validate; the function also accepts hidden page ids. For a known page it validates questions in their stored order:
-
-- `required`: no value contains non-whitespace content on a required question on a non-skippable page. Whitespace-only text counts as unanswered.
-- `unknownOption`: at least one submitted choice id is absent from the question's options.
-- `tooManySelections`: a boolean or single-select question has more than one submitted value. Duplicate selections count towards this limit.
-
-`optional` on a question and `skippable` on a page suppress only `required`. A question may report several issues, in the order `required`, `unknownOption`, `tooManySelections`. Each issue occurs at most once per question. Text format checks belong to the consumer.
-
-## Payload adapter
-
-Import `fromPayloadQuestionnaire(doc: StoredQuestionnaire): Questionnaire` from `@remy90/payload-conditions-engine/payload`. This entry point also exports `StoredQuestionnaire`, `StoredStandardPage`, `StoredQuestionAnswerPair`, `StoredAnswer`, `StoredBooleanOptions`, `StoredMultipleChoice`, `StoredInputText`, `StoredOption`, `StoredConditionGroup`, `StoredCondition`, `StoredUnknownBlock` and `StoredId`.
-
-Stored fields are optional and nullable. Numeric ids become strings, including `0`. The adapter accepts unknown block types and skips them. Pages, questions, options, condition groups and condition rows without ids are skipped. A condition row with an id and a missing `questionId`, `operator` or `answerId` remains in its group and evaluates false. A group whose conditions were all skipped is ignored.
-
-Missing match modes default to `all`; boolean flags default to false. Missing text becomes an empty string. Questions use the first supported answer block; a boolean block needs both option ids. Questions with no usable answer block are skipped. A missing questionnaire id becomes an empty string. The adapter leaves its input document untouched.
-
-## Performance
-
-A `WeakMap` caches an index per questionnaire identity, with constant-time lookup of questions and page positions. Keep questionnaires immutable and create a new questionnaire identity after editing the definition. The adapter returns a new definition each time it runs.
-
-The forward pass visits pages and their conditions once, plus the questions on hidden pages. Clearing lazily copies the answer map once. Lists of up to eight answer values use a plain membership loop; longer lists get a `Set` shared for that evaluation call. Evaluation hot paths use no array `find` or `includes` scans.
-
-The test suite times cold indexing, cached evaluation and dependency clearing with 200 pages, ten questions per page and five conditions per question on each dependent page. Each operation must complete in under 25 ms in the best of five runs.
+Use collection `questionnaires`, block `page`, array `questions` and answer blocks `yesNo`, `choice`, `text`. Operators are `equals`, `not_equals`, `in`, `not_in`. Replace old `question`/`optional` fields with `label`/`required`, add question names, and replace `allowMultipleSelection` with `hasMany`. There is no data migration. The briefly published 1.0.0 engine release is deprecated; use 0.3.0.

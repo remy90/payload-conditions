@@ -33,27 +33,29 @@ function AnswerInput({
       ? 'Choose an answer to continue.'
       : error?.issue === 'unknownOption'
         ? 'Choose one of the available options.'
-        : error
-          ? 'Choose a single answer.'
-          : undefined
+        : error?.issue === 'tooLong'
+          ? `Use ${answer.type === 'text' ? answer.maxLength : 2000} characters or fewer.`
+          : error
+            ? 'Choose a single answer.'
+            : undefined
   const options =
-    answer.type === 'boolean'
-      ? [answer.trueOption, answer.falseOption]
-      : answer.type === 'multipleChoice'
+    answer.type === 'yesNo'
+      ? [answer.yes, answer.no]
+      : answer.type === 'choice'
         ? answer.options
         : []
-  const multiple = answer.type === 'multipleChoice' && answer.allowMultipleSelection
+  const multiple = answer.type === 'choice' && answer.hasMany
   return (
     <fieldset className={styles.question} aria-describedby={message ? errorId : undefined}>
       <legend>
-        {question.text} {question.optional && <span className={styles.optional}>Optional</span>}
+        {question.label} {!question.required && <span className={styles.optional}>Optional</span>}
       </legend>
-      {answer.type === 'inputText' ? (
+      {answer.type === 'text' ? (
         <textarea
-          aria-label={question.text}
+          aria-label={question.label}
           aria-invalid={!!message}
           value={values[0] ?? ''}
-          placeholder={answer.prompt}
+          placeholder={answer.placeholder}
           rows={2}
           onChange={(event) =>
             setAnswer(question.id, event.target.value ? [event.target.value] : [])
@@ -141,7 +143,7 @@ export function QuestionnaireDemo({ document, logicOpen }: Props) {
         <a className={styles.brand} href="/">
           PAYLOAD <span>/ CONDITIONS</span>
         </a>
-        <a href="/admin/collections/questionnaire">Open editor ↗</a>
+        <a href="/admin/collections/questionnaires">Open editor ↗</a>
       </header>
       <div className={styles.intro}>
         <div>

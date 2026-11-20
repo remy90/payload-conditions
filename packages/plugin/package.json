@@ -1,9 +1,9 @@
 {
   "name": "@remy90/payload-conditions-plugin",
-  "version": "1.1.0",
+  "version": "0.3.0",
   "private": false,
   "type": "module",
-  "description": "plugin for Payload CMS, which enables conditional logic for pages to display",
+  "description": "Adds a questionnaire collection with conditional pages to Payload CMS",
   "license": "MIT",
   "author": {
     "name": "Remy",
@@ -22,9 +22,9 @@
     "plugin",
     "payload-plugin",
     "conditions",
-    "iff",
-    "ifttt",
-    "prerequisite"
+    "questionnaire",
+    "conditional-logic",
+    "survey"
   ],
   "bugs": {
     "url": "https://github.com/remy90/payload-conditions/issues"

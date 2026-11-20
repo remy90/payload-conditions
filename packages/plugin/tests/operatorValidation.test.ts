@@ -3,11 +3,11 @@ import { validateConditionOperator } from '../src/condition/validateOperator.js'
 
 const bool = {
   id: 'boolean',
-  answer: [{ blockType: 'booleanOptions', booleanOptions: { trueId: 'yes', falseId: 'no' } }],
+  answer: [{ blockType: 'yesNo', yesId: 'yes', noId: 'no' }],
 }
-const choice = (allowMultipleSelection: boolean) => ({
+const choice = (hasMany: boolean) => ({
   id: 'choice',
-  answer: [{ blockType: 'multipleChoice', allowMultipleSelection }],
+  answer: [{ blockType: 'choice', hasMany }],
 })
 const validate = (
   operator: unknown,
@@ -21,14 +21,14 @@ const validate = (
         survey: [
           {
             id: 'first',
-            blockType: 'standardPage',
-            questionAnswerPair: [
+            blockType: 'page',
+            questions: [
               bool,
               choice(multiple),
-              { id: 'text', answer: [{ blockType: 'inputText', inputText: 'Name' }] },
+              { id: 'text', answer: [{ blockType: 'text', placeholder: 'Name' }] },
             ],
           },
-          { id: 'second', blockType: 'standardPage' },
+          { id: 'second', blockType: 'page' },
         ],
       },
     },
@@ -38,7 +38,9 @@ const validate = (
 
 describe('operator field validation', () => {
   it('supports Payload field-state builds that omit the path', () => {
-    expect(validateConditionOperator('is', { siblingData: { questionId: 'boolean' } })).toBe(true)
+    expect(validateConditionOperator('equals', { siblingData: { questionId: 'boolean' } })).toBe(
+      true,
+    )
     expect(validateConditionOperator(null, {})).toEqual(expect.any(String))
     expect(validateConditionOperator('1', {})).toEqual(expect.any(String))
   })
@@ -48,34 +50,40 @@ describe('operator field validation', () => {
     const context = {
       data: {
         pages: [
-          { id: 'first', blockType: 'standardPage', questionAnswerPair: [question] },
-          { id: 'second', blockType: 'standardPage' },
+          { id: 'first', blockType: 'page', questions: [question] },
+          { id: 'second', blockType: 'page' },
         ],
       },
       path: ['pages', '1', 'conditionGroups', '0', 'conditions', '0', 'operator'],
       siblingData: { questionId: 'choice' },
     }
-    expect(validateConditionOperator('is', context)).toBe(true)
-    question.answer[0].allowMultipleSelection = true
-    expect(validateConditionOperator('is', context)).toEqual(expect.any(String))
-    expect(validateConditionOperator('includes', context)).toBe(true)
+    expect(validateConditionOperator('equals', context)).toBe(true)
+    question.answer[0].hasMany = true
+    expect(validateConditionOperator('equals', context)).toEqual(expect.any(String))
+    expect(validateConditionOperator('in', context)).toBe(true)
   })
 
-  it.each(['is', 'isNot'])('accepts %s for single selection and boolean questions', (operator) => {
-    expect(validate(operator)).toBe(true)
-    expect(validate(operator, 'boolean')).toBe(true)
-  })
+  it.each(['equals', 'not_equals'])(
+    'accepts %s for single selection and boolean questions',
+    (operator) => {
+      expect(validate(operator)).toBe(true)
+      expect(validate(operator, 'boolean')).toBe(true)
+    },
+  )
 
-  it.each(['includes', 'excludes'])('accepts %s after enabling multiple selection', (operator) => {
+  it.each(['in', 'not_in'])('accepts %s after enabling multiple selection', (operator) => {
     expect(validate(operator, 'choice', true)).toBe(true)
     expect(validate(operator)).toEqual(expect.any(String))
   })
 
-  it.each(['is', 'isNot'])('rejects stale %s after enabling multiple selection', (operator) => {
-    expect(validate(operator, 'choice', true)).toEqual(expect.any(String))
-  })
+  it.each(['equals', 'not_equals'])(
+    'rejects stale %s after enabling multiple selection',
+    (operator) => {
+      expect(validate(operator, 'choice', true)).toEqual(expect.any(String))
+    },
+  )
 
-  it.each([undefined, null, '', '1', 'unknown', ['is']])(
+  it.each([undefined, null, '', '1', 'unknown', ['equals']])(
     'rejects missing or invalid operators: %s',
     (operator) => {
       expect(validate(operator)).toEqual(expect.any(String))
@@ -83,18 +91,18 @@ describe('operator field validation', () => {
   )
 
   it.each(['missing', 'text'])('rejects unsupported source %s', (questionId) => {
-    expect(validate('is', questionId)).toEqual(expect.any(String))
+    expect(validate('equals', questionId)).toEqual(expect.any(String))
   })
 
   it.each(['0', 0])('rejects same-page references with path segment %s', (index) => {
-    expect(validate('is', 'boolean', false, index)).toEqual(expect.any(String))
+    expect(validate('equals', 'boolean', false, index)).toEqual(expect.any(String))
   })
 
   it.each(['1', 1])('accepts earlier references with path segment %s', (index) => {
-    expect(validate('is', 'boolean', false, index)).toBe(true)
+    expect(validate('equals', 'boolean', false, index)).toBe(true)
   })
 
   it.each(['', '-1', '1.5', 'nope'])('rejects malformed page index %s', (index) => {
-    expect(validate('is', 'boolean', false, index)).toEqual(expect.any(String))
+    expect(validate('equals', 'boolean', false, index)).toEqual(expect.any(String))
   })
 })

@@ -1,50 +1,62 @@
-import type { Questionnaire, StandardPage } from './payload-types'
+import type { Questionnaire, QuestionnairePage } from './payload-types'
+import type { Operator } from '@remy90/payload-conditions-engine'
 
-type StoredQuestionAnswerPair = NonNullable<StandardPage['questionAnswerPair']>[number]
-type StoredConditionGroup = NonNullable<StandardPage['conditionGroups']>[number]
+type StoredQuestion = NonNullable<QuestionnairePage['questions']>[number]
+type StoredConditionGroup = NonNullable<QuestionnairePage['conditionGroups']>[number]
 
-const bool = (id: string, question: string): StoredQuestionAnswerPair => ({
+const name = (id: string) => id.replaceAll('-', '_')
+const bool = (id: string, label: string): StoredQuestion => ({
   id,
-  question,
+  name: name(id),
+  label,
+  required: true,
   answer: [
     {
       id: `${id}-answer`,
-      blockType: 'booleanOptions',
-      booleanOptions: {
-        trueId: `${id}-yes`,
-        trueOption: 'Yes',
-        falseId: `${id}-no`,
-        falseOption: 'No',
-      },
+      blockType: 'yesNo',
+      yesId: `${id}-yes`,
+      yesLabel: 'Yes',
+      noId: `${id}-no`,
+      noLabel: 'No',
     },
   ],
 })
 const choice = (
   id: string,
-  question: string,
+  label: string,
   options: [string, string][],
-  multiple = false,
-): StoredQuestionAnswerPair => ({
+  hasMany = false,
+): StoredQuestion => ({
   id,
-  question,
+  name: name(id),
+  label,
+  required: true,
   answer: [
     {
       id: `${id}-answer`,
-      blockType: 'multipleChoice',
-      allowMultipleSelection: multiple,
-      multipleChoice: options.map(([id, option]) => ({ id, option })),
+      blockType: 'choice',
+      hasMany,
+      options: options.map(([id, label]) => ({ id, label })),
     },
   ],
 })
-const text = (id: string, question: string): StoredQuestionAnswerPair => ({
+const text = (id: string, label: string): StoredQuestion => ({
   id,
-  question,
-  optional: true,
-  answer: [{ id: `${id}-answer`, blockType: 'inputText', inputText: 'Type your answer…' }],
+  name: name(id),
+  label,
+  required: false,
+  answer: [
+    {
+      id: `${id}-answer`,
+      blockType: 'text',
+      placeholder: 'Type your answer…',
+      maxLength: 500,
+    },
+  ],
 })
 const group = (
   id: string,
-  conditions: [string, 'is' | 'isNot' | 'includes', string][],
+  conditions: [string, Operator, string][],
   match: 'all' | 'any' = 'all',
 ): StoredConditionGroup => ({
   id,
@@ -59,14 +71,14 @@ const group = (
 const page = (
   id: string,
   blockName: string,
-  questionAnswerPair: StoredQuestionAnswerPair[],
+  questions: StoredQuestion[],
   conditionGroups: StoredConditionGroup[] = [],
   skippable = false,
-): StandardPage => ({
+): QuestionnairePage => ({
   id,
   blockName,
-  blockType: 'standardPage',
-  questionAnswerPair,
+  blockType: 'page',
+  questions,
   conditionGroups,
   match: 'all',
   skippable,
@@ -98,25 +110,25 @@ export const trip: Pick<Questionnaire, 'title' | 'pages'> = {
           true,
         ),
       ],
-      [group('children-group', [['children', 'is', 'children-yes']])],
+      [group('children-group', [['children', 'equals', 'children-yes']])],
     ),
     page(
       'flight',
       'Flight',
       [bool('baggage', 'Do you need extra baggage?'), text('seat', 'Seat preference')],
-      [group('flight-group', [['travel', 'is', 'plane']])],
+      [group('flight-group', [['travel', 'equals', 'plane']])],
     ),
     page(
       'car-seats',
       'Car seats',
       [bool('seat-help', 'Would you like help arranging a car seat?')],
       [
-        group('seats-children', [['children', 'is', 'children-yes']]),
+        group('seats-children', [['children', 'equals', 'children-yes']]),
         group(
           'seats-route',
           [
-            ['travel', 'is', 'car'],
-            ['ages', 'includes', 'under2'],
+            ['travel', 'equals', 'car'],
+            ['ages', 'in', 'under2'],
           ],
           'any',
         ),
@@ -126,7 +138,7 @@ export const trip: Pick<Questionnaire, 'title' | 'pages'> = {
       'accessibility',
       'Accessibility',
       [bool('assistance', 'Do you need assistance at the station or airport?')],
-      [group('access-group', [['travel', 'isNot', 'car']])],
+      [group('access-group', [['travel', 'not_equals', 'car']])],
       true,
     ),
     page('anything', 'Anything else?', [

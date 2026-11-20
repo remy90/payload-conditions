@@ -1,45 +1,49 @@
-import type { CollectionAdminOptions, Plugin } from 'payload'
-import { Questionnaire } from './collections/Questionnaire.js'
-import { StandardPage as StandardPageBlock } from './blocks/formPage.js'
+import { definePlugin, type CollectionAdminOptions } from 'payload'
+import { deepMergeSimple } from 'payload/shared'
+import { Questionnaires } from './collections/Questionnaires.js'
+import { en } from './translations/languages/en.js'
 
-export interface PluginTypes {
-  /**
-   * Enable or disable the plugin.
-   * @default true
-   */
+export type QuestionnairePluginOptions = {
   enabled?: boolean
-  /** Configure the questionnaire collection's Preview button. */
   preview?: CollectionAdminOptions['preview']
-  /** Configure the questionnaire collection's Live Preview panel. */
   livePreview?: CollectionAdminOptions['livePreview']
 }
 
-export const payloadConditions =
-  ({ enabled = true, preview, livePreview }: PluginTypes = {}): Plugin =>
-  (config) => ({
-    ...config,
-    ...(enabled
-      ? {
-          collections: [
-            ...(config.collections ?? []),
-            preview === undefined && livePreview === undefined
-              ? Questionnaire
-              : {
-                  ...Questionnaire,
-                  admin: {
-                    ...Questionnaire.admin,
-                    ...(preview !== undefined ? { preview } : {}),
-                    ...(livePreview !== undefined ? { livePreview } : {}),
-                  },
-                },
-          ],
-        }
-      : {}),
-  })
+const defineQuestionnairePlugin = definePlugin<QuestionnairePluginOptions>({
+  slug: 'questionnaire',
+  plugin: ({ config, enabled = true, preview, livePreview }) => {
+    if (!enabled) return config
+    const languages = config.i18n?.supportedLanguages
+      ? Object.keys(config.i18n.supportedLanguages)
+      : ['en']
+    const translations = Object.fromEntries(languages.map((language) => [language, en]))
+    return {
+      ...config,
+      collections: [
+        ...(config.collections ?? []),
+        preview === undefined && livePreview === undefined
+          ? Questionnaires
+          : {
+              ...Questionnaires,
+              admin: {
+                ...Questionnaires.admin,
+                ...(preview !== undefined ? { preview } : {}),
+                ...(livePreview !== undefined ? { livePreview } : {}),
+              },
+            },
+      ],
+      i18n: {
+        ...config.i18n,
+        translations: deepMergeSimple(translations, config.i18n?.translations ?? {}),
+      },
+    }
+  },
+})
 
-export { Questionnaire }
-export { normalizeBooleanIdsHook } from './blocks/Answers/normalizeBooleanIds.js'
-export const StandardPage = StandardPageBlock
-export type StandardPage = import('./types.js').StandardPage
-export type { BooleanOptions, MultipleChoice, InputText } from './types.js'
+export const questionnairePlugin = (options: QuestionnairePluginOptions = {}) =>
+  defineQuestionnairePlugin(options)
+
+export { Questionnaires }
+export { QuestionnairePage } from './blocks/questionnairePage.js'
+export { questionnaireBeforeChange } from './hooks/questionnaireBeforeChange.js'
 export type * from '@remy90/payload-conditions-engine/payload'

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { nextPageId, previousPageId, resolveVisibility } from '../src/index.js'
-import { booleanQuestion, condition, page, questionnaire } from './fixtures.js'
+import { yesNoQuestion, condition, page, questionnaire } from './fixtures.js'
 
 // Ported from ohme page-calculator.test.ts. Response metadata, review/status
 // handling and product/accessory journey rules are outside this engine's API.
@@ -18,6 +18,14 @@ describe('navigation', () => {
     expect(previousPageId(single, visiblePageIds, 'one')).toBeUndefined()
   })
 
+  it('navigates past repeated page ids using the first position', () => {
+    const q = questionnaire(page('A'), page('A'), page('B'), page('A'))
+    const visible = new Set(['A', 'B'])
+    expect(nextPageId(q, visible, 'A')).toBe('B')
+    expect(previousPageId(q, visible, 'B')).toBe('A')
+    expect(nextPageId(q, visible, 'B')).toBeUndefined()
+  })
+
   it('moves between two unconditional pages', () => {
     const q = questionnaire(page('one'), page('two'))
     const { visiblePageIds } = resolveVisibility(q, new Map())
@@ -26,7 +34,7 @@ describe('navigation', () => {
   })
 
   it('moves to a second page when its prerequisite holds', () => {
-    const q = questionnaire(page('one', [booleanQuestion('a')]), page('two', [], [condition('a')]))
+    const q = questionnaire(page('one', [yesNoQuestion('a')]), page('two', [], [condition('a')]))
     const { visiblePageIds } = resolveVisibility(q, new Map([['a', ['yes']]]))
     expect([...visiblePageIds]).toEqual(['one', 'two'])
     expect(nextPageId(q, visiblePageIds, 'one')).toBe('two')
@@ -37,7 +45,7 @@ describe('navigation', () => {
     // ohme skips empty standard/multi-question pages. Here an unconditioned
     // page is visible regardless of its question count.
     const q = questionnaire(
-      page('one', [booleanQuestion('a')]),
+      page('one', [yesNoQuestion('a')]),
       page('hidden', [], [condition('a')]),
       page('empty'),
     )
